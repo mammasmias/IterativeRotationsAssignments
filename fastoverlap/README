@@ -1,0 +1,47 @@
+This directory contains the software fastoverlap,
+originally published in the work referenced in the file original_ref.bib.
+We include the zip file downloaded from their github repository at:
+  https://github.com/matthewghgriffiths/fastoverlap
+which was obtained on 7th July 2021.
+
+The other file included here is is the file containing some modification that we
+have done in order to run the software as we need.
+
+ - sphericalAlignment_modread.py:
+     The main routine with modificatins to input file reading.
+
+
+
+The modification done:
+
+  - input file reading:
+     Originally, the files read by the main are:
+       pos1 = readFile(os.path.join(datafolder, 'coords'))
+       pos2 = readFile(os.path.join(datafolder, 'finish'))
+
+     These have been modified to be:
+       pos1 = readFile('temp_in.dat')
+       pos2 = readFile('temp_random.dat')
+
+  - output:
+     Last part of the main function, which is:
+       'testing alignment on randomly generated data, distance should ~ 0'
+     has been commented, since it is not needed.
+
+
+TO RUN:
+ In order to run the fastoverlap software, unzip the fastoverlap-master.zip,
+
+   unzip fastoverlap-master.zip
+ 
+ Then copy the file sphericalAlignment_modread.py provided here to the main 
+ folder of fastoverlap. That should be /fastoverlap-master/fastoverlap:
+ 
+   cp sphericalAlignment_modread.py fastoverlap-master/fastoverlap
+
+ If you change these paths, modify the run_single.sh script accordingly.
+
+ Alternatively, you can download and install the
+ full software from link provided in the original work:
+      https://github.com/matthewghgriffiths/fastoverlap
+
