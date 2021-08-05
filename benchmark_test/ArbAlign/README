@@ -1,0 +1,16 @@
+This directory contains the software ArbAlign, published in the work referenced
+in the file original_ref.bib. Two python files are included:
+
+ - ArbAlign.py: contains the main call to ArbAlign algorithm.
+
+ - ArbAlign-driver.py: contains the driver to the main call.
+
+ - PrinCoords.py: is a procedure to rotate a structure into its principal axes
+                  of inertia. This is a precondition to ArbAlign.
+
+
+
+There has been a modification done. In detail:
+
+ - PrinCoords.py:
+     A mistake for the element CU at line number 69 was corrected. Originally: CO.
