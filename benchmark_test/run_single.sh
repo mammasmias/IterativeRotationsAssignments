@@ -54,12 +54,12 @@ ${aa_loc}/ArbAlign-driver.py temp_orig-prin.xyz temp_random-prin.xyz > dump_aa
 # Run fastovelap software:
 #
 # convert from xyz to FO format, write temp_in.dat and temp_random.dat
-./convert_xyz2FO/xyz2FO.x < temp_orig.xyz > temp_in.dat
-./convert_xyz2FO/xyz2FO.x < temp_random.xyz > temp_random.dat
+#./convert_xyz2FO/xyz2FO.x < temp_orig.xyz > temp_in.dat
+#./convert_xyz2FO/xyz2FO.x < temp_random.xyz > temp_random.dat
 
 # run fastoverlap, this reads files temp_in.dat and temp_random.dat. 
 # Write the output in dump_fo
-python3.6 ${fo_loc}/sphericalAlignment_modread.py > dump_fo
+python ${fo_loc}/sphericalAlignment_modread.py > dump_fo
 
 
 #-----------------------------------
@@ -81,7 +81,8 @@ rmsd_fo=$( grep rmsd dump_fo | cut -c 11- )
 
 #-----------------------------------
 # write input file path, and values to screen
-echo ${n} ${rmsd_aa} ${rmsd_fo} ${rmsd_ira}
+#echo ${n} ${rmsd_aa} ${rmsd_fo} ${rmsd_ira}
+echo ${rmsd_ira}
 
 
 
