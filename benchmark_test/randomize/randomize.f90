@@ -2,11 +2,26 @@
 !! Copyright (C) 2021, MAMMASMIAS Consortium
 !! Written by: Miha Gunde
 !!
-!! This file is distributed under the terms of GNU General Public License.
-!! See the license at: http://www.gnu.org/licenses/gpl-3.0.txt
+!! Licensed under the Apache License, Version 2.0 (the "License");
+!! you may not use this file except in compliance with the License.
+!! You may obtain a copy of the License at
 !!
+!!    http://www.apache.org/licenses/LICENSE-2.0
+!!
+!! Unless required by applicable law or agreed to in writing, software
+!! distributed under the License is distributed on an "AS IS" BASIS,
+!! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+!! See the License for the specific language governing permissions and
+!! limitations under the License.
+!!
+!!===============================================================
+!! Description:
+!!  This program reads an input structure from a .xyz input, generates a 
+!!  random rigid transformation, and returns the input structure transformed
+!!  by the generated transformation.
 program randomiz
   use read_typ
+  implicit none
   integer :: nat
   integer, allocatable :: typ(:)
   real, allocatable :: coords(:,:)
@@ -46,6 +61,10 @@ end program randomiz
 
 
   subroutine randomize( nat, typ, coords )
+    !! generate random rigid transformation: 
+    !!      permutation, rotation, translation, reflection,
+    !! and apply it to input structure.
+    implicit none
     integer, intent(in) :: nat
     integer,dimension(nat), intent(inout) :: typ
     real, dimension(3,nat), intent(inout) :: coords
@@ -128,6 +147,7 @@ end program randomiz
 
   subroutine rmat_from_ax_angle(ax_in, angle, rmat)
     !! wikipedia/rotation_matrix#quaternion
+    implicit none
     real, dimension(3), intent(in) :: ax_in
     real, intent(in) :: angle
     real, dimension(3,3), intent(out) :: rmat
