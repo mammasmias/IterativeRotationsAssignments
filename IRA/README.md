@@ -1,5 +1,7 @@
+# Description
 This directory contains the IRA and CShDA algorithms implemented in Fortran.
 
+# Files
 Routine files:
  - cshda.f90 contains the CShDA routine for pbc and non-pbc cases.
 
@@ -19,10 +21,11 @@ Example program files:
  - ira_general.f90 contains the main program for IRA which decides which of the
    above cases to do, based on number of atoms.
 
-
+# Compile and run
 TO COMPILE: (you need lapack library)
 
    sh compile.sh
+
 
 TO RUN:
 
