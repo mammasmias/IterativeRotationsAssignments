@@ -24,14 +24,14 @@ Example program files:
 # Compile and run
 TO COMPILE: (you need lapack library)
 
-   sh compile.sh
+   `sh compile.sh`
 
 
 TO RUN:
 
-   ./ira_eq.x      < input_file_eq.xyz      > output_file
-   ./ira_noneq.x   < input_file_noneq.xyz   > output_file
-   ./ira_general.x < input_file_general.xyz > output_file
+   `./ira_eq.x      < input_file_eq.xyz      > output_file`
+   `./ira_noneq.x   < input_file_noneq.xyz   > output_file`
+   `./ira_general.x < input_file_general.xyz > output_file`
 
 The input file should contain the two structures to be matched, both in the xyz
 format. The input_file_eq.xyz should contain structures with equal number of
