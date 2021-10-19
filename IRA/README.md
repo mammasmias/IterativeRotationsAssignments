@@ -1,5 +1,15 @@
 # Description
 This directory contains the IRA and CShDA algorithms implemented in Fortran.
+Further description of these algorithms is given in [[1]](#1). 
+
+# Iterative Rotations and Assignments (IRA)
+The Iterative Rotations and Assignments (IRA) algorithm is a shape matching
+algorithm for matching generic atomic structures, including structures with
+different number of atoms.
+
+# Constrained Shortest Distance Assignment (CShDA)
+The Constrained Shortest Distance Assignment (CShDA) algorithm is a Linear
+Assignment Problem (LAP) solver, which is used by the IRA algorithm. 
 
 # Files
 Routine files:
@@ -38,3 +48,10 @@ format. The input_file_eq.xyz should contain structures with equal number of
 atoms. The input_file_noneq.xyz should contain structures with different number
 of atoms, such that the first structure contains less atoms that the second
 structure. The input_file_general.xyz con be either of the above two cases.
+
+
+## References
+<a id="1">[1]</a> 
+Gunde M., Salles N., Hemeryck A., Martin Samos L.
+*IRA: A shape matching approach for recognition and comparison of generic atomic patterns*,
+Journal of Chemical Information and Modeling (2021), to appear online
