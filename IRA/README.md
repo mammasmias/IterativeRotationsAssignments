@@ -1,6 +1,6 @@
 # Description
 This directory contains the IRA and CShDA algorithms implemented in Fortran.
-Further description of these algorithms is given in [[1]](#1). 
+Further description of these algorithms is given in [[1]](https://doi.org/10.1021/acs.jcim.1c00567). 
 
 # Iterative Rotations and Assignments (IRA)
 The Iterative Rotations and Assignments (IRA) algorithm is a shape matching
@@ -54,4 +54,4 @@ structure. The input_file_general.xyz con be either of the above two cases.
 <a id="1">[1]</a> 
 Gunde M., Salles N., Hemeryck A., Martin Samos L.
 *IRA: A shape matching approach for recognition and comparison of generic atomic patterns*,
-Journal of Chemical Information and Modeling (2021), to appear online
+Journal of Chemical Information and Modeling (2021), DOI: [https://doi.org/10.1021/acs.jcim.1c00567](https://doi.org/10.1021/acs.jcim.1c00567)
