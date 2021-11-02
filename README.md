@@ -22,5 +22,5 @@ To run IRA, you need to compile it. See README in /IRA subdirectory.
 <a id="1">[1]</a> 
 Gunde M., Salles N., Hemeryck A., Martin Samos L.
 *IRA: A shape matching approach for recognition and comparison of generic atomic patterns*,
-Journal of Chemical Information and Modeling (2021), DOI: [https://doi.org/10.1021/acs.jcim.1c00567](https://doi.org/10.1021/acs.jcim.1c00567), HAL: [hal-03406717](https://hal.laas.fr/hal-03406717)
+Journal of Chemical Information and Modeling (2021), DOI: [https://doi.org/10.1021/acs.jcim.1c00567](https://doi.org/10.1021/acs.jcim.1c00567), HAL: [hal-03406717](https://hal.laas.fr/hal-03406717), arXiv: [2111.00939](https://export.arxiv.org/abs/2111.00939)
 
