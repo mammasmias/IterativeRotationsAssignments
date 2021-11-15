@@ -76,10 +76,12 @@ program ira_eq
                   apx_rot, apx_tr, apx_p )
 
   !!
-  !! apply ound permutation
+  !! apply found permutation
   !!
-  typ2(:) = typ2( apx_p(:) )
-  coords2(:,:) = coords2(:, apx_p(:) )
+  ! typ2(:) = typ2( apx_p(:) )
+  ! coords2(:,:) = coords2(:, apx_p(:) )
+  call permute_int_1d( nat2, typ2, apx_p )
+  call permute_real_2d( nat2, 3, coords2, apx_p )
   !!
   !! apply apx transformation (not strictly necessary)
   !!

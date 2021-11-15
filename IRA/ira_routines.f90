@@ -145,6 +145,113 @@
   end subroutine cross_prod
 
 
+
+  subroutine permute_real_2d( n, m, array, order )
+    !! permute a real 2D array into order, equivalent to:
+    !!
+    !!   array(:,:) = array(:, order(:) )
+    !!
+    implicit none
+    integer, intent(in) :: n
+    integer, intent(in) :: m
+    real, dimension(m, n), intent(inout) :: array
+    integer, dimension(n), intent(in) :: order
+
+    integer :: i
+    real, allocatable :: tmp(:,:)
+
+    !! tmp copy
+    allocate( tmp(1:m, 1:n), source=array )
+
+    !! permute
+    do i = 1, n
+       array(:,i) = tmp(:, order(i) )
+    end do
+
+    deallocate( tmp )
+
+  end subroutine permute_real_2d
+
+  subroutine permute_real_2d_back( n, m, array, order )
+    !! permute a real 2D array into inverse order,
+    !! equivalent to:
+    !!
+    !!   array(:, order(:) ) = array(:,:)
+    !!
+    implicit none
+    integer, intent(in) :: n
+    integer, intent(in) :: m
+    real, dimension(m, n), intent(inout) :: array
+    integer, dimension(n), intent(in) :: order
+
+    integer :: i
+    real, allocatable :: tmp(:,:)
+
+    !! tmp copy
+    allocate( tmp(1:m, 1:n), source=array )
+
+    !! permute
+    do i = 1, n
+       array(:, order(i)) = tmp(:, i )
+    end do
+
+    deallocate( tmp )
+
+  end subroutine permute_real_2d_back
+
+
+  subroutine permute_int_1d( n, array, order )
+    !! permute an integer 1D array into order, equivalent to:
+    !!
+    !!    array(:) = array( order(:) )
+    !!
+    implicit none
+    integer, intent(in) :: n
+    integer, dimension(n), intent(inout) :: array
+    integer, dimension(n), intent(in) :: order
+
+    integer :: i
+    integer, allocatable :: tmp(:)
+
+    !! tmp copy
+    allocate( tmp(1:n), source=array )
+
+    !! permute
+    do i = 1, n
+       array(i) = tmp( order(i) )
+    end do
+
+    deallocate( tmp )
+
+  end subroutine permute_int_1d
+
+  subroutine permute_int_1d_back( n, array, order )
+    !! permute an integer 1D array into inverse order,
+    !! equivalent to:
+    !!
+    !!    array( order(:) ) = array(:)
+    !!
+    implicit none
+    integer, intent(in) :: n
+    integer, dimension(n), intent(inout) :: array
+    integer, dimension(n), intent(in) :: order
+
+    integer :: i
+    integer, allocatable :: tmp(:)
+
+    !! tmp copy
+    allocate( tmp(1:n), source=array )
+
+    !! permute
+    do i = 1, n
+       array( order(i) ) = tmp( i )
+    end do
+
+    deallocate( tmp )
+
+  end subroutine permute_int_1d_back
+
+
   subroutine set_orthonorm_bas( vec1, vec2, basis, fail )
     !> @brief Set orthonormal basis from input vectors, third is cross of
     !! the first two, fail happens when input is collinear.
@@ -388,8 +495,10 @@
     !!
     !! permute to this order
     !!
-    coords2(:,:) = coords2(:,nint(d_o(2,:)) )
-    typ2(:) = typ2( nint(d_o(2,:)) )
+    ! coords2(:,:) = coords2(:,nint(d_o(2,:)) )
+    ! typ2(:) = typ2( nint(d_o(2,:)) )
+    call permute_real_2d( nat2, 3, coords2, nint(d_o(2,:)) )
+    call permute_int_1d( nat2, typ2, nint(d_o(2,:)) )
     !!
     !! search for gamma
     !!
@@ -602,8 +711,10 @@
     call sort(nat1, 2, d_o, 1)
 
     !! permute coords1 to that order
-    coords1(:,:) = coords1(:,nint(d_o(2,:)))
-    typ1(:) = typ1(nint(d_o(2,:)) )
+    ! coords1(:,:) = coords1(:,nint(d_o(2,:)))
+    ! typ1(:) = typ1(nint(d_o(2,:)) )
+    call permute_real_2d( nat1, 3, coords1, nint(d_o(2,:)) )
+    call permute_int_1d( nat1, typ1, nint(d_o(2,:)) )
 
     !! set initial permutation
     do i = 1, nat2
@@ -670,8 +781,10 @@
     !!
     !! permute
     !!
-    typ2(:) = typ2(found(1:nat2))
-    coords2(:,:) = coords2(:,found(1:nat2))
+    ! typ2(:) = typ2(found(1:nat2))
+    ! coords2(:,:) = coords2(:,found(1:nat2))
+    call permute_int_1d(nat2, typ2, found(1:nat2) )
+    call permute_real_2d(nat2, 3, coords2, found(1:nat2) )
 
     ! write(*,*) nat1
     ! write(*,*) 'c1'
@@ -787,8 +900,10 @@
     call sort(nat1, 2, d_o, 1)
 
     !! permute coords1 to that order
-    coords1(:,:) = coords1(:,nint(d_o(2,:)))
-    typ1(:) = typ1(nint(d_o(2,:)) )
+    ! coords1(:,:) = coords1(:,nint(d_o(2,:)))
+    ! typ1(:) = typ1(nint(d_o(2,:)) )
+    call permute_real_2d( nat1, 3, coords1, nint(d_o(2,:)) )
+    call permute_int_1d( nat1, typ1, nint(d_o(2,:)) )
 
     !! set initial permutation
     do i = 1, nat2
@@ -920,8 +1035,10 @@
     call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
          nat2, typ2(1:nat2), coords2(1:3,1:nat2), found(1:nat2), dists(1:nat2) )
     !! permute
-    typ2(:) = typ2(found(1:nat2))
-    coords2(:,:) = coords2(:,found(1:nat2))
+    ! typ2(:) = typ2(found(1:nat2))
+    ! coords2(:,:) = coords2(:,found(1:nat2))
+    call permute_int_1d(nat2, typ2, found(1:nat2) )
+    call permute_real_2d(nat2, 3, coords2, found(1:nat2) )
 
 
     ! write(*,*) nat1

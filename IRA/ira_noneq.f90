@@ -99,8 +99,10 @@ program ira_noneq
   !!
   !! apply the found permutation
   !!
-  typ2(:) = typ2( apx_p(:) )
-  coords2(:,:) = coords2(:, apx_p(:) )
+  ! typ2(:) = typ2( apx_p(:) )
+  ! coords2(:,:) = coords2(:, apx_p(:) )
+  call permute_int_1d( nat2, typ2, apx_p )
+  call permute_real_2d( nat2, 3, coords2, apx_p )
   !!
   !! apply the found apx transform (not strictly necessary)
   !!
