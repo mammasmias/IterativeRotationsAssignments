@@ -345,6 +345,7 @@
     !! hd_out  -> Hausdorff distance value
     !! gamma_idx -> possible intent(out) array of atomic indices giving gamma,
     !!              gamma_idx(1) = m_fin
+    implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1_in
     real, dimension(3,nat1),  intent(in) :: coords1_in
@@ -516,7 +517,7 @@
     gamma_idx(2) = nint(d_o(2,idx1))
     gamma_idx(3) = nint(d_o(2,idx2))
 
-    hd_out = hd_fin
+    hd_out = hd_old
     deallocate( d_o )
     deallocate( found, dists )
 
