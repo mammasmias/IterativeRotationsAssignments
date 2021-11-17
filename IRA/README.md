@@ -34,9 +34,9 @@ Example program files:
    above cases to do, based on number of atoms.
 
 # Compile and run
-TO COMPILE: (you need lapack library)
+TO COMPILE: (you need lapack library, see the Makefile)
 
-   `sh compile.sh`
+   `make all`
 
 
 TO RUN:
