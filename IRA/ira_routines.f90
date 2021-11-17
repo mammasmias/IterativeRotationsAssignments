@@ -371,8 +371,7 @@
     real, allocatable :: coords2(:,:)
     real, dimension(3) :: gc1, gc2
     real, dimension(3,3) :: matrix, u, smat, vt
-    integer :: i, k
-    real :: det_r
+    integer :: i
 
     !! set initial copies
     allocate( coords1(1:3,1:nat1), source=coords1_in )
@@ -663,15 +662,14 @@
     real, dimension(3),       intent(out) :: translation
     integer, dimension(nat1), intent(out) :: permutation
     !!
-    integer :: i, j, k, test_c, m, m_fin
+    integer :: i, j
     integer, allocatable :: typ1(:), typ2(:)
     real, allocatable :: coords1(:,:), coords2(:,:)
-    real, dimension(3,3) :: gamma, beta, invb, rmat, svd_r
-    real, dimension(3) :: rc1, rc2, tr, svd_tr
+    real, dimension(3,3) :: gamma, beta, invb, rmat
+    real, dimension(3) :: rc1, rc2
     real, allocatable :: dists(:)
     integer, allocatable :: found(:)
-    real :: hd, hd_old, dist_k, hd_out
-    integer :: idx1, idx2, central_old
+    real :: dist_k, hd_out
     logical :: fail
     real, allocatable :: d_o(:,:)
     integer, dimension(3) :: gamma_idx
@@ -863,15 +861,15 @@
     real, dimension(3),       intent(out) :: translation
     integer, dimension(nat2), intent(out) :: permutation
     !!
-    integer :: i, j, k, test_c, m, m_fin
+    integer :: i, j
     integer, allocatable :: typ1(:), typ2(:)
     real, allocatable :: coords1(:,:), coords2(:,:)
-    real, dimension(3,3) :: gamma, beta, invb, rmat, svd_r
-    real, dimension(3) :: rc1, rc2, tr, svd_tr
+    real, dimension(3,3) :: gamma, beta, invb, rmat
+    real, dimension(3) :: rc1, rc2
     real, allocatable :: dists(:)
     integer, allocatable :: found(:)
     real :: hd, hd_old, dist_k
-    integer :: idx1, idx2, central_old, ij
+    integer :: idx1, idx2, ij
     logical :: fail
     real, allocatable :: d_o(:,:)
     integer :: tc, idxm, typ_c1
