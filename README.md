@@ -1,21 +1,57 @@
 # Description
+This directory contains the IRA and CShDA algorithms implemented in Fortran.
+Further description of these algorithms is given in [[1]](#1). 
 
-This is the repository of shape matching algorithm 
-Iterative Rotations and Assignments (IRA), described in the publication [[1]](#1).
+# Iterative Rotations and Assignments (IRA)
+The Iterative Rotations and Assignments (IRA) algorithm is a shape matching
+algorithm for matching generic atomic structures, including structures with
+different number of atoms.
 
+# Constrained Shortest Distance Assignment (CShDA)
+The Constrained Shortest Distance Assignment (CShDA) algorithm is a Linear
+Assignment Problem (LAP) solver, which is used by the IRA algorithm. 
 
-# Directory contents
+# Files
+Routine files:
 
- /IRA: 
-   Contains the IRA software, see also the README in /IRA.
+ - cshda.f90 contains the CShDA routine for pbc and non-pbc cases.
 
- /benchmark_test:
-   Contains data and other software used for benchmark tests from [[1]](#1). See
-   also the README in /benchmark_test folder.
+ - ira_routines.f90 contains all the routines specific to IRA.
 
+ - read_typ.f90 contains a function to read atomic types from xyz format.
+
+ - sorting_module.f90 contains the mergesort algorithm.
+
+Example program files:
+
+ - ira_eq.f90 contains the main program for IRA shape matching when two
+   structures contain the same number of atoms.
+
+ - ira_noneq.f90 contains the main program for IRA shape matching when two
+   structures contain a different number of atoms.
+
+ - ira_general.f90 contains the main program for IRA which decides which of the
+   above cases to do, based on number of atoms.
 
 # Compile and run
-To run IRA, you need to compile it. See README in /IRA subdirectory.
+TO COMPILE: (you need lapack library, see the Makefile)
+
+   `make all`
+
+
+TO RUN:
+
+   `./ira_eq.x      < input_file_eq.xyz      > output_file`
+
+   `./ira_noneq.x   < input_file_noneq.xyz   > output_file`
+
+   `./ira_general.x < input_file_general.xyz > output_file`
+
+The input file should contain the two structures to be matched, both in the xyz
+format. The input_file_eq.xyz should contain structures with equal number of
+atoms. The input_file_noneq.xyz should contain structures with different number
+of atoms, such that the first structure contains less atoms that the second
+structure. The input_file_general.xyz con be either of the above two cases.
 
 
 ## References
