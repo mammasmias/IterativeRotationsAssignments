@@ -15,8 +15,8 @@
 
 
   subroutine cshda( nat1, typ1, coords1, &
-                   nat2, typ2, coords2, &
-                   found, dists )
+                    nat2, typ2, coords2, &
+                    some_threshold, found, dists )
 
     !> @detail
     !! Linear Assignment Problem (LAP) algorithm:
@@ -34,6 +34,7 @@
     !! nat2    -> number of atoms in conf 2;
     !! typ2    -> atomic types in conf 2;
     !! coords2 -> coordinates of conf 2;
+    !! some_threshold -> threshold for the Hausdorff distance, used for early exit;
     !! found   -> list of assigned atoms of conf 2 to conf 1:
     !!            e.g. found(3) = 9 means atom 3 from conf 1 is assigned
     !!            to atom 9 in conf 2;
@@ -46,6 +47,7 @@
     integer,                  intent(in) :: nat2
     integer, dimension(nat2), intent(in) :: typ2
     real, dimension(3,nat2),  intent(in) :: coords2
+    real,                     intent(in) :: some_threshold
     integer, dimension(nat2), intent(out) :: found
     real, dimension(nat2),    intent(out) :: dists
     !!
@@ -84,10 +86,13 @@
           !!
        end do
        !!
-       !! Early exit idea:
+       !! Early exit:
        !! if any row chkmat(i,:) has all values above some_threshold,
        !! then there is no way that Hausdorff distance be lower than some_threshold.
-       !! Can use this criterion for early return.
+       !! This criterion is used for early return of cshda.
+       if( minval(chkmat(i,:)) .gt. some_threshold ) then
+          return
+       endif
        !!
     end do
 

@@ -474,6 +474,7 @@
     logical :: fail
     integer :: count
     integer :: m_fin
+    real :: some_thr
 
 
     !! set local copies
@@ -505,6 +506,7 @@
     allocate( found(1:nat2) )
     allocate( dists(1:nat2) )
     !!
+    some_thr = 999.9
     count = 0
     do i = 1, nat2
        !!
@@ -539,10 +541,13 @@
           found(:) = 0
           dists(:) = 0.0
           call cshda( nat1, typ1, coords1, &
-               nat2, typ2, coords2, found, dists )
+               nat2, typ2, coords2, some_thr, found, dists )
           !!
           !! Hausdorff
           hd = maxval(dists(1:nat1) )
+          !!
+          !! keep the hd thr at minimum
+          if( hd .lt. some_thr ) some_thr = hd
           !!
           ! write(*,*) nat1+nat2
           ! write(*,*) 'bas',i,j, hd
@@ -582,17 +587,20 @@
           !! calc dists
           !!
           call cshda( nat1, typ1, coords1, &
-               nat2, typ2, coords2, found, dists )
+               nat2, typ2, coords2, some_thr, found, dists )
           !!
           !! Hausdorff
           hd = maxval(dists(1:nat1))
           !!
+          !! keep the hd thr at minimum
+          if( hd .lt. some_thr ) some_thr = hd
+          !!
           ! write(*,'(5i3,3f13.7)') i,j,nint(d_o(2,i)), nint(d_o(2,j)),m,hd, norm2(coords2(:,j))
           if( hd .lt. hd_old ) then
              hd_old = hd
-             idx1 = nint(d_o(2,i))
+             !idx1 = nint(d_o(2,i))
              idx1 = i
-             idx2 = nint(d_o(2,j))
+             !idx2 = nint(d_o(2,j))
              idx2 = j
              m_fin = m
           endif
@@ -775,7 +783,7 @@
     !! find permutations (this could be skipped)
     !!
     call cshda( nat1, typ1, coords1, &
-         nat2, typ2, coords2, found, dists )
+         nat2, typ2, coords2, 999.9, found, dists )
     !!
     !! permute
     !!
@@ -820,7 +828,7 @@
 
     !! find final permutations
     call cshda( nat1, typ1, coords1, &
-         nat2, typ2, coords2, found, dists )
+         nat2, typ2, coords2, 999.9, found, dists )
     !!
     !! set final permutation
     !!
@@ -874,6 +882,7 @@
     real, allocatable :: d_o(:,:)
     integer :: tc, idxm, typ_c1
     integer, dimension(3) :: gamma_idx
+    real :: some_thr
 
     !! allocate working copies
     allocate( typ1(1:nat1), source = typ1_in)
@@ -953,6 +962,7 @@
     allocate( found(1:nat2))
     allocate( dists(1:nat2))
     hd_old = 9999.9
+    some_thr = 999.9
     !!
     do ij = 1, nat2
        !!
@@ -984,10 +994,12 @@
        !!
        call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
                    nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
-                   found(1:nat2), dists(1:nat2) )
+                   some_thr, found(1:nat2), dists(1:nat2) )
        !!
        !! Hausdorff of this central, up to nat1
        hd = maxval(dists(1:nat1))
+       !!
+       if( hd .lt. some_thr ) some_thr = hd
        !!
        !! store minimum
        if( hd .lt. hd_old ) then
@@ -1031,7 +1043,7 @@
 
     !! get permutation (this could be skipped)
     call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
-         nat2, typ2(1:nat2), coords2(1:3,1:nat2), found(1:nat2), dists(1:nat2) )
+         nat2, typ2(1:nat2), coords2(1:3,1:nat2), 999.9, found(1:nat2), dists(1:nat2) )
     !! permute
     ! typ2(:) = typ2(found(1:nat2))
     ! coords2(:,:) = coords2(:,found(1:nat2))
@@ -1075,7 +1087,7 @@
 
     !! find final permutations
     call cshda( nat1, typ1, coords1, &
-         nat2, typ2, coords2, found, dists )
+         nat2, typ2, coords2, 999.9, found, dists )
     ! write(*,*) 'found'
     ! do i = 1, nat2
     !    write(*,*) i, found(i), dists(i)
