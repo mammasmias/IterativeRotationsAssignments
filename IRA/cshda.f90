@@ -200,7 +200,7 @@
 
   subroutine cshda_pbc( nat1, typ1, coords1, &
                    nat2, typ2, coords2, lat2, &
-                   found, dists )
+                   some_thr, found, dists )
 
     !> @detail
     !! Linear Assignment Problem (LAP) algorithm:
@@ -220,6 +220,7 @@
     !! typ2    -> atomic types in conf 2;
     !! coords2 -> coordinates of conf 2;
     !! lat2    -> lattice vectors of conf 2;
+    !! some_thr -> threshold for hd;
     !! found   -> list of paired atoms of conf 2 to conf 1:
     !!            e.g. found(3) = 9 means atom 3 from conf 1 is paired
     !!            to atom 9 in conf 2;
@@ -233,6 +234,7 @@
     integer, dimension(nat2), intent(in) :: typ2
     real, dimension(3,nat2),  intent(in) :: coords2
     real, dimension(3,3), intent(in) :: lat2
+    real,                     intent(in) :: some_thr
     integer, dimension(nat2), intent(out) :: found
     real, dimension(nat2),    intent(out) :: dists
     !!
@@ -246,6 +248,7 @@
     integer :: n_count
     real :: dist, dist_old
 
+    dists(:) = 999.9
     !!
     !! set up distance matrix
     chkmat(:,:) = 0.0
@@ -274,6 +277,14 @@
           chkmat(i,j) = dist
           !!
        end do
+       !!
+       !! Early return method:
+       !! if all values in the row chkmat(i,:) are above some_threshold, there
+       !! is no way that final dH could be below that threshold
+       if( minval(chkmat(i,:)) .gt. some_thr ) then
+          return
+       endif
+       !!
     end do
 
     !! set up the queue of searches
