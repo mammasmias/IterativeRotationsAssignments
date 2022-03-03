@@ -425,7 +425,7 @@
 
   subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
                          nat2, typ2_in, coords2_in, &
-                         kmax, gamma, gamma_idx, hd_out )
+                         kmax, gamma, gamma_idx, hd_out, some_thr )
     !> @detail
     !! Routine that does the loop over coords2 to find U_J, here called gamma.
     !! This is the main IRA loop over the space of rotations.
@@ -451,6 +451,10 @@
     !! hd_out  -> Hausdorff distance value
     !! gamma_idx -> possible intent(out) array of atomic indices giving gamma,
     !!              gamma_idx(1) = m_fin
+    !!
+    !! intent(inout):
+    !! some_thr  -> threshold for dh, updated in self-sufficient way
+    !!
     implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1_in
@@ -462,6 +466,7 @@
     real, dimension(3,3),     intent(out) :: gamma
     integer, dimension(3),    intent(out) :: gamma_idx
     real,                     intent(out) :: hd_out
+    real,                     intent(inout) :: some_thr
 
     integer :: i, j, idx1, idx2, m, k
     real :: hd, hd_old
@@ -474,7 +479,6 @@
     logical :: fail
     integer :: count
     integer :: m_fin
-    real :: some_thr
 
 
     !! set local copies
@@ -505,8 +509,10 @@
     hd_old = 999.9
     allocate( found(1:nat2) )
     allocate( dists(1:nat2) )
+    idx1 = 0
+    idx2 = 0
+    m_fin = 0
     !!
-    some_thr = 999.9
     count = 0
     do i = 1, nat2
        !!
@@ -598,9 +604,7 @@
           ! write(*,'(5i3,3f13.7)') i,j,nint(d_o(2,i)), nint(d_o(2,j)),m,hd, norm2(coords2(:,j))
           if( hd .lt. hd_old ) then
              hd_old = hd
-             !idx1 = nint(d_o(2,i))
              idx1 = i
-             !idx2 = nint(d_o(2,j))
              idx2 = j
              m_fin = m
           endif
@@ -625,13 +629,28 @@
     ! write(*,*) 'setting gama idx:',idx1,idx2,'m_fin:',m_fin, hd_old
     ! write(*,*) coords2(:,idx1)
     ! write(*,*) coords2(:,idx2)
-    call set_orthonorm_bas( coords2(:,idx1), coords2(:,idx2), gamma, fail)
-    gamma(3,:) = m_fin*gamma(3,:)
+    !!
+    !! set data
+    !!
+    if( idx1 .eq. 0 .or. idx2 .eq. 0 .or. m_fin .eq. 0) then
+       !! if nothing is found: BUG (probably too small kmax)
+       !! output gamma as identity matrix, all idx to zero
+       gamma_idx(:) = 0
+       gamma(:,:) = 0.0
+       gamma(1,1) = 1.0
+       gamma(2,2) = 1.0
+       gamma(3,3) = 1.0
+    else
+       !!
+       !! set found result
+       call set_orthonorm_bas( coords2(:,idx1), coords2(:,idx2), gamma, fail)
+       gamma(3,:) = m_fin*gamma(3,:)
 
-    !! for gamma_idx, use unsorted indices, which correspond to input order
-    gamma_idx(1) = m_fin
-    gamma_idx(2) = nint(d_o(2,idx1))
-    gamma_idx(3) = nint(d_o(2,idx2))
+       !! for gamma_idx, use unsorted indices, which correspond to input order
+       gamma_idx(1) = m_fin
+       gamma_idx(2) = nint(d_o(2,idx1))
+       gamma_idx(3) = nint(d_o(2,idx2))
+    endif
 
     hd_out = hd_old
     deallocate( d_o )
@@ -677,7 +696,7 @@
     real, dimension(3) :: rc1, rc2
     real, allocatable :: dists(:)
     integer, allocatable :: found(:)
-    real :: dist_k, hd_out
+    real :: dist_k, hd_out, some_thr
     logical :: fail
     real, allocatable :: d_o(:,:)
     integer, dimension(3) :: gamma_idx
@@ -727,7 +746,7 @@
        permutation(i) = i
     end do
 
-    deallocate( d_o )
+    ! deallocate( d_o )
 
     !!
     !! Find some basis in structure 1. Originally we take the first possible
@@ -764,44 +783,29 @@
        coords1(:,i) = matmul(beta, coords1(:,i))
     end do
 
+    !! permute coords1 back to orig
+    ! coords1(:,nint(d_o(2,:))) = coords1(:,:)
+    ! typ1(nint(d_o(2,:)) ) = typ1(:)
+    call permute_real_2d_back( nat1, 3, coords1, nint(d_o(2,:)) )
+    call permute_int_1d_back( nat1, typ1, nint(d_o(2,:)) )
+
+    deallocate( d_o )
 
     !!
     !! get basis in 2 (main IRA loop)
     !!
+    some_thr = 9999.9
     allocate( found(1:nat1))
     allocate( dists(1:nat1))
     call get_gamma_m(nat1, typ1, coords1, &
                      nat2, typ2, coords2, &
-                     dist_k, gamma, gamma_idx, hd_out )
+                     dist_k, gamma, gamma_idx, hd_out, some_thr )
     !!
     !! rotate to found basis transpose(gamma), coords1 is already in beta
     !!
     do i = 1, nat1
        coords1(:,i) = matmul(transpose(gamma),coords1(:,i))
     end do
-    !!
-    !! find permutations (this could be skipped)
-    !!
-    call cshda( nat1, typ1, coords1, &
-         nat2, typ2, coords2, 999.9, found, dists )
-    !!
-    !! permute
-    !!
-    ! typ2(:) = typ2(found(1:nat2))
-    ! coords2(:,:) = coords2(:,found(1:nat2))
-    call permute_int_1d(nat2, typ2, found(1:nat2) )
-    call permute_real_2d(nat2, 3, coords2, found(1:nat2) )
-
-    ! write(*,*) nat1
-    ! write(*,*) 'c1'
-    ! do k = 1, nat1
-    !    write(*,*) typ1(k), coords1(:,k)
-    ! end do
-    ! write(*,*) nat2
-    ! write(*,*) 'c2'
-    ! do k = 1, nat2
-    !    write(*,*) typ2(k), coords2(:,k)
-    ! end do
     !!
     !! set final R_apx matrix
     !!
@@ -812,6 +816,7 @@
     !!
     rotation(:,:) = rmat(:,:)
     translation(:) = rc1-matmul(rmat,rc2)
+
 
     !!
     !! re-set originals, to check if all is ok
@@ -826,14 +831,28 @@
        coords2(:,i) = matmul(rotation,coords2(:,i)) + translation
     end do
 
-    !! find final permutations
-    call cshda( nat1, typ1, coords1, &
-         nat2, typ2, coords2, 999.9, found, dists )
     !!
-    !! set final permutation
-    !!
-    permutation(:) = found(:)
+    if( gamma_idx(1) .ne. 0 ) then
+       !! if no BUG in gamma_idx (which happens if dist_k is too small)
+       !! find final permutations
+       call cshda( nat1, typ1, coords1, &
+            nat2, typ2, coords2, 999.9, found, dists )
+       !!
+       !! set final permutation
+       !!
+       permutation(:) = found(:)
+       !!
+    else
+       !! put dists to large
+       dists(:) = 999.9
+    endif
 
+
+
+    !!
+    !! set hd
+    !!
+    hd_out = maxval(dists)
 
     deallocate( coords1, coords2 )
   end subroutine ira_equal
@@ -883,6 +902,7 @@
     integer :: tc, idxm, typ_c1
     integer, dimension(3) :: gamma_idx
     real :: some_thr
+    real :: hd_out
 
     !! allocate working copies
     allocate( typ1(1:nat1), source = typ1_in)
@@ -962,7 +982,7 @@
     allocate( found(1:nat2))
     allocate( dists(1:nat2))
     hd_old = 9999.9
-    some_thr = 999.9
+    some_thr = 9999.9
     !!
     do ij = 1, nat2
        !!
@@ -979,9 +999,10 @@
        !!
        !! get gamma for this central atm
        !!
+       ! write(*,*) 'gamma with c:', ij
        call get_gamma_m(nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
                         nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
-                        dist_k, gamma, gamma_idx, hd )
+                        dist_k, gamma, gamma_idx, hd, some_thr )
        !!
        !! rotate to found basis
        !!
@@ -989,12 +1010,17 @@
           coords1(:,i) = matmul(transpose(gamma),coords1(:,i))
        end do
 
-       !!
-       !! find final permutations
-       !!
-       call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
-                   nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
-                   some_thr, found(1:nat2), dists(1:nat2) )
+       if( gamma_idx(1) .ne. 0 ) then
+          !!
+          !! find final permutations
+          !!
+          call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
+                      nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
+                      999.9, found(1:nat2), dists(1:nat2) )
+       else
+          !! all dists big
+          dists(:) = 999.9
+       endif
        !!
        !! Hausdorff of this central, up to nat1
        hd = maxval(dists(1:nat1))
@@ -1033,34 +1059,24 @@
     end do
 
     !! set the found gamma matrix
-    call set_orthonorm_bas( coords2(:,idx1),coords2(:,idx2), gamma, fail)
-    gamma(3,:) = gamma(3,:)*idxm
+    if( idxm .eq. 0 .or. idx1 .eq. 0 .or. idx2 .eq. 0) then
+       !! if bug in idx, set gamma to identity matrix
+       gamma(:,:) = 0.0
+       gamma(1,1) = 1.0
+       gamma(2,2) = 1.0
+       gamma(3,3) = 1.0
+    else
+       !! set final gamma
+       call set_orthonorm_bas( coords2(:,idx1),coords2(:,idx2), gamma, fail)
+       gamma(3,:) = gamma(3,:)*idxm
+    endif
+
 
     !! rotate to transpose(gamma), coords1 is already in beta.
     do i = 1, nat1
        coords1(:,i) = matmul(transpose(gamma),coords1(:,i))
     end do
 
-    !! get permutation (this could be skipped)
-    call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
-         nat2, typ2(1:nat2), coords2(1:3,1:nat2), 999.9, found(1:nat2), dists(1:nat2) )
-    !! permute
-    ! typ2(:) = typ2(found(1:nat2))
-    ! coords2(:,:) = coords2(:,found(1:nat2))
-    call permute_int_1d(nat2, typ2, found(1:nat2) )
-    call permute_real_2d(nat2, 3, coords2, found(1:nat2) )
-
-
-    ! write(*,*) nat1
-    ! write(*,*) 'c1'
-    ! do k = 1, nat1
-    !    write(*,*) typ1(k), coords1(:,k)
-    ! end do
-    ! write(*,*) nat2
-    ! write(*,*) 'c2'
-    ! do k = 1, nat2
-    !    write(*,*) typ2(k), coords2(:,k)
-    ! end do
     !!
     !! set final R_apx matrix
     !!
@@ -1085,18 +1101,24 @@
        coords2(:,i) = matmul(rotation,coords2(:,i)) + translation
     end do
 
-    !! find final permutations
-    call cshda( nat1, typ1, coords1, &
-         nat2, typ2, coords2, 999.9, found, dists )
-    ! write(*,*) 'found'
-    ! do i = 1, nat2
-    !    write(*,*) i, found(i), dists(i)
-    ! end do
+    !! permutations
+    if( idxm .ne. 0 ) then
+       !! if no bug in gamma:
+       !! find final permutations
+       call cshda( nat1, typ1, coords1, &
+            nat2, typ2, coords2, 999.9, found, dists )
+       !!
+       !! set final permutation
+       !!
+       permutation(:) = found(:)
+    else
+       !! set all dists to large
+       dists(:) = 999.9
+    endif
 
-    !!
-    !! set final permutation
-    !!
-    permutation(:) = found(:)
+    !! if hd is needed for output
+    hd_out = maxval(dists)
+
 
     deallocate( coords1, coords2 )
   end subroutine ira_nonequal
