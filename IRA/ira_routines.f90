@@ -1123,3 +1123,301 @@
     deallocate( coords1, coords2 )
   end subroutine ira_nonequal
 
+
+
+subroutine ira_unify( nat1, typ1_in, coords1_in, candidate_1, &
+                      nat2, typ2_in, coords2_in, candidate_2, &
+                      kmax_factor, rotation, translation, permutation, hd_out )
+  integer,                  intent(in) :: nat1
+  integer, dimension(nat1), intent(in) :: typ1_in
+  real, dimension(3, nat1), intent(in) :: coords1_in
+  integer, dimension(nat1), intent(in) :: candidate_1
+  integer,                  intent(in) :: nat2
+  integer, dimension(nat2), intent(in) :: typ2_in
+  real, dimension(3,nat2),  intent(in) :: coords2_in
+  integer, dimension(nat2), intent(in) :: candidate_2
+  real,                     intent(in) :: kmax_factor
+  real, dimension(3,3),     intent(out) :: rotation
+  real, dimension(3),       intent(out) :: translation
+  integer, dimension(nat2), intent(out) :: permutation
+  real,                     intent(out) :: hd_out
+
+  integer :: i, ii, j, jj
+  integer, dimension(nat1) :: typ1
+  real, dimension(3,nat1) :: coords1
+  integer, dimension(nat2) :: typ2
+  real, dimension(3,nat2) :: coords2
+  integer :: c1, c2, c1min, c2min, idxm, idx1, idx2
+  integer, dimension(nat2) :: found
+  real, dimension(nat2) :: dists
+  real, dimension(2,nat1) :: d_o
+  real :: hd_old, some_thr, hd
+  real, dimension(3) :: rc1, rc2
+  real, dimension(3,3) :: beta, gamma, beta_min, gamma_min, invb
+  logical :: fail
+  real :: dist_k
+  integer, dimension(3) :: gamma_idx
+
+  !!
+  !! REQUIREMENT: nat1 .le. nat2
+  if( nat1 .gt. nat2) then
+     write(*,*) 'error in ira_unify: nat1 > nat2',nat1, nat2
+     stop
+  endif
+
+  !! make local copies of input structures
+  typ1(:) = typ1_in(:)
+  coords1(:,:) = coords1_in(:,:)
+  typ2(:) = typ2_in(:)
+  coords2(:,:) = coords2_in(:,:)
+
+
+  !! initialize some variables
+  c1min = 0
+  c2min = 0
+  idxm = 0
+  idx1 = 0
+  idx2 = 0
+  beta_min(:,:) = 0.0
+  gamma_min(:,:) = 0.0
+  do i = 1, 3
+     beta_min(i,i) = 1.0
+     gamma_min(i,i) = 1.0
+  end do
+  permutation(:) = 0
+  do i = 1, nat2
+     permutation(i) = i
+  end do
+
+
+  hd_old = 999.9
+  some_thr = 9999.9
+  !!
+  !! for each candidate center in struc 1:
+  !!
+  do ii = 1, nat1
+
+     !! candidate index
+     c1 = candidate_1(ii)
+
+     !! we have exhausted all candidates in 1
+     if( c1 .eq. 0 ) exit
+
+     !!
+     !! shift struc 1 to respective vector
+     !!
+     call select_rc( nat1, coords1, c1, rc1 )
+     !!
+     do i = 1, nat1
+        coords1(:,i) = coords1(:,i) - rc1
+     end do
+
+     !! sort by size (distance from center)
+     do i = 1, nat1
+        d_o(1,i) = norm2(coords1(:,i))
+        d_o(2,i) = real(i)
+     end do
+
+     call sort(nat1, 2, d_o, 1)
+
+     !! permute coords1 to that order
+     ! coords1(:,:) = coords1(:,nint(d_o(2,:)))
+     ! typ1(:) = typ1(nint(d_o(2,:)) )
+     call permute_real_2d( nat1, 3, coords1, nint(d_o(2,:)) )
+     call permute_int_1d( nat1, typ1, nint(d_o(2,:)) )
+
+
+
+     !!
+     !! Find some basis in structure 1. Originally we take the first possible
+     !! basis that is found. If you have a better guess, modify this part.
+     !! Ideas on optimal basis: the bases beta and gamma should be as equivalent
+     !! as possible, therefore the atoms which set them should have as low
+     !! distortions as possible.
+     !!
+     do i = 1, nat1
+        do j = 1, nat1
+           if( i .eq. j ) cycle
+           !! set bas
+           call set_orthonorm_bas( coords1(:,i),coords1(:,j), beta, fail)
+           !! exit on first non-failed basis
+           if( .not. fail ) exit
+        end do
+        if( .not. fail ) exit
+     end do
+     ! write(*,*) '1 in',i,j, norm2(coords1(:,i)), norm2(coords1(:,j))
+     ! write(*,*) i, coords1(:,i)
+     ! write(*,*) j, coords1(:,j)
+     ! write(*,*)
+     !!
+     !! Measure "cutoff" of basis, multiply by a factor which is 1.2 by default.
+     !! This factor should be greather than 1 in all cases. Decreasing it makes
+     !! the search space for basis in structure 2 smaller, which can make the
+     !! algorithm faster when structures are quite similar. It can also make it
+     !! miss the optimal basis, in cases when the distortion is exactly on atoms
+     !! corresponding to those which set the basis in structure 1.
+     !!
+     dist_k = max( norm2(coords1(:,i)), norm2(coords1(:,j)) )
+     dist_k = dist_k*kmax_factor
+     !!
+     !! rotate 1 to that bas
+     !!
+     do i = 1, nat1
+        coords1(:,i) = matmul(beta, coords1(:,i))
+     end do
+
+
+     !!
+     !! for each candidate center in struc 2:
+     !!
+     do jj = 1, nat2
+
+        !! candidate index
+        c2 = candidate_2(jj)
+
+        !! we have exhausted all candidates in 2
+        if( c2 .eq. 0 ) exit
+
+        !!
+        !! shift struc 2 to respective vector
+        !!
+        call select_rc( nat2, coords2, c2, rc2 )
+        !!
+        do i = 1, nat2
+           coords2(:,i) = coords2(:,i) - rc2
+        end do
+
+        !!
+        ! write(*,*) 'shifted 2'
+
+        !! find stuffs
+        !!
+        !! get gamma for this central atm
+        !!
+        ! call get_gamma_m(nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
+        !      nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
+        !      dist_k, gamma, gamma_idx, hd )
+        call get_gamma_m(nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
+             nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
+             dist_k, gamma, gamma_idx, hd, some_thr )
+
+        ! write(*,*) 'after gamma 2'
+
+        !!
+        !! rotate to found basis
+        !!
+        do i = 1, nat1
+           coords1(:,i) = matmul(transpose(gamma),coords1(:,i))
+        end do
+
+        !! if gamma is found:
+        if( gamma_idx(1) .ne. 0 ) then
+           !!
+           !! find permutations
+           !!
+           call cshda( nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
+                nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
+                999.9, found(1:nat2), dists(1:nat2) )
+        else
+           !! all dists big
+           dists(:) = 999.9
+        endif
+
+        ! write(*,*) 'after cshda 2'
+        !! Hausdorff of this c1, up to nat1
+        hd = maxval(dists(1:nat1))
+
+
+         write(*,*) 'aa:',c1, c2, hd, some_thr
+        !!
+        if( hd .lt. hd_old ) then
+           hd_old = hd
+           c1min = c1
+           c2min = c2
+           idxm = gamma_idx(1)
+           idx1 = gamma_idx(2)
+           idx2 = gamma_idx(3)
+           beta_min = beta
+           gamma_min = gamma
+        endif
+
+        !! rotate struc 1 back to orig
+        do i = 1, nat1
+           coords1(:,i) = matmul(gamma, coords1(:,i))
+        end do
+
+        !! shift struc 2 back
+        do i = 1, nat2
+           coords2(:,i) = coords2(:,i) + rc2
+        end do
+
+     end do
+
+     !!
+     !! rotate 1 back to original
+     !!
+     do i = 1, nat1
+        coords1(:,i) = matmul(transpose(beta), coords1(:,i))
+     end do
+
+     !! shift struc 1 back
+     do i = 1, nat1
+        coords1(:,i) = coords1(:,i) + rc1
+     end do
+
+     !! permute struc1 back to orig
+     ! coords1(:,nint(d_o(2,:))) = coords1(:,:)
+     ! typ1(nint(d_o(2,:)) ) = typ1(:)
+     call permute_real_2d_back( nat1, 3, coords1, nint(d_o(2,:)) )
+     call permute_int_1d_back( nat1, typ1, nint(d_o(2,:)) )
+
+
+  end do
+
+  !!
+  !! at the end of this loop, the structures 1 and 2 should be
+  !! identical to the input structures
+  !!
+
+
+  !!
+  !! set found data
+  !!
+  !! center vectors
+  call select_rc( nat1, coords1, c1min, rc1 )
+  call select_rc( nat2, coords2, c2min, rc2 )
+  !!
+  !! rotation
+  invb = transpose(beta_min)
+  rotation = matmul(invb, gamma_min)
+  !!
+  !! translation
+  translation(:) = rc1 - matmul(rotation, rc2)
+
+  !! rotate + translate struc2
+  do i = 1, nat2
+     coords2(:,i) = matmul(rotation, coords2(:,i)) + translation
+  end do
+
+  !! permutation
+  if( idxm .ne. 0 ) then
+     !! if no bug in gamma (which happens if dist_k too small):
+     !! find final permutations
+     call cshda( nat1, typ1, coords1, &
+          nat2, typ2, coords2, &
+          999.9, found, dists )
+     !!
+     !! set final permutation
+     !!
+     permutation(:) = found(:)
+  else
+     !! all dists large
+     dists(:) = 999.9
+  endif
+
+  !! set hd
+  hd_out = maxval(dists(1:nat1))
+
+
+end subroutine ira_unify
+
