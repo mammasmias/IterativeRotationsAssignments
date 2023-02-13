@@ -61,66 +61,35 @@ program main
 
 
 
-  !!
-  !! form candidates for central atms in 1 and 2
-  !!
-  allocate( candidate_1(1:nat1) )
-  allocate( candidate_2(1:nat2) )
-  call set_candidates( nat1, typ1, coords1, &
-                       nat2, typ2, coords2, &
-                       candidate_1, candidate_2 )
+
 
   !!
-  !! call main ira with candidates
+  !! =================================
+  !! The following routine ira_svd encapsulates a default call to IRA. This includes
+  !! setting the candidate central atoms as per default.
+  !! To see a deconstructed sequence of calls, see the commented code below.
+  !! =================================
   !!
   allocate( permutation(1:nat2))
   kmax_factor = 1.2
-  call ira_unify( nat1, typ1, coords1, candidate_1, &
-       nat2, typ2, coords2, candidate_2, &
-       kmax_factor, rotation, translation, permutation, hd_out)
+  call ira_svd( nat1, typ1, coords1, &
+                nat2, typ2, coords2, &
+                kmax_factor, rotation, translation, permutation, hd, rmsd )
 
   !!
-  !! apply found transformation
+  !! apply to structure 2
   !!
   typ2(:) = typ2(permutation(:))
   coords2(:,:) = coords2(:,permutation(:))
-  !!
-  do i = 1, nat2
-     coords2(:,i) = matmul(rotation, coords2(:,i)) + translation
-  end do
-
-  !!
-  !! call SVD
-  !!
-  call svdrot_m( nat1, typ1, coords1, &
-       nat1, typ2(1:nat1), coords2(:,1:nat1), &
-       svd_rot, svd_tr )
-
-  !!
-  !! apply svd
-  !!
-  ! do i = 1, nat2
-  !    coords2(:,i) = matmul( svd_rot, coords2(:,i) ) + svd_tr
-  ! end do
-
-  !! rotate back to orig
-  do i = 1, nat2
-     coords2(:,i) = matmul(transpose(rotation),coords2(:,i)) - matmul(transpose(rotation),translation)
-  end do
-
-  !!
-  !! put together apx and svd
-  !!
-  rotation = matmul(svd_rot, rotation)
-  translation = matmul(svd_rot,translation) + svd_tr
-  !! apply
   do i = 1, nat2
      coords2(:,i) = matmul(rotation,coords2(:,i)) + translation
   end do
+  !!
+  !! or alternatively apply to structure 1
+  !!
   ! do i = 1, nat1
   !    coords1(:,i) = matmul(transpose(rotation),coords1(:,i)) - matmul(transpose(rotation),translation)
   ! end do
-
 
   write(*,*) nat1
   write(*,*)
@@ -132,8 +101,6 @@ program main
   do i = 1, nat2
      write(*,*) typ2(i),coords2(:,i)
   end do
-
-  ! write(*,*) hd_out
 
   hd = 0.0
   do i = 1, nat1
@@ -148,5 +115,79 @@ program main
 
   write(*,*) 'final values of dH and rmsd:'
   write(*,*) hd, sqrt(rmsd/nat1)
+
+
+
+
+  !!
+  !! =================================
+  !! The following code shows a deconstructed series of calls
+  !! to the main algorithm routines.
+  !! Attention, use with care and try to understand what you are doing
+  !! before applying them.
+  !! =================================
+  !!
+
+
+
+  ! !!
+  ! !! form candidates for central atms in 1 and 2
+  ! !!
+  ! allocate( candidate_1(1:nat1) )
+  ! allocate( candidate_2(1:nat2) )
+  ! call set_candidates( nat1, typ1, coords1, &
+  !                      nat2, typ2, coords2, &
+  !                      candidate_1, candidate_2 )
+
+  ! !!
+  ! !! call main ira with candidates
+  ! !!
+  ! allocate( permutation(1:nat2))
+  ! kmax_factor = 1.2
+  ! call ira_unify( nat1, typ1, coords1, candidate_1, &
+  !      nat2, typ2, coords2, candidate_2, &
+  !      kmax_factor, rotation, translation, permutation, hd_out)
+
+  ! !!
+  ! !! apply found transformation
+  ! !!
+  ! typ2(:) = typ2(permutation(:))
+  ! coords2(:,:) = coords2(:,permutation(:))
+  ! !!
+  ! do i = 1, nat2
+  !    coords2(:,i) = matmul(rotation, coords2(:,i)) + translation
+  ! end do
+
+  ! !!
+  ! !! call SVD
+  ! !!
+  ! call svdrot_m( nat1, typ1, coords1, &
+  !      nat1, typ2(1:nat1), coords2(:,1:nat1), &
+  !      svd_rot, svd_tr )
+
+  ! !!
+  ! !! apply svd
+  ! !!
+  ! ! do i = 1, nat2
+  ! !    coords2(:,i) = matmul( svd_rot, coords2(:,i) ) + svd_tr
+  ! ! end do
+
+  ! !! rotate back to orig
+  ! do i = 1, nat2
+  !    coords2(:,i) = matmul(transpose(rotation),coords2(:,i)) - matmul(transpose(rotation),translation)
+  ! end do
+
+  ! !!
+  ! !! put together apx and svd
+  ! !!
+  ! rotation = matmul(svd_rot, rotation)
+  ! translation = matmul(svd_rot,translation) + svd_tr
+  ! !! apply
+  ! do i = 1, nat2
+  !    coords2(:,i) = matmul(rotation,coords2(:,i)) + translation
+  ! end do
+  ! ! do i = 1, nat1
+  ! !    coords1(:,i) = matmul(transpose(rotation),coords1(:,i)) - matmul(transpose(rotation),translation)
+  ! ! end do
 
 end program main
