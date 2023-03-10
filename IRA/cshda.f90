@@ -402,9 +402,9 @@
     do i = 1, nat1
        do j = 1, nat2
           !!
-          rj(:) = coords2(:,j)
-          call pbc_vec( rj, lat2 )
-          rij = coords1(:,i) - rj
+          ! rj(:) = coords2(:,j)
+          rij = coords1(:,i) - coords2(:,j)
+          call pbc_vec( rij, lat2 )
           dist = sqrt( dot_product(rij, rij) )
           !!
           !! if the atoms are not of same typ, set some large distance:
