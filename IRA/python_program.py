@@ -55,7 +55,7 @@ t=np.zeros( 3 )
 #   rmsd -> float, root-mean-square-distance computed after the matching
 #
 
-kmax_factor = 1.2
+kmax_factor = 1.8
 
 r, t, p, hd, rmsd = ira_mod.ira_svd( nat1, typ1, np.transpose(coords1), nat2, typ2, np.transpose(coords2), kmax_factor )
 
