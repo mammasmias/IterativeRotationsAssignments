@@ -254,7 +254,7 @@
        if( n_count .gt. nat1*nat2) then
           found(i) = 0
           dists(i) = 999.9
-          write(*,*) " PROBLEM in dist_set_reg: huge number of searches"
+          write(*,*) " PROBLEM in cshda: huge number of searches"
           return
        endif
        !!
@@ -444,7 +444,7 @@
        if( n_count .gt. nat1**2) then
           found(i) = 0
           dists(i) = 999.9
-          write(*,*) " PROBLEM in dist_set_reg: huge number of searches"
+          write(*,*) " PROBLEM in cshda_pbc: huge number of searches"
           return
        endif
        !!
