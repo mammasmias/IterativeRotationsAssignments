@@ -94,7 +94,7 @@ $(IRALIB): $(outils)
 # pack the shared library
 #====
 $(SHLIB): $(olib) $(outils)
-	${F90} -o $@ -shared -fPIC $(MOD) $^ $(FLAGS) $(LIBLAPACK)
+	$(FCOMP) -o $@ -shared -fPIC $(MOD) $^ $(FLAGS) $(LIBLAPACK)
 
 #====
 # generate the python module
