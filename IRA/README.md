@@ -7,50 +7,52 @@ inserting IRA into an off-lattice kMC algorithm is developed.
 This directory contains the IRA and CShDA algorithms implemented in Fortran.
 Further descriptions of these algorithms are given in [[1]](#1) and [[2]](#2). 
 
+The default compilation also produces a shared library `shlib_ira.so`, which contains wrapper routines to the main IRA and CShDA routines, such that they are bound to the C-namespace via `bind(C)` and `use iso_c_binding`.
+
 # Iterative Rotations and Assignments (IRA)
+
 The Iterative Rotations and Assignments (IRA) algorithm is a shape matching
 algorithm for matching generic atomic structures, including structures with
 different number of atoms.
 
 # Constrained Shortest Distance Assignment (CShDA)
+
 The Constrained Shortest Distance Assignment (CShDA) algorithm is a Linear
 Assignment Problem (LAP) solver, which is used by the IRA algorithm. 
 
-# Files
+## Files
+
 Routine files:
 
- - cshda.f90 contains the CShDA routine for pbc and non-pbc cases.
-
- - ira_routines.f90 contains all the routines specific to IRA.
- 
- - set_candidate.f90 contains routines for selecting candidate central atoms and their vectors.
-
- - read_typ.f90 contains a function to read atomic types from xyz format.
-
- - sorting_module.f90 contains the mergesort algorithm.
+ - cshda.f90          : the CShDA routine for pbc and non-pbc cases;
+ - ira_routines.f90   : all the routines specific to IRA;
+ - set_candidate.f90  : routines for selecting candidate central atoms and their vectors;
+ - read_typ.f90       : a function to read atomic types from xyz format;
+ - sorting_module.f90 : the mergesort algorithm;
+ - library_ira.f90    : C-bound wrappers to the main routines of IRA, compiles into `shlib_ira.so`;
+ - ira_mod.py         : python module which calls the interface routines from `shlib_ira.so`, via the `ctypes` module.
 
 Example program files:
 
  - f90_program.f90 is an example of a f90 program that calls main IRA routine, followed by application of SVD.
- 
- - python_program.py is an example of a python3 program that calls the routine which is a wrapper for the main IRA call and SVD in one call.
- 
+ - python_program.py demonstrates some simple use of the `ira_mod` python module, including matching structures with equal and nonequal numbers of atoms.
+
 Example structures:
 
  - example_inputs/ folder contains some example input files that can be used for the f90 and python3 programs.
- 
-# Compile and run
+
+## Compile and run
+
 TO COMPILE: (you need lapack library, see the Makefile)
 
-   `make all`
-
+    make all
 
 TO RUN:
 
-    `f90_program.x   <   example_inputs/f90_input1.xyz`
+    f90_program.x   <   example_inputs/f90_input1.xyz
 or:
 
-    `python3   python_program.py`
+    python3  python_program.py
 
 
 ## References
