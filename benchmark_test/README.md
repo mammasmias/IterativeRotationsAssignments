@@ -39,6 +39,19 @@ Description of scripts:
    Runs the randomization test over a directory of data. See header of the file.
 
 
+## Terms and conditions
+
+The ArbAlign and fastoverlap software, used for benchmark test purposes in the
+`/benchmark_test` directory,
+are subject to their own licenses. According to their original publications,
+they are GNU-GPL v2 for ArbAlign [[2]](#2), and GNU-GPL v3 for fastoverlap
+[[7]](#7).
+
+The data used for benchmark test are originated from several sources, please refer to
+the original publicaions mentioned in the README files
+(`/benchmark_test/data/*/README`) of each data set for their terms and conditions.
+
+
 ## References
 
 <a id="1">[1]</a> Gunde M., Salles N., Hemeryck A., Martin Samos L. *IRA: A

@@ -49,7 +49,9 @@ TO COMPILE: (you need lapack library, see the Makefile)
 
 TO RUN:
 
-    f90_program.x   <   example_inputs/f90_input1.xyz
+    ./f90_program.x   <   example_inputs/f90_input1.xyz
+    ./f90_program.x   <   example_inputs/f90_input2.xyz
+
 or:
 
     python3  python_program.py

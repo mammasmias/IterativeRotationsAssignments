@@ -67,7 +67,7 @@ class algo():
 class IRA(algo):
     """
     The Iterative Rotatitions and Assignments (IRA) algorithm is a shape matching algorithm
-    designed for matching arbitrary atomic structures.
+    designed for matching generic atomic structures.
     It solves the problem:
 
         P_B B = R A + t
