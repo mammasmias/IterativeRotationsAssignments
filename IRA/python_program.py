@@ -1,23 +1,19 @@
 import numpy as np
 
 #
-# import the IRA module
-#
-import ira_mod
-
-#
 # auxiliary function for reading .xyz files
 #
 def read_xyz(fname):
-  typ  = np.loadtxt( fname, skiprows = 2, usecols = [0], dtype = int )
-  coords = np.loadtxt( fname, skiprows = 2, usecols = [1,2,3] )
-  nat = len( typ )
-  return nat, typ, coords
-
+    typ = np.genfromtxt( fname, skip_header=2, usecols=[0] )
+    coords = np.genfromtxt( fname, skip_header = 2, usecols = [1,2,3], dtype=np.float64 )
+    nat = len( typ )
+    cc=np.ndarray( (nat,3), dtype=np.float64, order="C" )
+    cc=coords
+    return nat, typ, cc
 
 
 #
-# read .xyz files "s1.xyz" and "s2.xyz"
+# read .xyz files "s1.xyz" and "s2.xyz" containing some near-congruent structures
 #
 
 nat1, typ1, coords1 = read_xyz( "example_inputs/s1.xyz" )
@@ -27,75 +23,144 @@ nat2, typ2, coords2 = read_xyz( "example_inputs/s2.xyz" )
 
 
 #
-# initialize rotation matrix and translation vector
+# import the IRA module
 #
-
-r=np.zeros(( 3, 3 ))
-t=np.zeros( 3 )
-
-
-
+import ira_mod
 
 #
-# call ira + svd in single call.
-# Attention!: when structures have different number of atoms, the structure with
-# lower number of atoms should belabelled as structure 1!
+# initialize IRA with shared library
 #
-# input variables:
-#   nat1    -> integer, number of atoms in structure 1
-#   typ1    -> array of integers size(nat1), atomic types of atoms in structure 1
-#   coords1 -> array of floats size(3,nat1), coordinates of atoms in structure 1
-#   ---||---   similarly for structure 2
-#   kmax_factor -> float, multiplicative factor for the radial distance of the basis check, should be >= 1. Default is 1.2
-# output variables:
-#   r   -> float size(3,3) rotation matrix
-#   t   -> float size(3), translation vector
-#   p   -> integer array size(nat2), permutation order
-#   hd  -> float, Hausdorff distance computed after the matching
-#   rmsd -> float, root-mean-square-distance computed after the matching
-#
+ira = ira_mod.IRA('./shlib_ira.so')
 
+#=================================================================
+# Demonstration how to match structures with equal number of atoms:
+#=================================================================
+print("====================================================")
+print("=  Demonstration Python program to call IRA for    =")
+print("=  matching structures with equal number of atoms  =")
+print("====================================================")
+
+print( nat1 )
+print( " original structure 1" )
+for i in range( nat1 ):
+    print( "%i %.4f %.4f %.4f" %(typ1[i], coords1[i][0], coords1[i][1], coords1[i][2]) )
+print( nat2 )
+print( " original structure 2" )
+for i in range( nat2 ):
+    print( "%i %.4f %.4f %.4f" %(typ2[i], coords2[i][0], coords2[i][1], coords2[i][2]) )
+print("")
+#
+# compute Hausdorff distance between the two structures as-read from the file,
+# using the CShDA algorithm
+#
+perm, dists = ira.cshda( nat1, typ1, coords1, nat2, typ2, coords2 )
+#
+# Hausdorff distance is np.max( dists )
+#
+print( "initial Hausdorff distance:", np.max(dists) )
+
+
+#
+# perform the IRA shape-matching algorithm:
+#
 kmax_factor = 1.8
+rmat, tr, perm, dh = ira.match( nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor )
 
-r, t, p, hd, rmsd = ira_mod.ira_svd( nat1, typ1, np.transpose(coords1), nat2, typ2, np.transpose(coords2), kmax_factor )
+print( "Hausdorff distance after matching:", dh )
 
-
+print( "Rotation matrix:" )
+print( rmat )
+print( "translation vector" )
+print( tr )
+print( "permutation of atoms:" )
+print( perm )
+print("")
 
 #
 # apply found transformation:
 #
+for i in range( nat2 ):
+    coords2[i] = np.matmul( rmat, coords2[i] ) + tr
+#
+# apply permutation
+#
+coords2[:] = coords2[perm]
+typ2[:] = typ2[perm]
+
+
+
 
 #
-# permutation order p is always the permutation of structure 2.
-# permute with [p-1] because fortran starts arrays at 1 and python at 0
+# structures 1 and 2 should now be matched:
 #
-typ2=typ2[p-1]
-coords2=coords2[p-1]
+print( nat2 )
+print( " matched structure 2" )
+for i in range( nat2 ):
+    print( "%i %.4f %.4f %.4f" %(typ2[i], coords2[i][0], coords2[i][1], coords2[i][2]) )
+
+
+
+
+
+# ==============================
+# Demonstration for structures with different number of atoms:
+# ==============================
+print("")
+print("=====================================================")
+print(" Matching structures with different number of atoms  ")
+print("=====================================================")
+
 #
-# rotate and translate
+# re-read the original structures
 #
-for i in range(nat2):
-    coords2[i] = np.matmul( r, coords2[i] ) + t
+nat1, typ1, coords1 = read_xyz( "example_inputs/s1.xyz" )
+nat2, typ2, coords2 = read_xyz( "example_inputs/s2.xyz" )
 #
-# Alternatively, r and t can be applied to structure 1, in the following way:
+# for purpose of demonstration:
+#   make structure 1 smaller than structure 2 by three atoms:
 #
-#for i in range(nat1):
-#    coords1[i] = np.matmul( np.transpose(r), coords1[i] ) - np.matmul( np.transpose(r), t )
+nat1 = nat1 - 3
+
+print( nat1 )
+print( " original structure 1 (smaller by 3 atoms)" )
+for i in range( nat1 ):
+    print( "%i %.4f %.4f %.4f" %(typ1[i], coords1[i][0], coords1[i][1], coords1[i][2]) )
+print( nat2 )
+print( " original structure 2" )
+for i in range( nat2 ):
+    print( "%i %.4f %.4f %.4f" %(typ2[i], coords2[i][0], coords2[i][1], coords2[i][2]) )
+print("")
+
+perm_p, dists_p = ira.cshda( nat1, typ1, coords1, nat2, typ2, coords2 )
+print("initial Hausdorff of partial:", np.max(dists_p[:nat1]) )
 
 
+#
+# find matching
+#
+rmat_p, tr_p, perm_p, dh_p = ira.match( nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor )
 
-#print(r)
-#print(t)
-#print(p)
+print("Hausdorff distance of matched:", dh_p )
+print( "Rotation matrix:" )
+print( rmat_p )
+print( "translation vector" )
+print( tr_p )
+print( "permutation of atoms:" )
+print( perm_p )
+print("")
 
-print( 'matched structures' )
-print ( nat1 )
-print()
-print(coords1)
+#
+# apply found transformation:
+#
+for i in range( nat2 ):
+    coords2[i] = np.matmul( rmat_p, coords2[i] ) + tr_p
+#
+# apply permutation
+#
+coords2[:] = coords2[perm_p]
+typ2[:] = typ2[perm_p]
 
-print(nat2)
-print()
-print( coords2 )
-
-print( 'computed dH, rmsd:' )
-print(hd, rmsd)
+print( nat2 )
+print( " matched structure 2" )
+for i in range( nat2 ):
+    print( "%i %.4f %.4f %.4f" %(typ2[i], coords2[i][0], coords2[i][1], coords2[i][2]) )

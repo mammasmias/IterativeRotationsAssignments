@@ -236,6 +236,7 @@ class IRA(algo):
         Apply permutation:
 
             >>> coords2[:] = coords2[permutation]
+            >>> typ2[:] = typ2[permutation]
 
         Requirement: nat1 .le. nat2 !!
         ==========================
