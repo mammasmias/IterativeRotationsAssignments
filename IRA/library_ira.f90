@@ -135,6 +135,16 @@ end subroutine lib_cshda_pbc
 subroutine lib_ira_unify( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
      kmax_factor, rotation, translation, permutation, hd )bind(C)
+  !! wrapper to ira_unify routine from ira_routines.f90
+  !!
+  !! Warning:
+  !! the indices in candidate1, and candidate2 need to be F-style (start by 1) on input!
+  !!
+  !! The result can be applied to struc2, as:
+  !!
+  !!   idx = permutation(i)
+  !!   coords2(:,i) = matmul( rotation, coords2(:,idx) ) + translation
+  !!
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat1
