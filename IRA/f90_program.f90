@@ -71,7 +71,7 @@ program main
   !! =================================
   !!
   allocate( permutation(1:nat2))
-  kmax_factor = 1.2
+  kmax_factor = 1.8
   call ira_svd( nat1, typ1, coords1, &
                 nat2, typ2, coords2, &
                 kmax_factor, rotation, translation, permutation, hd, rmsd )

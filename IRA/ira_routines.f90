@@ -14,17 +14,17 @@
 !!
 
 
-  ! subroutine determinant( a, d )
-  !   !! determinant of a 3x3 matrix a
-  !   implicit none
-  !   real, dimension(3,3), intent(in) :: a
-  !   real, intent(out) :: d
+  subroutine determinant3x3( a, d )
+    !! determinant of a 3x3 matrix a
+    implicit none
+    real, dimension(3,3), intent(in) :: a
+    real, intent(out) :: d
 
-  !   d = a(1,1)*a(2,2)*a(3,3) - a(1,1)*a(2,3)*a(3,2) + &
-  !         a(1,2)*a(2,3)*a(3,1) - a(2,2)*a(3,1)*a(1,3) + &
-  !         a(2,1)*a(3,2)*a(1,3) - a(3,3)*a(1,2)*a(2,1)
+    d = a(1,1)*a(2,2)*a(3,3) - a(1,1)*a(2,3)*a(3,2) + &
+          a(1,2)*a(2,3)*a(3,1) - a(2,2)*a(3,1)*a(1,3) + &
+          a(2,1)*a(3,2)*a(1,3) - a(3,3)*a(1,2)*a(2,1)
 
-  ! end subroutine determinant
+  end subroutine determinant3x3
 
 
   subroutine sort( n, ndim, array, axis )
@@ -429,6 +429,144 @@
     deallocate( coords1, coords2 )
 
   end subroutine svdrot_m
+
+
+
+  subroutine svd_forcerot( nat1, typ1, coords1_in, &
+                       nat2, typ2, coords2_in, &
+                       rmat, translate)
+    !> @detail
+    !! Optimal rotation by SVD.
+    !!
+    !! This routine forces the output rmat to be rotation (determinant = +1)
+    !!
+    !! The output can be applied as:
+    !!
+    !!     coords2(:,i) = matmul( rmat, coords2(:,i) ) + translate
+    !!
+    !! OR
+    !!
+    !!     coords1(:,i) = matmul( transpose(rmat), coords1(:,i) ) - &
+    !!                                  matmul( transpose(rmat), translate )
+    !!
+    !!================================================
+    !!
+    !! intent(in):
+    !! nat1    -> number of atoms in conf 1;
+    !! typ1    -> atomic types in conf 1;
+    !! coords1 -> coordinates of conf 1;
+    !! nat2    -> number of atoms in conf 2;
+    !! typ2    -> atomic types in conf 2;
+    !! coords2 -> coordinates of conf 2;
+    !!
+    !! intent(out):
+    !! rmat    -> 3x3 optimal rotation matrix
+    !! translate -> optimal translation vector
+    !!
+    implicit none
+    integer,                  intent(in) :: nat1
+    integer, dimension(nat1), intent(in) :: typ1
+    real, dimension(3,nat1),  intent(in) :: coords1_in
+    integer,                  intent(in) :: nat2
+    integer, dimension(nat2), intent(in) :: typ2
+    real, dimension(3,nat2),  intent(in) :: coords2_in
+    real,dimension(3,3),      intent(out) :: rmat
+    real, dimension(3),       intent(out) :: translate
+
+    real, allocatable :: coords1(:,:)
+    real, allocatable :: coords2(:,:)
+    real, dimension(3) :: gc1, gc2
+    real, dimension(3,3) :: matrix, u, smat, vt
+    integer :: i
+    real :: det_u, det_vt, det_s, det_m, det_r
+
+    !! set initial copies
+    allocate( coords1(1:3,1:nat1), source=coords1_in )
+    allocate( coords2(1:3,1:nat2), source=coords2_in )
+
+    !! set geo centers
+    gc1(:) = 0.0
+    gc2(:) = 0.0
+    gc1(:) = sum( coords1(:,:), 2 )/nat1
+    gc2(:) = sum( coords2(:,:), 2 )/nat2
+
+    !! recenter
+    do i = 1, nat1
+       coords1(:,i) = coords1(:,i) - gc1
+    end do
+    do i = 1, nat2
+       coords2(:,i) = coords2(:,i) - gc2
+    end do
+
+    !! set the H matrix
+    matrix = matmul( coords1, transpose(coords2))
+    ! write(*,*) 'Hmat'
+    ! do i = 1, 3
+    !    write(*,'(3(f12.8,x))') matrix(i,:)
+    ! end do
+
+
+    !! call svd routine
+    call svd(3, 3, matrix, u, smat, vt )
+
+    ! call determinant3x3(u, det_u)
+    ! write(*,*) 'u:', det_u
+    ! do i = 1, 3
+    !    write(*,*) u(i,:)
+    ! end do
+
+    ! call determinant3x3(smat, det_s)
+
+    ! call determinant3x3(vt, det_vt)
+    ! write(*,*) 'vt:',det_vt
+    ! do i = 1, 3
+    !    write(*,'(3f9.4)') vt(i,:)
+    ! end do
+
+
+    ! write(*,*) 'detm',det_m
+    ! write(*,*) 'det_u',det_u
+    ! write(*,*) 'det_s',det_s
+    ! write(*,*) 'det_vt',det_vt
+
+
+    !! set final rotation
+    rmat = matmul(u, vt)
+    call determinant3x3(rmat, det_r)
+
+
+    !! force rmat to be rotation: Vt is written row-wise
+    if( det_r .lt. -0.5 ) vt(3,:) = - vt(3,:)
+    rmat = matmul(u, vt)
+
+    ! write(*,*) 'rmat:', det_r
+    ! do i = 1, 3
+    !    write(*,'(3f9.4)') rmat(i,:)
+    ! end do
+
+
+
+    !! set final translation
+    translate = gc1 - matmul(rmat,gc2)
+
+    !! test output
+    ! write(*,*) 'translate'
+    ! write(*,*) translate
+
+    ! coords1(:,:) = coords1_in(:,:)
+    ! coords2(:,:) = coords2_in(:,:)
+
+    ! do i = 1, nat2
+    !    coords2(:,i) = matmul(rmat,coords2(:,i)) + translate
+    ! end do
+
+    ! do i =1, nat2
+    !    write(*,*) coords2(:,i)
+    ! end do
+
+    deallocate( coords1, coords2 )
+
+  end subroutine svd_forcerot
 
 
   subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
