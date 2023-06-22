@@ -31,7 +31,7 @@ MOD = -I$(OBJ) -J$(OBJ)
 IRAUNI_X = f90_program.x
 IRALIB = libira.a
 SHLIB = shlib_ira.so
-PY_MOD = ira_mod
+#PY_MOD = ira_mod
 
 
 #=======================
@@ -99,8 +99,8 @@ $(SHLIB): $(olib) $(outils)
 #====
 # generate the python module
 #====
-$(PY_MOD): $(futils)
-	f2py3 $(LIBLAPACK) -c --fcompiler=$(FCOMP) --f90flags='$(FFLAGS)' ira_interf.pyf $^ -m $(PY_MOD)
+#$(PY_MOD): $(futils)
+#	f2py3 $(LIBLAPACK) -c --fcompiler=$(FCOMP) --f90flags='$(FFLAGS)' ira_interf.pyf $^ -m $(PY_MOD)
 
 
 msg:
@@ -120,7 +120,7 @@ msg:
 
 
 clean:
-	rm -rf $(IRAUNI_X) $(PY_MOD).* $(IRALIB) $(SHLIB)
+	rm -rf $(IRAUNI_X) $(IRALIB) $(SHLIB)
 	rm -rf $(OBJ)
 
 
