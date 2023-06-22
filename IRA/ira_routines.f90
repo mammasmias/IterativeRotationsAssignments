@@ -811,6 +811,12 @@
   subroutine ira_unify( nat1, typ1_in, coords1_in, candidate_1, &
                         nat2, typ2_in, coords2_in, candidate_2, &
                         kmax_factor, rotation, translation, permutation, hd_out )
+    !!
+    !! the result is applied to struc 2:
+    !!
+    !!    j = permutation(i)
+    !!    coords2(:,i) = matmul( rotation, coords2(:,j) ) + tr
+
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1_in
     real, dimension(3, nat1), intent(in) :: coords1_in
