@@ -2,6 +2,7 @@
 # Fortran compiler
 #
 FCOMP = gfortran
+CCOMP=gcc
 
 #
 # archiver
@@ -31,7 +32,7 @@ MOD = -I$(OBJ) -J$(OBJ)
 IRAUNI_X = f90_program.x
 IRALIB = libira.a
 SHLIB = shlib_ira.so
-#PY_MOD = ira_mod
+CPROG = c_program.x
 
 
 #=======================
@@ -53,35 +54,29 @@ o_uni := $(patsubst $(SRC)%, $(OBJ)%, $(f_uni:%.f90=%.o))
 
 flib := $(SRC)/library_ira.f90
 olib := $(patsubst $(SRC)%,$(OBJ)%,$(flib:%.f90=%.o))
+
+cprog := $(SRC)/c_program.c
 #======================
 
 
 default: msg
 
-#all : main lib pyf shlib
-all : main lib shlib
+all : lib f90 shlib cprog
 
 $(OBJ)%.o: $(SRC)/%.f90
 	$(FCOMP) $(FFLAGS) $(MOD) -c $< -o $@
 
 
-main: $(OBJ) $(IRAUNI_X)
+f90: $(OBJ) $(IRAUNI_X)
 lib: $(OBJ) $(IRALIB)
-pyf: $(PY_MOD)
 shlib: $(OBJ) $(SHLIB)
+cprog: $(OBJ) $(SHLIB) $(CPROG)
 
 #
 # object folder
 #
 $(OBJ):
 	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ) ; fi
-
-
-#====
-# Compile the executable
-#====
-$(IRAUNI_X): $(outils) $(oread) $(o_uni)
-	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(LIBLAPACK)
 
 
 #====
@@ -97,17 +92,29 @@ $(SHLIB): $(olib) $(outils)
 	$(FCOMP) -o $@ -shared -fPIC $(MOD) $^ $(FLAGS) $(LIBLAPACK)
 
 #====
+# Compile the f90 executable
+#====
+$(IRAUNI_X): $(outils) $(oread) $(o_uni)
+	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(LIBLAPACK)
+
+#====
+# Compile the C executable
+#====
+$(CPROG): $(cprog)
+	$(CCOMP) -o $@ $^ $(SHLIB)
+
+
+#====
 # generate the python module
 #====
 #$(PY_MOD): $(futils)
 #	f2py3 $(LIBLAPACK) -c --fcompiler=$(FCOMP) --f90flags='$(FFLAGS)' ira_interf.pyf $^ -m $(PY_MOD)
 
-
 msg:
 	@echo 'Use one of the following:'
 	@echo ''
 	@echo ' make f90     -> compiles the f90 example program $(IRAUNI_X) executable'
-#	@echo ' make pyf     -> compiles the $(PY_MOD).* python module'
+	@echo ' make cprog   -> compiles the C example program $(CPROG)'
 	@echo ' make lib     -> compiles the $(IRALIB) library'
 	@echo ' make shlib   -> compiles the $(SHLIB) shared library'
 	@echo ' make all     -> all of the above'
@@ -120,7 +127,7 @@ msg:
 
 
 clean:
-	rm -rf $(IRAUNI_X) $(IRALIB) $(SHLIB)
+	rm -rf $(IRAUNI_X) $(IRALIB) $(SHLIB) $(CPROG)
 	rm -rf $(OBJ)
 
 
