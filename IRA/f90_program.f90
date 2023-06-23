@@ -116,6 +116,15 @@ program main
   write(*,*) 'final values of dH and rmsd:'
   write(*,*) hd, sqrt(rmsd/nat1)
 
+  write(*,*)
+  write(*,*) "rotation matrix:"
+  write(*,'(3f9.4)') rotation(1,:)
+  write(*,'(3f9.4)') rotation(2,:)
+  write(*,'(3f9.4)') rotation(3,:)
+
+  write(*,*)
+  write(*,*) "translation vector"
+  write(*,*) translation
 
 
 
