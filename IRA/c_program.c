@@ -2,14 +2,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+/*
+  This is a small example program in C, that shows how to declare and call routines
+  from the shared libraru shlib_ira.so, that are defined in library_ira.f90
+
+   WARNING: this code is NOT very robust to read different file types, empty lines, etc.
+   USE AT OWN RISK
+*/
+
+
 /* declare external function from library_ira.f90 */
 extern void lib_match( int, int*, double **, int *,  \
                        int, int*, double **, int *,  \
                        double, double **, double **, \
                        int **, double * );
 
-int main( int argc, char **argv ){
 
+int main( int argc, char **argv ){
 
   char *fname;
   fname = argv[1];
@@ -87,6 +97,8 @@ int main( int argc, char **argv ){
     {
       printf( "%d %lf %lf %lf \n", typ2[i], coords2[i][0], coords2[i][1], coords2[i][2]);
     }
+
+
 
 
   /* form the candidate arrays */

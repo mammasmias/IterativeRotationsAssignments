@@ -47,12 +47,17 @@ TO COMPILE: (you need lapack library, see the Makefile)
 
     make all
 
-TO RUN:
+To run fortran example program:
 
     ./f90_program.x   <   example_inputs/f90_input1.xyz
     ./f90_program.x   <   example_inputs/f90_input2.xyz
 
-or:
+to run C example program:
+
+    ./c_program.x   example_inputs/f90_input1.xyz
+    ./c_program.x   example_inputs/f90_input2.xyz
+
+to run python example program:
 
     python3  python_program.py
 
