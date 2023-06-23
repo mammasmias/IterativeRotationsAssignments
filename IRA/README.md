@@ -39,7 +39,7 @@ Example program files:
 
 Example structures:
 
- - example_inputs/ folder contains some example input files that can be used for the f90 and python3 programs.
+ - example_inputs/ folder contains some example input files, used for the f90, C, and python3 example programs.
 
 ## Compile and run
 
@@ -49,15 +49,15 @@ TO COMPILE: (you need lapack library, see the Makefile)
 
 To run fortran example program:
 
-    ./f90_program.x   <   example_inputs/f90_input1.xyz
-    ./f90_program.x   <   example_inputs/f90_input2.xyz
+    ./f90_program.x   <   example_inputs/input1.xyz
+    ./f90_program.x   <   example_inputs/input2.xyz
 
 to run C example program:
 
-    ./c_program.x   example_inputs/f90_input1.xyz
-    ./c_program.x   example_inputs/f90_input2.xyz
+    ./c_program.x   example_inputs/input1.xyz
+    ./c_program.x   example_inputs/input2.xyz
 
-to run python example program:
+to run python3 example program:
 
     python3  python_program.py
 
