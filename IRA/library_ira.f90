@@ -132,10 +132,12 @@ subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, fo
 end subroutine lib_cshda_pbc
 
 
-subroutine lib_ira_unify( nat1, typ1, coords1, candidate1, &
+subroutine lib_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
      kmax_factor, rotation, translation, permutation, hd )bind(C)
-  !! wrapper to ira_unify routine from ira_routines.f90
+  !!
+  !! wrapper call to match two structures. This includes call to ira_unify to get apx,
+  !! and then call to svdrot_m to obtain final match. Routines from ira_routines.f90
   !!
   !! Warning:
   !! the indices in candidate1, and candidate2 need to be F-style (start by 1) on input!
@@ -169,7 +171,12 @@ subroutine lib_ira_unify( nat1, typ1, coords1, candidate1, &
   real( c_double ), dimension(:,:), pointer :: p_matrix
   real(c_double), dimension(:), pointer :: p_tr
 
-  integer :: i, j
+  integer :: i
+  real( c_double ), dimension(3,nat2) :: fcoords2
+  integer(c_int), dimension(nat2) :: ftyp2
+  real( c_double ), dimension(3,3) :: srot
+  real( c_double ), dimension(3) :: str, rdum
+  real( c_double ) :: pp
 
   !! connect c ptrs to f
   call c_f_pointer( typ1, p_typ1, [nat1] )
@@ -185,32 +192,43 @@ subroutine lib_ira_unify( nat1, typ1, coords1, candidate1, &
   call c_f_pointer( translation, p_tr, [3] )
   call c_f_pointer( permutation, p_perm, [nat2] )
 
+  !! get apx
   call ira_unify( nat1, p_typ1, p_coords1, p_c1, &
        nat2, p_typ2, p_coords2, p_c2, &
        kmax_factor, p_matrix, p_tr, p_perm, hd )
 
-  ! write(*,*) 'Fortran matrix:'
-  ! write(*,*) p_matrix(1,:)
-  ! write(*,*) p_matrix(2,:)
-  ! write(*,*) p_matrix(3,:)
+  !! transform
+  ftyp2(:) = p_typ2(p_perm(:))
+  fcoords2(:,:) = p_coords2(:,p_perm(:))
+  do i = 1, nat2
+     fcoords2(:,i) = matmul( p_matrix, fcoords2(:,i)) + p_tr
+  end do
 
-  ! write(*,*) 'tr'
-  ! write(*,*) p_tr
+  !! call svd
+  call svdrot_m( nat1, p_typ1, p_coords1, &
+       nat1, ftyp2(1:nat1), fcoords2(:,1:nat1), &
+       srot, str )
 
-  ! write(*,*) nat1
-  ! write(*,*)
-  ! do i = 1, nat1
-  !    write(*,*) p_typ1(i), p_coords1(:,i)
-  ! end do
-  ! write(*,*) nat2
-  ! write(*,*)
-  ! do i = 1, nat2
-  !    j = p_perm(i)
-  !    write(*,*) p_typ2(j), matmul( p_matrix, p_coords2(:,j) ) + p_tr
-  ! end do
+  !! apply svd
+  do i = 1, nat2
+     fcoords2(:,i) = matmul( srot, fcoords2(:,i) ) + str
+  end do
+
+  !! measure dH
+  pp=0.0
+  do i = 1, nat1
+     rdum = p_coords1(:,i) - fcoords2(:,i)
+     pp = max( pp, norm2(rdum) )
+  end do
+  hd=pp
+
+  !! put together
+  p_matrix = matmul( srot, p_matrix )
+  p_tr = matmul(srot, p_tr) + str
 
   !! return C-style data
   p_matrix = transpose( p_matrix )
   p_perm(:) = p_perm(:) - 1
 
-end subroutine lib_ira_unify
+end subroutine lib_match
+

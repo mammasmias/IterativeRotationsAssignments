@@ -1,17 +1,17 @@
 
 # Copyright (C) 2023, MAMMASMIAS Consortium
 # Written by: Miha Gunde
-
+#
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-License-Identifier: Apache-2.0
 # See the file LICENSE.txt for further information.
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
 # Python interface to the library_ira.f90 routines, via ctypes module
 
 from ctypes import *
@@ -219,9 +219,10 @@ class IRA(algo):
     def match( self, nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor, candidate1=None, candidate2=None ):
         """
 
-        The Iterative Rotatitions and Assignments (IRA) procedure to match two structures.
+        The Iterative Rotatitions and Assignments (IRA) procedure to match two structures, including
+        the SVD correction at the end.
 
-        This is a wrapper to the lib_ira_unify routine in library_ira.f90
+        This is a wrapper to the lib_match routine in library_ira.f90
 
         Solution is to be applied to struc2, as:
 
@@ -262,8 +263,9 @@ class IRA(algo):
         :type coords2: np.ndarray( (nat2, 3), dtype = float)
 
         :param kmax_factor: factor for multiplication of search radius, the value
-                            should be > 1.0, for very non-congruent structures a higher value is needed.
-                            Lower value speeds up the algorithm, but can give non-optimal values.
+                            should be > 1.0, for very non-congruent structures a higher value
+                            is needed. Lower value speeds up the algorithm, but can give
+                            non-optimal results.
         :type kmax_factor: float
 
         === optional ===
@@ -312,8 +314,12 @@ class IRA(algo):
         # check typ arrays
         u_typ1, u_typ2  = self.tf_int2( typ1, typ2 )
 
-        # manage the candidates: array of integers with proper size are needed
-        # also shift everything by +1 to get F indices
+        # manage the candidates: array of integers with proper size are needed.
+        # Also shift everything by +1 to get F indices.
+        # In case of equal number of atoms, default behaviour is to specify
+        # signal -1 (which by default means: use geometric center); in case
+        # of non-equal number of atoms, default is to take first atom as candidate
+        # in structure1, and all atoms of same typ as candidate1 as candidates for structure2
         cand1 = np.zeros(nat1, dtype=int)
         cand2 = np.zeros(nat2, dtype=int)
         idx_1=0
@@ -330,17 +336,20 @@ class IRA(algo):
             if lenc1 == 1:
                 # candidate1 is a single index
                 cand1[0]=candidate1+1
+                idx_1=candidate1+1
             else:
                 # candidate1 is an array
+                idx_1=candidate1[0]+1
                 for i in range(lenc1):
                     cand1[i] = candidate1[i]+1
         if candidate2 is None:
-            # candiate is not set
-
+            # candiate is not set,
             # matching strucs with different nat, impose all atoms of struc2
             if nat2 != nat1:
                 m=0
                 for i in range(nat2):
+                    # skip atoms of dirrerent typ,
+                    # idx_1 is atom chosen as candidate1
                     if typ2[i] != typ1[idx_1]:
                         continue
                     cand2[m]=i+1
@@ -358,6 +367,8 @@ class IRA(algo):
                 for i in range(lenc2):
                     cand2[i] = candidate2[i]+1
 
+        # print(cand1)
+        # print(cand2)
         # convert input to C-style
         n1 = c_int(nat1)
         n2 = c_int(nat2)
@@ -375,15 +386,15 @@ class IRA(algo):
         c_perm = (c_int*nat2)()
         c_hd = c_double()
 
-        self.lib.lib_ira_unify.argtypes = \
+        self.lib.lib_match.argtypes = \
             [ c_int, POINTER(c_int), POINTER(POINTER(c_double)), POINTER(c_int), \
               c_int, POINTER(c_int), POINTER(POINTER(c_double)), POINTER(c_int), \
               c_double, POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), \
               POINTER(POINTER(c_int*nat2)), POINTER(c_double) ]
-        self.lib.lib_ira_unify.restype=None
+        self.lib.lib_match.restype=None
 
-        self.lib.lib_ira_unify( n1, t1, c1, cd1, n2, t2, c2, cd2, \
-                                km, pointer(c_rmat), pointer(c_tr), pointer(c_perm), pointer(c_hd) )
+        self.lib.lib_match( n1, t1, c1, cd1, n2, t2, c2, cd2, \
+                            km, pointer(c_rmat), pointer(c_tr), pointer(c_perm), pointer(c_hd) )
 
         # convert output C data
         rotation = np.ndarray((3,3),dtype=float)

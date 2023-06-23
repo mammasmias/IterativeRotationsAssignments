@@ -812,6 +812,8 @@
                         nat2, typ2_in, coords2_in, candidate_2, &
                         kmax_factor, rotation, translation, permutation, hd_out )
     !!
+    !! There is no SVD at the end of this routine!
+    !!
     !! the result is applied to struc 2:
     !!
     !!    j = permutation(i)
