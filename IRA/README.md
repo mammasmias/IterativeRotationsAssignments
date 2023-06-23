@@ -35,6 +35,7 @@ Routine files:
 Example program files:
 
  - f90_program.f90 is an example of a f90 program that calls main IRA routine, followed by application of SVD.
+ - c_program.c is a demonstration how to call routines from the shared library `shlib_ira.so` in C.
  - python_program.py demonstrates some simple use of the `ira_mod` python module, including matching structures with equal and nonequal numbers of atoms.
 
 Example structures:
