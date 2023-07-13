@@ -700,7 +700,7 @@ class SOFI(algo):
         return n_op, matrix
 
 
-    def get_pg( self, nb, mat_list):
+    def get_pg( self, nm_in, mat_list):
 
         """
         wrapper to lib_get_pg() from library.f90
@@ -709,22 +709,22 @@ class SOFI(algo):
         input:
         ======
 
-        :param nb:
-        :type nb:
+        :param nm_in: number of matrices in the `mat_list` array
+        :type nm_in: integer
 
-        :param mat_list:
-        :type mat_list:
+        :param mat_list: list of matrices containging symmetry operations
+        :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
         output:
         =======
 
-        :param pg:
-        :type pg:
+        :param pg: associated Point Group (PG)
+        :type pg: string
 
         """
         # input data
-        n = c_int( nb )
+        n = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
 
 
@@ -740,40 +740,48 @@ class SOFI(algo):
         pg=pg.value.decode()
         return pg
 
-    def get_unique_ax_angle( self, nb, mat_list ):
+    def get_unique_ax_angle( self, nm_in, mat_list ):
         """
         wrapper to lib_get_unique_ax_angle() from library.f90
         Description: input list of symmetry matrices, output lists
         of op, ax, angle for each symmetry operation in the list, such that
         axes are aligned, and angle has a correspoding +/- sign.
 
+        This is a wrapper to lib_unique_ax_angle() routine from library_sofi.f90
+
         input:
         ======
 
-        :param nb:
-        :type nb:
+        :param nm_in: number of matrices in the `mat_list` array
+        :type nm_in: integer
 
-        :param mat_list:
-        :type mat_list:
+        :param mat_list: list of matrices containging symmetry operations
+        :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
         output:
         =======
 
-        :param op:
-        :type op:
+        :param op: Schoeflies Op name, possible values:
+                         - "Id" = identity
+                         - "I" = inversion
+                         - "C" = rotation
+                         - "S" = (roto-)reflection
+        :type op: array of length-2 strings, nd.ndarray( nm_in, dtype = "U2" )
 
-        :param axis:
-        :type axis:
+        :param axis: the list of axes along each corresponding matrix acts.
+        :type axis: nm_in x 3 vector, np.ndarray((nm_in, 3), dtype = float)
 
-        :param angle:
-        :type angle:
+        :param angle: the list of angles by which each matrix rotates, in units of 1/(2pi),
+                      e.g. the value `angle = 0.5` means half the circle, and `angle = -1.0/6.0`
+                      means rotation about the axis in negative direction for 1/6th of the circle
+        :type angle: np.ndarray( nm_in, dtype = float )
 
         """
         # input data
-        n_m = c_int( nb )
+        n_m = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
-        n_op=nb
+        n_op=nm_in
         nl = 2*n_op+1
 
         # output
@@ -790,12 +798,14 @@ class SOFI(algo):
                                       pointer(ax_data), pointer(angle_data) )
         op = np.empty(n_op,dtype="U2")
         for n in range(n_op):
-            op[n] = op_data[n][:].decode()
+            op[n] = op_data[2*n:2*n+2].decode()
         axis=np.ndarray((n_op,3), dtype=float)
         for n in range(n_op):
             axis[n] = ax_data[n][:]
         angle=np.zeros(n_op, dtype=float)
-        angle=angle_data
+        for n in range(n_op):
+            angle[n]=angle_data[n]
+        # angle=angle_data
 
         return op, axis, angle
 
@@ -804,32 +814,45 @@ class SOFI(algo):
         """
         wrapper to lib_analmat.f90 from library.f90
         Description: analyse the input matrix, output the Schoenflies notation: Op n^p
+        The notation can be transformed into an angle:
+
+            angle = p / n * 2pi
+
+        e.g. C 8^3 corresponds to 3/8th of full circle = 135 degress = 2.3563 radian
+
         Also return axis and angle of the matrix
+
+        This is a wrapper to lib_analmat() routine from library_sofi.f90
 
         input:
         ======
 
-        :param rmat:
-        :type rmat:
+        :param rmat: input matrix
+        :type rmat: np.ndarray((3, 3), dtype = float )
 
 
         output:
         =======
 
-        :param op:
-        :type op:
+        :param op: Schoeflies Op name, possible values:
+                         - "Id" = identity
+                         - "I" = inversion
+                         - "C" = rotation
+                         - "S" = (roto-)reflection
+        :type op: string
 
-        :param n:
-        :type n:
+        :param n: the n value from Op n^p, gives the angle 2pi/n
+        :type n: integer
 
-        :param p:
-        :type p:
+        :param p: the p value from Op n^p, gives the "multiplicity" of 1/n operation
+        :type p: integer
 
-        :param ax:
-        :type ax:
+        :param ax: axis along which the matrix `rmat` operates, in case of rotation is the axis of rotation,
+                   in case of (roto-)reflection is the normal of the plane of reflection.
+        :type ax: 3D vector, np.ndarray(3, dtype = float)
 
-        :param angle:
-        :type angle:
+        :param angle: the angle of rotation of matrix `rmat`, in units of 1/2pi, is the ratio p/n
+        :type angle: float
 
         """
 
@@ -884,24 +907,24 @@ class SOFI(algo):
         Input:
         ======
 
-        :param n_mat:
-        :type n_mat:
+        :param n_mat: number of matrices in the input `mat_list`
+        :type n_mat: integer
 
-        :param mat_list:
-        :type mat_list:
+        :param mat_list: list of 3x3 matrices of symmetry operations in input
+        :type mat_list: np.ndarray((n_mat, 3, 3), dtype = float )
 
-        :param b_field:
-        :type b_field:
+        :param b_field: direction of magnetic field
+        :type b_field: 3d vector, np.ndarray(3, dtype = float )
 
 
         output:
         =======
 
-        :param n_op:
-        :type n_op:
+        :param n_op: number of operations that fulfill the constraint of the desired magnetic field
+        :type n_op: integer
 
-        :param matrix:
-        :type matrix:
+        :param matrix: the list of matrices that act on the system constrained by the desired magnetic field
+        :type matrix: np.ndarray( (n_op, 3, 3), dtype = float )
 
         """
         # input data
@@ -931,26 +954,42 @@ class SOFI(algo):
         return n_op, matrix
 
 
-    def get_perm( self, nat, typ_in, coords, nbas, bas_list ):
+    def get_perm( self, nat, typ_in, coords, nm_in, mat_list ):
 
         '''
 
         Description:
+        Obtain the list of permutations and maximal distances for each matrix in input.
+
+        This is a wrapper to lib_get_perm() from library_sofi.f90
 
         Input:
         ======
 
-        nat
-        typ_in
-        coords
-        nbas
-        bas_list
+        :param nat: number of atoms in the structure
+        :type nat: integer
+
+        :param typ_in: atomic types of the structure
+        :type typ_in: np.ndarray( nat, dtype = integer or string )
+
+        :param coords: atomic positions in the structure
+        :type coords: np.ndarray((nat, 3), dtype = float )
+
+        :param nm_in: number of matrices in the `mat_list` input
+        :typ nm_in: integer
+
+        :param mat_list: list of input matrices
+        :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
         Output:
         =======
 
-        perm
-        dmax
+        :param perm: list of permutations corresponding to each matrix operation in input
+        :type perm: np.ndarray( (nm_in, nat), dtype = integer )
+
+        :param dmax: maximal distance (Hausdorff distance) corresponding to the application off
+                     each matrix in the `mat_list` to the structure. Can be seen as "score" of each symmetry
+        :type dmax: np.ndarray( nm_in, dtype = float )
 
         '''
 
@@ -961,8 +1000,8 @@ class SOFI(algo):
         n = c_int( nat )
         t = typ.ctypes.data_as( POINTER(c_int) )
         c = coords.ctypes.data_as( POINTER(c_double) )
-        n_m = c_int( nbas )
-        mats = bas_list.ctypes.data_as( POINTER(c_double) )
+        n_m = c_int( nm_in )
+        mats = mat_list.ctypes.data_as( POINTER(c_double) )
 
         # output data
         perm_data = (c_int*nat*nbas)()
@@ -984,32 +1023,49 @@ class SOFI(algo):
                                pointer(perm_data), pointer(dmax_data) )
 
         # cast the result into readable things
-        perm = np.ndarray((nbas, nat),dtype=int)
-        for n in range(nbas):
+        perm = np.ndarray((nm_in, nat),dtype=int)
+        for n in range(nm_in):
             perm[n]=perm_data[n][:]
-        dmax=np.ndarray(nbas, dtype=float)
-        dmax = dmax_data
+        dmax=np.ndarray(nm_in, dtype=float)
+        for n in range(nm_in):
+            dmax[n] = dmax_data[n]
 
         return perm, dmax
 
-    def get_combos( self, nat, typ_in, coords, nb, mat_list ):
+    def get_combos( self, nat, typ_in, coords, nm_in, mat_list ):
 
         '''
         Description:
+        Obtain all unique combinations of input matrices, which are symmetry operations of given structure.
+
+        This is a wrapper to the routine lib_get_combos() from library_sofi.f90
 
         Input:
         ======
-        nat
-        typ_in
-        coords
-        nb
-        mat_list
+
+        :param nat: number of atoms in the structure
+        :type nat: integer
+
+        :param typ_in: atomic types of the structure
+        :type typ_in: np.ndarray( nat, dtype = integer or string )
+
+        :param coords: atomic positions in the structure
+        :type coords: np.ndarray((nat, 3), dtype = float )
+
+        :param nm_in: number of matrices in the `mat_list` input
+        :typ nm_in: integer
+
+        :param mat_list: list of input matrices
+        :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
         Output:
         =======
-        nm_out
-        m_out
+        :param nm_out: number of matrices in the output list `mat_out`
+        :type nm_out: integer
+
+        :param mat_out: list of output matrices
+        :type mat_out: np.ndarray( (nm_out, 3, 3), dtype = float )
 
         '''
 
@@ -1021,12 +1077,12 @@ class SOFI(algo):
         n = c_int( nat )
         t = typ.ctypes.data_as( POINTER(c_int) )
         c = coords.ctypes.data_as( POINTER(c_double) )
-        nm = c_int( nb )
+        nm = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
 
         # output
         nb_out= c_int()
-        mat_out=(c_double*9*nmax)()
+        cmat_out=(c_double*9*nmax)()
 
         self.lib.lib_get_combos.argtypes=\
             [ c_int, \
@@ -1038,37 +1094,54 @@ class SOFI(algo):
               POINTER(POINTER(c_double*9*nmax)) ]
         self.lib.lib_get_combos.restype=None
 
-        self.lib.lib_get_combos( n, t, c, nm, mats, nb_out, pointer(mat_out) )
+        self.lib.lib_get_combos( n, t, c, nm, mats, nb_out, pointer(cmat_out) )
 
         nm_out=nb_out.value
-        m_out=np.ndarray( (nm_out,3,3), dtype=float)
+        mat_out=np.ndarray( (nm_out,3,3), dtype=float)
         for n in range(nm_out):
             m=0
             for i in range(3):
                 for j in range(3):
-                    m_out[n][i][j] = mat_out[n][m]
+                    mat_out[n][i][j] = cmat_out[n][m]
                     m+=1
-        return nm_out, m_out
+        return nm_out, mat_out
 
 
     def try_mat( self, nat, typ_in, coords, theta ):
         '''
         Description:
+        Apply a given matrix `theta` to the structure, and compute the distance between the transformed
+        and original structure. If the distance is small, then `theta` is a symmetry operation (or close to).
+        The distance is computed in a permutationally invariant way, using the CShDA algorithm, which
+        imposes a one-to-one assignment of the atoms. The value of distance corresponds to the maximal value
+        of distances between all assigned atomic pairs, which is the Hausdorff distance.
+
+        This is a wrapper to lib_try_mat() routine from library_sofi.f90
 
         Input:
         ======
 
-        nat
-        typ_in
-        coords
-        theta
+        :param nat: number of atoms in the structure
+        :type nat: integer
+
+        :param typ_in: atomic types of the structure
+        :type typ_in: np.ndarray( nat, dtype = integer or string )
+
+        :param coords: atomic positions in the structure
+        :type coords: np.ndarray((nat, 3), dtype = float )
+
+        :param theta: the input matrix of an orthonormal operation to be tested on structure
+        :type theta: np.ndarray((3,3), dtype = float)
 
 
         Output:
         =======
 
-        dh
-        perm
+        :param dh: the Hausdorff distance value
+        :type dh: float
+
+        :param perm: permutations of atoms which were assignmed by CShDA upon application of `theta`
+        :type perm: np.ndarray((nat), dtype = int )
 
         '''
         typ = self.tf_int( typ_in )
@@ -1101,19 +1174,43 @@ class SOFI(algo):
     def construct_operation( self, op, axis, angle ):
         '''
         Description:
+        Construct the 3x3 matrix corresponding to operation encoded by the Schoenflies Op,
+        such that it acts along the desired axis, and given angle.
+
+        This is a wrapper to lib_construct_operation() routine from library_sofi.f90
 
         Input:
         ======
 
-        op
-        axis
-        angle
+        :param op: Schoeflies Op name, possible values:
+                         - "Id" = identity
+                         - "I" = inversion
+                         - "C" = rotation
+                         - "S" = (roto-)reflection
+        :type op: string
+
+        :param axis: the axis along which the desired operation should act
+        :type axis: 3D vector, np.ndarray(3, dtype = float)
+
+        :param angle: the angle by which the desired operation should rotate, in units of 1/(2pi),
+                      e.g. the value `angle = 0.5` means half the circle, and `angle = -1.0/6.0`
+                      means rotation about the axis in negative direction for 1/6th of the circle
+        :type angle: float
 
 
         Output:
         =======
 
-        matrix
+        :param matrix: the matrix representation of desired operation
+        :type matrix: 3x3 matrix, np.ndarray((3, 3), dtype = float )
+
+
+        NOTE:
+        =====
+
+        The operation "Id" is equivalent to "C" about any axis for angle=0.0; and
+        similarly the operation "I" is equivalent to "S" with angle=0.5 about any axis.
+        The operation "S" with angle=0.0 is a reflection.
 
         '''
         c_op=op.encode()
@@ -1136,33 +1233,43 @@ class SOFI(algo):
                 m+=1
         return matrix
 
-    def mat_combos( self, nb, mat_list ):
+    def mat_combos( self, nm_in, mat_list ):
 
         '''
         Description:
+        Obtain all unique combinations of matrices in input, without checking them against any
+        specific structure.
+
+        This is a wrapper to routine lib_mat_combos() from library_sofi.f90
 
         Input:
         ======
-        nb
-        mat_list
+        :param nm_in: number of matrices in the `mat_list` input
+        :typ nm_in: integer
+
+        :param mat_list: list of input matrices
+        :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
         Output:
         =======
-        nm_out
-        m_out
+        :param nm_out: number of matrices in the output list `mat_out`
+        :type nm_out: integer
+
+        :param mat_out: list of output matrices
+        :type mat_out: np.ndarray( (nm_out, 3, 3), dtype = float )
 
         '''
 
         nmax=self._nmax
 
         #input
-        nm = c_int( nb )
+        nm = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
 
         # output
         nb_out= c_int()
-        mat_out=(c_double*9*nmax)()
+        cmat_out=(c_double*9*nmax)()
 
         self.lib.lib_mat_combos.argtypes=\
             [ \
@@ -1173,15 +1280,15 @@ class SOFI(algo):
              ]
         self.lib.lib_mat_combos.restype=None
 
-        self.lib.lib_mat_combos( nm, mats, nb_out, pointer(mat_out) )
+        self.lib.lib_mat_combos( nm, mats, nb_out, pointer(cmat_out) )
 
         nm_out=nb_out.value
-        m_out=np.ndarray( (nm_out,3,3), dtype=float)
+        mat_out=np.ndarray( (nm_out,3,3), dtype=float)
         for n in range(nm_out):
             m=0
             for i in range(3):
                 for j in range(3):
-                    m_out[n][i][j] = mat_out[n][m]
+                    mat_out[n][i][j] = cmat_out[n][m]
                     m+=1
-        return nm_out, m_out
+        return nm_out, mat_out
 
