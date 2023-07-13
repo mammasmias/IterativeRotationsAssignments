@@ -1635,7 +1635,7 @@
 
   subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
     !! generate combos of matrices without a structure
-    use sofi_tools, only: nmax, matrix_distance
+    use sofi_tools, only: nmax, matrix_distance, m_thr
     implicit none
     integer, intent(in) :: n_in
     real, dimension(3,3,n_in), intent(in) :: mat_in
@@ -1662,7 +1662,7 @@
              pp: do k = 1, ii
                 call matrix_distance( rmat, mat_out(:,:,k), dd )
 
-                if( dd .lt. 0.73 ) then
+                if( dd .lt. m_thr ) then
                    is_new = .false.
                    exit pp
                 endif
