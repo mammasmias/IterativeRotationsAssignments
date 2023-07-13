@@ -15,7 +15,7 @@
 
 !!==============================================================================
 !! This file defines the wrappers to IRA routines, which are part of the
-!! shared library shlib_ira.so.
+!! shared library libira.so.
 !! The routines here are defined with "bind(C)" and "use iso_c_binding", and
 !! they effectively behave as C-code. The arrays passed to these routines are
 !! assumed to be already allocated by the caller, and are assumed to have
