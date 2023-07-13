@@ -1,15 +1,24 @@
 # Description
 
 This is the repository of shape matching algorithm
-Iterative Rotations and Assignments (IRA), described in the publication
-[[1]](#1). It is also the main subject of the dissertation [[2]](#2), where a workflow
+Iterative Rotations and Assignments (IRA), and the Symmetry Operations FInder (SOFI) algorithm.
+
+IRA is described in the publication [[1]](#1).
+It is also the main subject of the dissertation [[2]](#2), where a workflow
 inserting IRA into an off-lattice kMC algorithm is developed.
 
+SOFI is described in the publication [[3]](#3).
 
 # Directory contents
 
- `/IRA`:
-   Contains the IRA software, see also `/IRA/README`.
+ `/src`:
+   Contains the source code of the algorithms, and the C-bound API library.
+
+ `/examples`:
+   Contains example programs which use different functionalities of the IRA/CShDA/SOFI algorithms.
+
+ `/interface`:
+   Contains interfaces to API, written in Fortran and Python.
 
  `/benchmark_test`:
    Contains data and other software used for benchmark tests done in [[1]](#1). See
@@ -17,12 +26,11 @@ inserting IRA into an off-lattice kMC algorithm is developed.
 
 
 # Compile and run
-To run IRA on any platform, you first need to compile it. See `/IRA/README`.
+To run IRA/SOFI on any platform, you first need to compile it. See `src/README`.
 
 
 # Terms and conditions
-The IRA software, contained in the `/IRA` directory, is subject to the license(s)
-provided in the `/IRA/LICENSE.txt` file.
+The software in this repository is subject to the license(s) provided in the `LICENSE.txt` file.
 
 
 ## References
@@ -41,10 +49,7 @@ and utility in a general off-lattice kMC kernel*, PhD dissertation,
 November 2021.
 [PDF link](http://thesesups.ups-tlse.fr/5109/1/2021TOU30132.pdf)
 
-<!-- <a id="3"> [3]</a> B. Temelso, J. M. Mabey, T. Kubota, N. Appiah-Padi, G. C. -->
-<!-- Shields, J. Chem. Inf. Model. 2017 57, 1054, DOI: -->
-<!-- [10.1021/acs.jcim.6b00546](https://doi.org/10.1021/acs.jcim.6b00546) -->
-
-<!-- <a id="4">[4]</a> Griffiths M. Niblett S. P., Wales D. J., J. Chem. Theory -->
-<!-- Comput. 2017 13, 4914, DOI: -->
-<!-- [10.1021/acs.jctc.7b00543](https://doi.org/10.1021/acs.jctc.7b00543) -->
+<a id="3">[3]</a>
+Gunde M., Salles N., Grisanti L., Hemeryck A., Martin Samos L.
+*SOFI: Finding point group symmetries in atomic clusters as finding the set of degenerate solutions in a shape-matching problem*,
+Journal of Chemical Information and Modeling (submitted)
