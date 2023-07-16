@@ -1,6 +1,6 @@
 import ira_mod
 
-sofi=ira_mod.SOFI('../../../src/libira.so')
+sofi=ira_mod.SOFI()
 
 import numpy as np
 

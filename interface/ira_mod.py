@@ -16,14 +16,23 @@
 
 from ctypes import *
 import numpy as np
-
+from os.path import dirname,abspath,join
+from inspect import getsourcefile
 
 class algo():
-    def __init__(self, shlib=None ):
-        if shlib is None:
-            raise ValueError("Please provide path to shared library file libira.so")
-        else:
-            self.lib = CDLL(shlib)
+    def __init__(self, shlib='' ):
+        # path to this file
+        mypath=dirname(abspath(getsourcefile(lambda:0)))
+        # one directory up
+        mypath=dirname(mypath)
+        # by default, the lib should be there:
+        path = join(mypath,"src/libira.so")
+
+        if shlib:
+            # user provde path
+            path=shlib
+
+        self.lib = CDLL(path)
 
     def tf_int(self, arr_in):
         """

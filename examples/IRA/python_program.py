@@ -36,9 +36,9 @@ import ira_mod
 
 
 #
-# initialize IRA with correct path of the shared library
+# initialize IRA
 #
-ira = ira_mod.IRA('../../src/libira.so')
+ira = ira_mod.IRA()
 
 #=================================================================
 # Demonstration how to match structures with equal number of atoms:

@@ -32,7 +32,7 @@ gc = np.mean( coords, axis=0 )
 coords = coords - gc
 
 ## initialize SOFI
-sofi = ira_mod.SOFI('../../src/libira.so')
+sofi = ira_mod.SOFI()
 
 ## threshold for symmetries
 sym_thr = 0.53
