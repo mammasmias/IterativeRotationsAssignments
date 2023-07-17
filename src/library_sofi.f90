@@ -182,13 +182,14 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )bind(C)
 end subroutine lib_get_symm_ops
 
 
-subroutine lib_get_pg( nbas, cptr_op_list, ppg )bind(C)
+subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C)
   use iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: nbas
   type( c_ptr ), value, intent(in) :: cptr_op_list
   !! c ptr to write output
   type( c_ptr ), intent(in) :: ppg
+  logical( c_bool ), value, intent(in) :: verbose
 
   !! f pointers
   type( c_ptr ), dimension(:), pointer :: p_lvl1
@@ -216,7 +217,7 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg )bind(C)
 
   call c_f_pointer( ppg, pg_char, [11] )
 
-  verb = .false.
+  verb = verbose
   call sofi_get_pg( nbas, op_list, pg, verb )
 
   n = len_trim(pg)

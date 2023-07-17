@@ -709,7 +709,7 @@ class SOFI(algo):
         return n_op, matrix
 
 
-    def get_pg( self, nm_in, mat_list):
+    def get_pg( self, nm_in, mat_list, verb=False):
 
         """
         wrapper to lib_get_pg() from library.f90
@@ -724,6 +724,10 @@ class SOFI(algo):
         :param mat_list: list of matrices containging symmetry operations
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
+        == optional ==
+        :param verb: verbosity of the output, verb=True outputs a report from get_pg() routine.
+        :type verb: logical
+
 
         output:
         =======
@@ -735,6 +739,7 @@ class SOFI(algo):
         # input data
         n = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
+        cverb = c_bool( verb )
 
 
         # output data
@@ -742,9 +747,9 @@ class SOFI(algo):
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_get_pg.argtypes = \
-            [ c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_char*11)) ]
+            [ c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_char*11)), c_bool ]
         self.lib.lib_get_pg.restype=None
-        self.lib.lib_get_pg( n, mats, pointer(pg))
+        self.lib.lib_get_pg( n, mats, pointer(pg), cverb)
 
         pg=pg.value.decode()
         return pg

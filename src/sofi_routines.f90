@@ -860,7 +860,8 @@
     do i = 1, nbas
        rmat = op_list(:,:,i)
        call sofi_analmat( rmat, op(i), n_int(i), power(i), ax_list(:,i), angle )
-       if(verb) write(*,'(i2,a3,i3,2x,3f8.3,x,f9.4)') i, op(i), n_int(i), ax_list(:,i), angle
+       if(verb) write(*,'(i2,a3,x,i0,"^",i0,2x,"axis:",x,3(f6.3,x),2x,"angle:",x,g0.4)') &
+            i, op(i), n_int(i), power(i), ax_list(:,i), angle
     end do
 
     uniq_ax(:,:) = 0.0
@@ -950,10 +951,10 @@
     if( max_n_loc .eq. 0 ) max_n_loc = 2
 
 
-    if(verb) then
-      write(*,*) 'largest n:', max_n_val, max_n_loc
-      write(*,*) 'ax:',ax_list(:,max_n_loc)
-    endif
+    ! if(verb) then
+    !   write(*,*) 'largest n:', max_n_val, max_n_loc
+    !   write(*,*) 'ax:',ax_list(:,max_n_loc)
+    ! endif
 
     !! get how many C ax have this n
     nr_n = count( nint(uniq_ax(4,:)) .eq. max_n_val )
