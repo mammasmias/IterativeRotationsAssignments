@@ -1018,8 +1018,8 @@ class SOFI(algo):
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
 
         # output data
-        perm_data = (c_int*nat*nbas)()
-        dmax_data = (c_double*nbas)()
+        perm_data = (c_int*nat*nm_in)()
+        dmax_data = (c_double*nm_in)()
 
 
         # have to set argtypes in here, since nat is not know in init
@@ -1029,8 +1029,8 @@ class SOFI(algo):
               POINTER(POINTER(c_double)), \
               c_int, \
               POINTER(POINTER(c_double)), \
-              POINTER(POINTER(c_int*nat*nbas)), \
-              POINTER(POINTER(c_double*nbas)) ]
+              POINTER(POINTER(c_int*nat*nm_in)), \
+              POINTER(POINTER(c_double*nm_in)) ]
         self.lib.lib_get_perm.restype=None
 
         self.lib.lib_get_perm( n, t, c, n_m, mats, \
