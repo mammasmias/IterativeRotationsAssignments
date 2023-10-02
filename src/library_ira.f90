@@ -26,7 +26,8 @@
 !! stored. Therefore, the output data appears as "intent(in)".
 !!==============================================================================
 
-subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )bind(C)
+subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )&
+     bind(C, name="lib_cshda")
   !! wrapper to the cshda routine from cshda.f90
   use iso_c_binding
   implicit none
@@ -74,7 +75,8 @@ end subroutine lib_cshda
 
 
 
-subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, found, dists )bind(C)
+subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, found, dists )&
+     bind(C, name="lib_cshda_pbc")
   !! wrapper to the cshda_pbc routine from cshda.f90
   use iso_c_binding
   implicit none
@@ -134,7 +136,7 @@ end subroutine lib_cshda_pbc
 
 subroutine lib_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
-     kmax_factor, rotation, translation, permutation, hd )bind(C)
+     kmax_factor, rotation, translation, permutation, hd )bind(C, name="lib_match")
   !!
   !! wrapper call to match two structures. This includes call to ira_unify to get apx,
   !! and then call to svdrot_m to obtain final match. Routines from ira_routines.f90

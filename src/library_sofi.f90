@@ -31,7 +31,7 @@
 subroutine lib_compute_all( nat, typ, coords, sym_thr, &
                             nmat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
-                            ax_list, angle_list, dmax_list, pg ) bind(C)
+                            ax_list, angle_list, dmax_list, pg ) bind(C, name="lib_compute_all")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
@@ -137,7 +137,8 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
 end subroutine lib_compute_all
 
 
-subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )bind(C)
+subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
+     bind(C, name="lib_get_symm_ops")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
@@ -182,7 +183,7 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )bind(C)
 end subroutine lib_get_symm_ops
 
 
-subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C)
+subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C, name="lib_get_pg")
   use iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: nbas
@@ -229,7 +230,8 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C)
 end subroutine lib_get_pg
 
 
-subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out )bind(C)
+subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out ) &
+     bind(C,name="lib_unique_ax_angle")
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: n_mat
@@ -282,7 +284,7 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out 
 end subroutine lib_unique_ax_angle
 
 
-subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C)
+subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analmat")
   use iso_c_binding
   implicit none
   !! in
@@ -321,7 +323,8 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C)
 end subroutine lib_analmat
 
 
-subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )bind(C)
+subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
+     bind(C, name="lib_ext_bfield")
   use iso_c_binding
   implicit none
 
@@ -375,7 +378,8 @@ subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )bind(C)
 end subroutine lib_ext_bfield
 
 
-subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)bind(C)
+subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)&
+     bind(C,name="lib_get_perm")
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
@@ -425,7 +429,8 @@ subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)
 end subroutine lib_get_perm
 
 
-subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out )bind(C)
+subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out )&
+     bind(C,name="lib_get_combos")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
@@ -472,7 +477,7 @@ subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out 
 end subroutine lib_get_combos
 
 
-subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C)
+subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="lib_try_mat")
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
@@ -539,7 +544,7 @@ subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C)
 end subroutine lib_try_mat
 
 
-subroutine lib_construct_operation( op, axis, angle, matrix )bind(C)
+subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_construct_operation")
   use iso_c_binding
   implicit none
   interface
@@ -584,7 +589,7 @@ subroutine lib_construct_operation( op, axis, angle, matrix )bind(C)
 end subroutine lib_construct_operation
 
 
-subroutine lib_mat_combos( nbas_in, bas_in, nbas_out, bas_out )bind(C)
+subroutine lib_mat_combos( nbas_in, bas_in, nbas_out, bas_out )bind(C,name="lib_mat_combos")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none

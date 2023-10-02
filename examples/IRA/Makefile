@@ -15,12 +15,14 @@ LIBLAPACK = -llapack
 # compilation flags
 #
 FFLAGS = -Wall -fdefault-real-8 -fbounds-check
+CFLAGS =
 
 SRC = $(PWD)
 SRCDIR = ../../src
+INTERFDIR = $(SRC)/../../interface
 OBJ = $(SRC)/Obj
 
-MOD = -I$(OBJ) -J$(OBJ)
+MOD = -I$(OBJ) -J$(OBJ) -I$(INTERFDIR)
 
 #
 # path to src/libira.so
@@ -73,7 +75,7 @@ $(IRAUNI_X): $(o_uni)
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CCOMP) -o $@ $^ $(SHLIB) -ldl
+	$(CCOMP) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB)
 
 
 msg:

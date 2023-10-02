@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* load the C headers of ira lib */
+#include "iralib_interf.h"
 
 /* a small function to slice strings */
 void slice(const char* str, char* result, size_t start, size_t end)
@@ -9,11 +11,6 @@ void slice(const char* str, char* result, size_t start, size_t end)
   strncpy(result, str + start, end - start);
 }
 
-/* declare functions from library_sofi.f90 */
-extern void lib_compute_all( int, int *, double **, double, \
-                             int *, double **, int **,      \
-                             char **, int **, int **,       \
-                             double **, double **, double **, char ** );
 
 int main( void ){
 
@@ -107,6 +104,11 @@ int main( void ){
   dmax_data = malloc( sizeof(double)*nmax);
   op_data = malloc(sizeof(char)*2*nmax+1);
   pg = malloc(sizeof(char)*11);
+
+
+  /* lib_get_symm_ops( nat, typ, coords, sym_thr, &nmat, &mat_data ); */
+  /* lib_get_pg( nmat, &mat_data, &pg, 0 ); */
+  /* lib_unique_ax_angle( nmat, &mat_data, &op_data, &ax_data, &angle_data ); */
 
   /* call SOFI compute_all */
   lib_compute_all( nat, typ, coords, sym_thr,     \

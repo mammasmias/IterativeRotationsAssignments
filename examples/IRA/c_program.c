@@ -2,21 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* load the C headers of ira lib */
+#include "iralib_interf.h"
 
 /*
   This is a small example program in C, that shows how to declare and call routines
-  from the shared libraru shlib_ira.so, that are defined in library_ira.f90
+  from the shared library shlib_ira.so, that are defined in library_ira.f90
 
    WARNING: this code is NOT very robust to read different file types, empty lines, etc.
    USE AT OWN RISK
+
+   Note the input file containing the structure is passed as argument, not stdin. Run as:
+
+       c_program.x  input_file
+
 */
-
-
-/* declare external function from library_ira.f90 */
-extern void lib_match( int, int*, double **, int *,  \
-                       int, int*, double **, int *,  \
-                       double, double **, double **, \
-                       int **, double * );
 
 
 int main( int argc, char **argv ){
