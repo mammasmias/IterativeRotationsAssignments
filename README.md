@@ -18,7 +18,7 @@ SOFI is described in the publication [[3]](#3).
    Contains example programs which use different functionalities of the IRA/CShDA/SOFI algorithms.
 
  `/interface`:
-   Contains interfaces to API, written in Fortran and Python.
+   Contains the C-headers, and Python module to interface the API.
 
  `/benchmark_test`:
    Contains data and other software used for benchmark tests done in [[1]](#1). See
