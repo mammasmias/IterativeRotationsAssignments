@@ -282,15 +282,15 @@
 
     !! first vector, normalize
     norm_v = sqrt( dot_product(vec1,vec1) )
-    basis(1,:) = vec1(:) / norm_v
     !! if too small, return with fail = .true.
     if( norm_v .lt. small_size_thr ) return
+    basis(1,:) = vec1(:) / norm_v
 
     !! second vector, normalize
     norm_v = sqrt( dot_product(vec2,vec2) )
-    basis(2,:) = vec2(:) / norm_v
     !! if too small, return with fail = .true.
     if( norm_v .lt. small_size_thr ) return
+    basis(2,:) = vec2(:) / norm_v
 
     !! check projection
     prod = dot_product( basis(1,:), basis(2,:) )
