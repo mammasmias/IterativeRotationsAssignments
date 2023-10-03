@@ -69,7 +69,7 @@ $(OBJ):
 # Compile the f90 executable
 #====
 $(IRAUNI_X): $(o_uni)
-	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SRCDIR)/Obj/*.o $(LIBLAPACK)
+	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBLAPACK)
 
 #====
 # Compile the C executable
