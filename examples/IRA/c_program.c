@@ -100,15 +100,6 @@ int main( int argc, char **argv ){
 
 
 
-
-  int *found;
-  double* dists;
-  found = malloc( sizeof(int)*nat2);
-  dists = malloc( sizeof(double)*nat2);
-  lib_cshda( nat1, typ1, data1, nat2, typ2, data2, 999.9, &found, &dists );
-  printf("here\n");
-
-
   /* form the candidate arrays */
   int *candidate1;
   int *candidate2;
