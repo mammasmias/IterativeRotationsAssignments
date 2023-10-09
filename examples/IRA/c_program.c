@@ -101,6 +101,14 @@ int main( int argc, char **argv ){
 
 
 
+  int *found;
+  double* dists;
+  found = malloc( sizeof(int)*nat2);
+  dists = malloc( sizeof(double)*nat2);
+  lib_cshda( nat1, typ1, data1, nat2, typ2, data2, 999.9, &found, &dists );
+  printf("here\n");
+
+
   /* form the candidate arrays */
   int *candidate1;
   int *candidate2;
@@ -146,8 +154,8 @@ int main( int argc, char **argv ){
   /* =========================================== */
   /* main call to lib_match from library_ira.f90 */
   /* =========================================== */
-  lib_match( nat1, typ1, coords1, candidate1, \
-             nat2, typ2, coords2, candidate2, \
+  lib_match( nat1, typ1, &coords1[0][0], candidate1, \
+             nat2, typ2, &coords2[0][0], candidate2, \
              kmax_factor, &data_rotation, &translation, &perm, &hd );
 
 

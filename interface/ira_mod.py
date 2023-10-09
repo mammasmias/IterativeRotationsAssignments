@@ -195,15 +195,15 @@ class IRA(algo):
 
         # non-pbc
         self.lib.lib_cshda.argtypes = \
-            [c_int, POINTER(c_int), POINTER(POINTER(c_double)), \
-             c_int, POINTER(c_int), POINTER(POINTER(c_double)), \
+            [c_int, POINTER(c_int), POINTER(c_double), \
+             c_int, POINTER(c_int), POINTER(c_double), \
              c_double, \
              POINTER(POINTER(c_int*nat2)), POINTER(POINTER(c_double*nat2))]
         self.lib.lib_cshda.restype=None
         # pbc
         self.lib.lib_cshda_pbc.argtypes = \
-            [c_int, POINTER(c_int), POINTER(POINTER(c_double)), \
-             c_int, POINTER(c_int), POINTER(POINTER(c_double)), \
+            [c_int, POINTER(c_int), POINTER(c_double), \
+             c_int, POINTER(c_int), POINTER(c_double), \
              POINTER(c_double), c_double,  \
              POINTER(POINTER(c_int*nat2)), POINTER(POINTER(c_double*nat2))]
         self.lib.lib_cshda_pbc.restype=None
@@ -396,8 +396,8 @@ class IRA(algo):
         c_hd = c_double()
 
         self.lib.lib_match.argtypes = \
-            [ c_int, POINTER(c_int), POINTER(POINTER(c_double)), POINTER(c_int), \
-              c_int, POINTER(c_int), POINTER(POINTER(c_double)), POINTER(c_int), \
+            [ c_int, POINTER(c_int), POINTER(c_double), POINTER(c_int), \
+              c_int, POINTER(c_int), POINTER(c_double), POINTER(c_int), \
               c_double, POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), \
               POINTER(POINTER(c_int*nat2)), POINTER(c_double) ]
         self.lib.lib_match.restype=None
@@ -583,7 +583,7 @@ class SOFI(algo):
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_compute_all.argtypes = \
-            [ c_int, POINTER(c_int), POINTER(POINTER(c_double)), c_double, \
+            [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
               POINTER(POINTER(c_char*2*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
@@ -690,7 +690,7 @@ class SOFI(algo):
         mat_data = (c_double*9*nmax)()
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_get_symm_ops.argtypes = \
-            [ c_int, POINTER(c_int), POINTER(POINTER(c_double)), c_double, \
+            [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)) ]
         self.lib.lib_get_symm_ops.restype=None
 
@@ -747,7 +747,7 @@ class SOFI(algo):
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_get_pg.argtypes = \
-            [ c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_char*11)), c_bool ]
+            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), c_bool ]
         self.lib.lib_get_pg.restype=None
         self.lib.lib_get_pg( n, mats, pointer(pg), cverb)
 
@@ -804,7 +804,7 @@ class SOFI(algo):
         angle_data = (c_double*n_op)()
 
         self.lib.lib_unique_ax_angle.argtypes = \
-            [ c_int, POINTER(POINTER(c_double)), POINTER(POINTER(c_char*nl)) , \
+            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*nl)) , \
               POINTER(POINTER(c_double*3*n_op)), POINTER(POINTER(c_double*n_op)) ]
         self.lib.lib_unique_ax_angle.restype=None
 
@@ -881,7 +881,7 @@ class SOFI(algo):
         angle=c_double()
 
         self.lib.lib_analmat.argtypes=\
-            [ POINTER(POINTER(c_double)), POINTER(POINTER(c_char*3)), \
+            [ POINTER(c_double), POINTER(POINTER(c_char*3)), \
               POINTER(c_int), POINTER(c_int), POINTER(POINTER(c_double*3)), \
               POINTER(c_double) ]
         self.lib.lib_analmat.restype=None
@@ -949,7 +949,7 @@ class SOFI(algo):
         n_out=c_int()
         m_out=(c_double*9*n_mat)()
 
-        self.lib.lib_ext_bfield.argtypes = [ c_int, POINTER(POINTER(c_double)), \
+        self.lib.lib_ext_bfield.argtypes = [ c_int, POINTER(c_double), \
                                              POINTER(c_double), POINTER(c_int), \
                                              POINTER(POINTER(c_double*9*n_mat))]
         self.lib.lib_ext_bfield.restype=None
@@ -1026,9 +1026,9 @@ class SOFI(algo):
         self.lib.lib_get_perm.argtypes = \
             [ c_int, \
               POINTER(c_int), \
-              POINTER(POINTER(c_double)), \
+              POINTER(c_double), \
               c_int, \
-              POINTER(POINTER(c_double)), \
+              POINTER(c_double), \
               POINTER(POINTER(c_int*nat*nm_in)), \
               POINTER(POINTER(c_double*nm_in)) ]
         self.lib.lib_get_perm.restype=None
@@ -1101,9 +1101,9 @@ class SOFI(algo):
         self.lib.lib_get_combos.argtypes=\
             [ c_int, \
               POINTER(c_int), \
-              POINTER(POINTER(c_double)), \
+              POINTER(c_double), \
               c_int, \
-              POINTER(POINTER(c_double)), \
+              POINTER(c_double), \
               POINTER(c_int), \
               POINTER(POINTER(c_double*9*nmax)) ]
         self.lib.lib_get_combos.restype=None
@@ -1171,8 +1171,8 @@ class SOFI(algo):
         c_perm=(c_int*nat)()
 
         self.lib.lib_try_mat.argtypes = \
-            [ c_int, POINTER(c_int), POINTER(POINTER(c_double)), \
-              POINTER(POINTER(c_double)), POINTER(c_double), POINTER(POINTER(c_int*nat)) ]
+            [ c_int, POINTER(c_int), POINTER(c_double), \
+              POINTER(c_double), POINTER(c_double), POINTER(POINTER(c_int*nat)) ]
         self.lib.lib_try_mat.restype = None
 
         self.lib.lib_try_mat( n, t, c, r, pointer(c_dh), pointer(c_perm) )
@@ -1288,7 +1288,7 @@ class SOFI(algo):
         self.lib.lib_mat_combos.argtypes=\
             [ \
               c_int, \
-              POINTER(POINTER(c_double)), \
+              POINTER(c_double), \
               POINTER(c_int), \
               POINTER(POINTER(c_double*9*nmax)) \
              ]

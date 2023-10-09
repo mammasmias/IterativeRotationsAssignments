@@ -16,6 +16,7 @@ int main( void ){
 
   int nat;
   int *typ;
+  double *coords_data;
   double **coords;
   double sym_thr;
 
@@ -28,15 +29,14 @@ int main( void ){
   typ=malloc( sizeof(int)*nat);
 
   /* allocate data space which is contigus in memory, after cut it into (3,nat) for coords */
-  double *data;
-  data = malloc( sizeof(double)*3*nat);
+  coords_data = malloc( sizeof(double)*3*nat);
   /* allocate coords */
   coords=malloc( sizeof(double)*nat );
   /* coords[i] points to a stride in data for each atom */
   int n=0;
   for( int i=0; i< nat; i++)
     {
-      coords[i] = &data[n];
+      coords[i] = &coords_data[n];
       n+=3;
     }
 
@@ -106,12 +106,9 @@ int main( void ){
   pg = malloc(sizeof(char)*11);
 
 
-  /* lib_get_symm_ops( nat, typ, coords, sym_thr, &nmat, &mat_data ); */
-  /* lib_get_pg( nmat, &mat_data, &pg, 0 ); */
-  /* lib_unique_ax_angle( nmat, &mat_data, &op_data, &ax_data, &angle_data ); */
 
   /* call SOFI compute_all */
-  lib_compute_all( nat, typ, coords, sym_thr,     \
+  lib_compute_all( nat, typ, &coords[0][0], sym_thr,     \
                    &nmat, &mat_data, &perm_data,  \
                    &op_data, &n_data, &p_data,    \
                    &ax_data, &angle_data, &dmax_data, &pg );

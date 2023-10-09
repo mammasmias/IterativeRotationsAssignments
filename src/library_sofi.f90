@@ -54,7 +54,6 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   !! pointers for c input arrays
   integer(c_int), dimension(:), pointer :: ptyp
   real( c_double), dimension(:,:), pointer :: pcoords
-  type( c_ptr ), dimension(:), pointer :: patom
   real( c_double ), dimension(:,:,:), pointer :: pmat_list
   integer( c_int ), dimension(:,:), pointer :: pperm_list
   integer( c_int ), dimension(:), pointer :: pn_list
@@ -80,8 +79,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   !! receive input
   !!
   call c_f_pointer( typ, ptyp, [nat] )
-  call c_f_pointer( coords, patom, [nat] )
-  call c_f_pointer( patom(1), pcoords, [3,nat] )
+  call c_f_pointer( coords, pcoords, [3,nat] )
   !!
   !! set pointers from c to f
   !!
@@ -154,7 +152,6 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
   !! F pointers
   integer(c_int), dimension(:), pointer :: ptr_typ
   real(c_double), dimension(:,:), pointer :: ptr_coords
-  type( c_ptr ), dimension(:), pointer :: ptr_atom
   real( c_double), dimension(:,:,:), pointer :: ptr_op
   !! memory in f
   integer(c_int) :: n, i
@@ -164,8 +161,7 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
   !! receive input
   !!
   call c_f_pointer( typ, ptr_typ, [nat] )
-  call c_f_pointer( coords, ptr_atom, [nat] )
-  call c_f_pointer( ptr_atom(1), ptr_coords, [3,nat] )
+  call c_f_pointer( coords, ptr_coords, [3,nat] )
 
   call c_f_pointer( sym_list, ptr_op, [3,3,nmax] )
 
@@ -193,7 +189,6 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C, name="lib_get_p
   logical( c_bool ), value, intent(in) :: verbose
 
   !! f pointers
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real(c_double), dimension(:,:,:), pointer :: op_list
   ! character(len=10, kind=c_char), pointer :: str
@@ -204,8 +199,7 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C, name="lib_get_p
   logical :: verb
 
   !! receive input
-  call c_f_pointer( cptr_op_list, p_lvl1, [nbas] )
-  call c_f_pointer( p_lvl1(1), p_lvl2, [9,nbas] )
+  call c_f_pointer( cptr_op_list, p_lvl2, [9,nbas])
 
 
   !! put the array into proper fortran shape
@@ -241,7 +235,6 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out 
   type( c_ptr ), intent(in) :: ax_out
   type( c_ptr ), intent(in) :: angle_out
 
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real(c_double), dimension(:,:,:), pointer :: mat_list
   real( c_double ), dimension(:,:), pointer :: ptr_ax
@@ -253,8 +246,7 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out 
   character(len=2) :: this_op
 
   !! receive input
-  call c_f_pointer( cptr_mat_list, p_lvl1, [n_mat] )
-  call c_f_pointer( p_lvl1(1), p_lvl2, [9,n_mat] )
+  call c_f_pointer( cptr_mat_list, p_lvl2, [9,n_mat] )
   call c_f_pointer( ax_out, ptr_ax, [3,n_mat] )
   call c_f_pointer( angle_out, ptr_angle, [n_mat] )
 
@@ -297,7 +289,6 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analma
   real( c_double ), intent(out) :: angle
 
   !! f pointers
-  type( c_ptr ), dimension(:), pointer :: ax1
   real(c_double), dimension(:,:), pointer :: rmat
   real( c_double), dimension(:), pointer :: ax
   character(len=1, kind=c_char), dimension(:), pointer :: op_fptr
@@ -307,8 +298,7 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analma
   character(len=2) :: op
 
   !! connect c to f
-  call c_f_pointer( c_rmat, ax1, [3] )
-  call c_f_pointer( ax1(1), rmat, [3,3] )
+  call c_f_pointer( c_rmat, rmat, [3,3] )
   rmat = transpose(rmat)
   call c_f_pointer( c_op, op_fptr, [3] )
   call c_f_pointer( c_ax, ax, [3] )
@@ -338,7 +328,6 @@ subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
   ! type( c_ptr ), value :: cop_out
 
   !! f ptrs
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double ), dimension(:), pointer :: b_field
 
@@ -351,8 +340,7 @@ subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
   m=n_mat
 
   !! connect c to f
-  call c_f_pointer( cop_list, p_lvl1, [n_mat] )
-  call c_f_pointer( p_lvl1(1), p_lvl2, [9,n_mat] )
+  call c_f_pointer( cop_list, p_lvl2, [9,n_mat] )
 
   call c_f_pointer( cb_field, b_field, [3] )
   call c_f_pointer( cop_out, pmat_list, [3,3,n_mat])
@@ -394,8 +382,6 @@ subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)
   !! F pointers
   integer(c_int), dimension(:), pointer :: ptr_typ
   real(c_double), dimension(:,:), pointer :: ptr_coords
-  type( c_ptr ), dimension(:), pointer :: ptr_atom
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double), dimension(:,:,:), pointer :: ptr_op
   integer( c_int ), dimension(:,:), pointer :: pperm_list
@@ -404,14 +390,12 @@ subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)
   integer :: i
 
   call c_f_pointer( typ, ptr_typ, [nat] )
-  call c_f_pointer( coords, ptr_atom, [nat] )
-  call c_f_pointer( ptr_atom(1), ptr_coords, [3,nat] )
+  call c_f_pointer( coords, ptr_coords, [3,nat] )
 
   call c_f_pointer( perm_list, pperm_list, [nat,nbas] )
   call c_f_pointer( dmax_list, pdmax_list, [nbas] )
 
-  call c_f_pointer( bas_list, p_lvl1, [nbas])
-  call c_f_pointer( p_lvl1(1), p_lvl2, [9,nbas] )
+  call c_f_pointer( bas_list, p_lvl2, [9,nbas] )
 
   !! receive input array and reshape into fortran order
   allocate( ptr_op(1:3,1:3,1:nbas))
@@ -445,8 +429,6 @@ subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out 
 
   integer(c_int), dimension(:), pointer :: ptr_typ
   real(c_double), dimension(:,:), pointer :: ptr_coords
-  type( c_ptr ), dimension(:), pointer :: ptr_atom
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double), dimension(:,:,:), pointer :: pcombo_out
 
@@ -454,11 +436,9 @@ subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out 
   integer :: i, m
 
   call c_f_pointer( typ, ptr_typ, [nat] )
-  call c_f_pointer( coords, ptr_atom, [nat] )
-  call c_f_pointer( ptr_atom(1), ptr_coords, [3,nat] )
+  call c_f_pointer( coords, ptr_coords, [3,nat] )
 
-  call c_f_pointer( bas_in, p_lvl1, [nbas_in])
-  call c_f_pointer( p_lvl1(1), p_lvl2, [9,nbas_in] )
+  call c_f_pointer( bas_in, p_lvl2, [9,nbas_in] )
 
   do i = 1, nbas_in
      bas_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
@@ -490,8 +470,6 @@ subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="lib_try_m
   !! f pointers
   integer(c_int), dimension(:), pointer :: ptr_typ
   real(c_double), dimension(:,:), pointer :: ptr_coords
-  type( c_ptr ), dimension(:), pointer :: ptr_atom
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   integer( c_int ), dimension(:), pointer :: p_found
 
@@ -504,11 +482,9 @@ subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="lib_try_m
 
   !! connect pointers
   call c_f_pointer( typ, ptr_typ, [nat] )
-  call c_f_pointer( coords, ptr_atom, [nat] )
-  call c_f_pointer( ptr_atom(1), ptr_coords, [3,nat] )
+  call c_f_pointer( coords, ptr_coords, [3,nat] )
 
-  call c_f_pointer( rmat, p_lvl1, [3] )
-  call c_f_pointer( p_lvl1(1), p_lvl2, [3,3] )
+  call c_f_pointer( rmat, p_lvl2, [3,3] )
   frmat = transpose( p_lvl2 )
 
   !! rotate with rmat
@@ -599,7 +575,6 @@ subroutine lib_mat_combos( nbas_in, bas_in, nbas_out, bas_out )bind(C,name="lib_
   type( c_ptr ), intent(in) :: bas_out
 
 
-  type( c_ptr ), dimension(:), pointer :: p_lvl1
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double), dimension(:,:,:), pointer :: pcombo_out
 
@@ -607,8 +582,7 @@ subroutine lib_mat_combos( nbas_in, bas_in, nbas_out, bas_out )bind(C,name="lib_
   real(c_double), dimension(3,3,nbas_in) :: bas_inp
   integer :: i, m
 
-  call c_f_pointer( bas_in, p_lvl1, [nbas_in])
-  call c_f_pointer( p_lvl1(1), p_lvl2, [9,nbas_in] )
+  call c_f_pointer( bas_in, p_lvl2, [9,nbas_in] )
 
   do i = 1, nbas_in
      bas_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])

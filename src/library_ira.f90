@@ -44,21 +44,20 @@ subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dist
 
   !! f ptrs
   integer(c_int), dimension(:), pointer :: p_typ1, p_typ2, p_found
-  type( c_ptr ), dimension(:), pointer :: p_atm1, p_atm2
   real( c_double ), dimension(:,:), pointer :: p_coords1, p_coords2
   real( c_double ), dimension(:), pointer :: p_dists
 
   !! local f memory
   real(c_double) :: some_thr
 
+  integer :: i
 
   !! connect c ptrs to f
   call c_f_pointer( typ1, p_typ1, [nat1] )
   call c_f_pointer( typ2, p_typ2, [nat2] )
-  call c_f_pointer( coords1, p_atm1, [nat1] )
-  call c_f_pointer( coords2, p_atm2, [nat2] )
-  call c_f_pointer( p_atm1(1), p_coords1, [3,nat1] )
-  call c_f_pointer( p_atm2(1), p_coords2, [3,nat2] )
+
+  call c_f_pointer( coords1, p_coords1, [3,nat1] )
+  call c_f_pointer( coords2, p_coords2, [3,nat2] )
 
   call c_f_pointer( found, p_found, [nat2] )
   call c_f_pointer( dists, p_dists, [nat2] )
@@ -94,7 +93,6 @@ subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, fo
 
   !! f ptrs
   integer(c_int), dimension(:), pointer :: p_typ1, p_typ2, p_found
-  type( c_ptr ), dimension(:), pointer :: p_atm1, p_atm2
   real( c_double ), dimension(:,:), pointer :: p_coords1, p_coords2
   real( c_double ), dimension(:), pointer :: p_dists, p_lat
 
@@ -106,10 +104,8 @@ subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, fo
   !! connect c ptrs to f
   call c_f_pointer( typ1, p_typ1, [nat1] )
   call c_f_pointer( typ2, p_typ2, [nat2] )
-  call c_f_pointer( coords1, p_atm1, [nat1] )
-  call c_f_pointer( coords2, p_atm2, [nat2] )
-  call c_f_pointer( p_atm1(1), p_coords1, [3,nat1] )
-  call c_f_pointer( p_atm2(1), p_coords2, [3,nat2] )
+  call c_f_pointer( coords1, p_coords1, [3,nat1] )
+  call c_f_pointer( coords2, p_coords2, [3,nat2] )
   call c_f_pointer( lat, p_lat, [9] )
   f_lat = reshape( p_lat, [3,3] )
   !! receive C-style array, do transpose
@@ -168,7 +164,6 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
 
   !! f ptrs
   integer(c_int), dimension(:), pointer :: p_typ1, p_typ2, p_c1, p_c2, p_perm
-  type( c_ptr ), dimension(:), pointer :: p_atm1, p_atm2
   real( c_double ), dimension(:,:), pointer :: p_coords1, p_coords2
   real( c_double ), dimension(:,:), pointer :: p_matrix
   real(c_double), dimension(:), pointer :: p_tr
@@ -183,10 +178,8 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   !! connect c ptrs to f
   call c_f_pointer( typ1, p_typ1, [nat1] )
   call c_f_pointer( typ2, p_typ2, [nat2] )
-  call c_f_pointer( coords1, p_atm1, [nat1] )
-  call c_f_pointer( coords2, p_atm2, [nat2] )
-  call c_f_pointer( p_atm1(1), p_coords1, [3,nat1] )
-  call c_f_pointer( p_atm2(1), p_coords2, [3,nat2] )
+  call c_f_pointer( coords1, p_coords1, [3,nat1] )
+  call c_f_pointer( coords2, p_coords2, [3,nat2] )
   call c_f_pointer( candidate1, p_c1, [nat1] )
   call c_f_pointer( candidate2, p_c2, [nat2] )
 
