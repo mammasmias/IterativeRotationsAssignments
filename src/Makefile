@@ -18,7 +18,7 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -Wall -fdefault-real-8 -fbounds-check
+FFLAGS = -Wall -fdefault-real-8 -fbounds-check -fPIC
 
 SRC = $(PWD)
 OBJ = $(SRC)/Obj
@@ -84,7 +84,7 @@ $(IRALIB): $(outils)
 # pack the shared library
 #====
 $(SHLIB): $(olib) $(outils)
-	$(FCOMP) -o $@ -shared -fPIC $(MOD) $^ $(FLAGS) $(LIBLAPACK)
+	$(FCOMP) -o $@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK)
 
 msg:
 	@echo 'Use one of the following:'
