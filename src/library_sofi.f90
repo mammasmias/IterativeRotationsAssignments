@@ -155,8 +155,10 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
   real( c_double), dimension(:,:,:), pointer :: ptr_op
   !! memory in f
   integer(c_int) :: n, i
+  integer :: ierr
 
   ! write(*,*) 'enter symmop'
+  n_sym = 0_c_int
   !!
   !! receive input
   !!
@@ -165,7 +167,8 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
 
   call c_f_pointer( sym_list, ptr_op, [3,3,nmax] )
 
-  call sofi_get_symmops( nat, ptr_typ, ptr_coords, symm_thr, n, ptr_op )
+  call sofi_get_symmops( nat, ptr_typ, ptr_coords, symm_thr, n, ptr_op, ierr )
+  if( ierr /= 0 ) return
 
   !! set output data
   n_sym=n

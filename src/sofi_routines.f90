@@ -64,13 +64,14 @@
     character(len=10),             intent(out) :: pg
 
     real :: dum
-    integer :: i
+    integer :: i, ierr
     real, dimension(3) :: rdum
     real, dimension(3,3) :: rmat
     logical :: verb
 
     !! get symmetries with sym_thr
-    call sofi_get_symmops( nat, typ, coords, sym_thr, nmat, mat_list )
+    call sofi_get_symmops( nat, typ, coords, sym_thr, nmat, mat_list, ierr )
+    if( ierr /= 0 ) return
 
     !! get combos, can produce symm above sym_thr
     call sofi_get_combos( nat, typ, coords, nmat, mat_list )
@@ -110,9 +111,11 @@
     integer, allocatable :: perm_list(:,:)
     real, allocatable :: op_list(:,:,:)
     real, dimension(3) :: gc
-    integer :: i
+    integer :: i, ierr
     integer, dimension(nat) :: typ
     real, dimension(3,nat) :: coords
+
+    pg = ""
 
     allocate( op_list(1:3,1:3,1:nmax) )
     allocate( perm_list(1:nat, 1:nmax) )
@@ -128,8 +131,9 @@
     end do
 
     !! get list of symm operations
-    call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list )
+    call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list, ierr )
     ! call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list, perm_list )
+    if( ierr /= 0 ) return
 
     !! get PG name
     ! call sofi_get_pg( n_op, op_list, pg, verb )
@@ -146,7 +150,7 @@
   end subroutine sofi_struc_pg
 
 
-  subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list )
+  subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ierr )
   ! subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, perm_list )
   !! main SOFI routine
     !!====================================
@@ -174,6 +178,7 @@
     !!
     integer,                           intent(out) :: n_so       ! number of found symm operations
     real, dimension(3,3,nmax),         intent(out) :: op_list   ! the list of operations
+    integer,                           intent(out) :: ierr
     ! integer, dimension(1:nat, 1:nmax), intent(out) :: perm_list  ! list of associated permutations
 
     !! local
@@ -190,10 +195,13 @@
     real :: small_norm
     ! real, dimension(3) :: v1, v2
 
+    ierr = 0
+
     ! if( size(op_list,3) .ne. nmax .or. size(perm_list,2) .ne. nmax ) then
     if( size(op_list,3) .ne. nmax ) then
-    write(*,*) 'the op_list on input should have maxsize:',nmax
-       stop
+       write(*,*) 'the op_list on input should have maxsize:',nmax
+       ierr = -1
+       return
     end if
 
     !! zero the output data
@@ -276,9 +284,16 @@
     ! write(*,*) i,j
     if( i .gt. nat .or. j .gt. nat ) then
       write(*,*) repeat('%',40)
-      write(*,*) "ERROR: cannot set beta. Linear structure?"
+      write(*,*) "ERROR: cannot set beta. Linear structure? Or not properly shifted?"
       write(*,*) repeat('%',40)
-      stop
+      write(*,*) "small norm:",small_norm
+      write(*,*) nat
+      write(*,*) "i=",i,"j=",j
+      do i = 1, nat
+         write(*,*) typ(i), coords(:,i)
+      end do
+      ierr = -2
+      return
     endif
 
     !! distances of atoms i,j
@@ -407,6 +422,8 @@
     integer, dimension(nat) :: found
     real, dimension(nat) :: dists
 
+    real :: svd_rot(3,3), svd_tr(3), rdum(3)
+
     do i = 1, nbas
        !! get matrix from list
        rmat = bas_list(:,:,i)
@@ -421,6 +438,30 @@
        !    write(*,*) "!! ERROR IN: sofi_get_perm, failed cshda?"
        !    stop
        ! endif
+
+       !! correct with svd tr, rot should be diag(1,1,1), tr could be something small
+       call svd_forcerot( nat, typ, coords, nat, t_local(found), c_local(:,found), svd_rot, svd_tr )
+       ! write(*,*) "rot after svd"
+       ! write(*,*) svd_rot(1,:)
+       ! write(*,*) svd_rot(2,:)
+       ! write(*,*) svd_rot(3,:)
+       ! write(*,*) "tr after svd"
+       ! write(*,*) svd_tr
+
+       !! apply svd
+       do j = 1, nat
+          c_local(:,j) = matmul( svd_rot, c_local(:,j) ) + svd_tr
+       end do
+
+       !! recompute dists, now should be good
+       dists(:) = 0.0
+       do j = 1, nat
+          rdum = coords(:,j) - c_local(:,found(j))
+          dists(j) = norm2( rdum )
+       end do
+
+
+
        perm_list(:,i) = found(1:nat)
        dmax_list(i) = maxval( dists(1:nat) )
        ! write(*,*) i, maxval(dists(1:nat))
@@ -1521,6 +1562,10 @@
     character(len=2), dimension(n_mat) :: op_list
     real, dimension(3) :: ax
     real, dimension(3,3) :: rmat
+    real :: dotp_equal
+
+    !! threshold value for dot product between two vectors which should be equal
+    dotp_equal = 0.95
 
     !! get all axes
     do i = 1, n_mat
@@ -1536,11 +1581,11 @@
     do i = 1, n_mat
        do j = 1, n_mat
           dotp = dot_product( ax_out(:,i), ax_out(:,j) )
-          if( abs(dotp) .gt. 0.99 ) then
+          if( abs(dotp) .gt. dotp_equal ) then
              !! axes are equivalent, flip
-             ax_out(:,j) = dotp * ax_out(:,j)
+             ax_out(:,j) = -ax_out(:,j)
              !! flip also angle
-             angle_out(j) = dotp*angle_out(j)
+             angle_out(j) = -angle_out(j)
           endif
        end do
        ! write(*,'(i4,x,3f9.4,4x,f9.4)') i, ax_out(:,i), angle_out(i)
@@ -1556,8 +1601,8 @@
           !!
           ! write(*,*) i,j, dotp, angle_diff
           if( op_list(i) .eq. op_list(j) .and. &
-              dotp .gt. 0.99 .and. &
-              angle_diff .lt. 1e-3 ) then
+              dotp .gt. dotp_equal .and. &
+              angle_diff .lt. 1e-2 ) then
              !!
              !! found ambiguous operations (i,j)
              !! could just randomly decide and flip either, but let's
