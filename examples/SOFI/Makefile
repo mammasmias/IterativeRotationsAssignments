@@ -17,8 +17,8 @@ LIBLAPACK = -llapack
 FFLAGS = -Wall -fdefault-real-8 -fbounds-check
 CFLAGS =
 
-SRC = $(PWD)
-SRCDIR = ../../src
+SRC := $(PWD)
+SRCDIR := $(SRC)/../../src
 INTERFDIR = $(SRC)/../../interface
 OBJ = $(SRC)/Obj
 
