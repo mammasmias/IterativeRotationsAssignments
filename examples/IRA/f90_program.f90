@@ -4,7 +4,7 @@ program main
   integer :: nat1, nat2, dnat, nat_pass
   integer, allocatable :: typ1(:), typ2(:), typ_pass(:)
   real, allocatable :: coords1(:,:), coords2(:,:), coords_pass(:,:)
-  integer :: i
+  integer :: i, ierr
   integer, allocatable :: candidate_1(:), candidate_2(:)
   real, dimension(3) :: translation, svd_tr
   real, dimension(3,3) :: rotation, svd_rot
@@ -71,10 +71,12 @@ program main
   !! =================================
   !!
   allocate( permutation(1:nat2))
-  kmax_factor = 1.8
+  kmax_factor = 1.9
   call ira_svd( nat1, typ1, coords1, &
                 nat2, typ2, coords2, &
-                kmax_factor, rotation, translation, permutation, hd, rmsd )
+                kmax_factor, rotation, translation, permutation, hd, rmsd, ierr )
+
+  if( ierr /= 0 ) return
 
   !!
   !! apply to structure 2

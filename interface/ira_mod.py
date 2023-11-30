@@ -394,16 +394,20 @@ class IRA(algo):
         c_tr = (c_double*3)()
         c_perm = (c_int*nat2)()
         c_hd = c_double()
+        c_err = c_int()
 
         self.lib.lib_match.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), POINTER(c_int), \
               c_int, POINTER(c_int), POINTER(c_double), POINTER(c_int), \
               c_double, POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), \
-              POINTER(POINTER(c_int*nat2)), POINTER(c_double) ]
+              POINTER(POINTER(c_int*nat2)), POINTER(c_double), POINTER(c_int) ]
         self.lib.lib_match.restype=None
 
         self.lib.lib_match( n1, t1, c1, cd1, n2, t2, c2, cd2, \
-                            km, pointer(c_rmat), pointer(c_tr), pointer(c_perm), pointer(c_hd) )
+                            km, pointer(c_rmat), pointer(c_tr), pointer(c_perm), pointer(c_hd), pointer(c_err) )
+        if c_err.value != 0:
+            msg = "error"
+            raise ValueError(msg)
 
         # convert output C data
         rotation = np.ndarray((3,3),dtype=float)

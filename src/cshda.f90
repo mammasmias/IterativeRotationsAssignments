@@ -197,7 +197,7 @@
     integer, dimension(nat1) :: search
     integer :: i, j, k
     integer :: idx_old
-    integer :: n_count
+    integer :: n_count, nmax
     real :: dist, dist_old
 
     found(:) = 0
@@ -246,12 +246,13 @@
     j = minloc( chkmat(i,:), 1 )
 
     n_count = 1
+    nmax = nat1*nat2
     do while( search(i) .gt. 0 )
        !!
        !! return on huge number of searches
        !! ( in worst case do n searches on each of the n sites -> n**2 )
        !!
-       if( n_count .gt. nat1*nat2) then
+       if( n_count .gt. nmax ) then
           found(i) = 0
           dists(i) = 999.9
           write(*,*) " PROBLEM in cshda: huge number of searches"

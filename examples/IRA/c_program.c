@@ -142,13 +142,19 @@ int main( int argc, char **argv ){
   double kmax_factor;
   kmax_factor = 1.8;
 
+  int err;
+
   /* =========================================== */
   /* main call to lib_match from library_ira.f90 */
   /* =========================================== */
   lib_match( nat1, typ1, &coords1[0][0], candidate1, \
              nat2, typ2, &coords2[0][0], candidate2, \
-             kmax_factor, &data_rotation, &translation, &perm, &hd );
+             kmax_factor, &data_rotation, &translation, &perm, &hd, &err );
 
+  if( err != 0){
+    printf(" err code: %d\n", err);
+    return err;
+  }
 
   printf(" \n");
   printf( "final Hausdorff distance: %lf\n", hd );

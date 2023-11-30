@@ -132,7 +132,7 @@ end subroutine lib_cshda_pbc
 
 subroutine lib_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
-     kmax_factor, rotation, translation, permutation, hd )bind(C, name="lib_match")
+     kmax_factor, rotation, translation, permutation, hd, cerr ) bind(C, name="lib_match")
   !!
   !! wrapper call to match two structures. This includes call to ira_unify to get apx,
   !! and then call to svdrot_m to obtain final match. Routines from ira_routines.f90
@@ -146,6 +146,7 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   !!   coords2(:,i) = matmul( rotation, coords2(:,idx) ) + translation
   !!
   use iso_c_binding
+  use err_module, only: get_err_msg
   implicit none
   integer(c_int), value, intent(in) :: nat1
   type( c_ptr ), value, intent(in) :: typ1
@@ -161,6 +162,7 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   type( c_ptr ), intent(in) :: translation
   type( c_ptr ), intent(in) :: permutation
   real(c_double), intent(out) :: hd
+  integer( c_int ), intent(out) :: cerr
 
   !! f ptrs
   integer(c_int), dimension(:), pointer :: p_typ1, p_typ2, p_c1, p_c2, p_perm
@@ -168,7 +170,7 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   real( c_double ), dimension(:,:), pointer :: p_matrix
   real(c_double), dimension(:), pointer :: p_tr
 
-  integer :: i
+  integer :: i, ierr
   real( c_double ), dimension(3,nat2) :: fcoords2
   integer(c_int), dimension(nat2) :: ftyp2
   real( c_double ), dimension(3,3) :: srot
@@ -189,8 +191,16 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
 
   !! get apx
   call ira_unify( nat1, p_typ1, p_coords1, p_c1, &
-       nat2, p_typ2, p_coords2, p_c2, &
-       kmax_factor, p_matrix, p_tr, p_perm, hd )
+                  nat2, p_typ2, p_coords2, p_c2, &
+                  kmax_factor, p_matrix, p_tr, p_perm, hd, ierr )
+  cerr = int( ierr, c_int )
+  write(*,*) "HD after unify",hd
+  if( ierr /= 0 ) then
+     write(*,*) "ERROR in lib_match"
+     write(*,*) get_err_msg( ierr )
+     return
+  end if
+
 
   !! transform
   ftyp2(:) = p_typ2(p_perm(:))

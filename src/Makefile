@@ -18,7 +18,7 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -Wall -fdefault-real-8 -fbounds-check -fPIC
+FFLAGS = -Wall -fdefault-real-8 -fbounds-check -fPIC -O1
 
 SRC = $(PWD)
 OBJ = $(SRC)/Obj
@@ -38,6 +38,7 @@ SHLIB = libira.so
 #
 # utils
 futils := \
+	$(SRC)/err_module.f90 \
 	$(SRC)/sorting_module.f90 \
 	$(SRC)/set_candidate.f90 \
 	$(SRC)/cshda.f90 \

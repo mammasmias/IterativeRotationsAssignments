@@ -97,7 +97,7 @@
 
     !!
     !! for the single precision real use this:
-    !call sgesvd ( jobu, jobv, m, n, a_copy, lda, sdiag, u, ldu, v, ldv, work, &
+    ! call sgesvd ( jobu, jobv, m, n, a_copy, lda, sdiag, u, ldu, v, ldv, work, &
     !     lwork, info )
     !!
     !!
@@ -273,7 +273,7 @@
 
     !! threshold for too small vectors
     !! (for numerical reasons, don't want to normalize a too small vector)
-    small_size_thr = 1e-2
+    small_size_thr = 1e-1
 
     fail = .true.
     basis(:,:) = 0.0
@@ -570,8 +570,8 @@
 
 
   subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
-                         nat2, typ2_in, coords2_in, &
-                         kmax, gamma, gamma_idx, hd_out, some_thr )
+                       nat2, typ2_in, coords2_in, &
+                       kmax, gamma, gamma_idx, hd_out, some_thr )
     !> @detail
     !! Routine that does the loop over coords2 to find U_J, here called gamma.
     !! This is the main IRA loop over the space of rotations.
@@ -625,7 +625,6 @@
     logical :: fail
     integer :: count
     integer :: m_fin
-
 
     !! set local copies
     typ1(:) = typ1_in(:)
@@ -780,6 +779,7 @@
     !!
     if( idx1 .eq. 0 .or. idx2 .eq. 0 .or. m_fin .eq. 0) then
        !! if nothing is found: BUG (probably too small kmax)
+       !! But can also happen when searching nonequal nat...
        !! output gamma as identity matrix, all idx to zero
        gamma_idx(:) = 0
        gamma(:,:) = 0.0
@@ -810,7 +810,7 @@
 
   subroutine ira_unify( nat1, typ1_in, coords1_in, candidate_1, &
                         nat2, typ2_in, coords2_in, candidate_2, &
-                        kmax_factor, rotation, translation, permutation, hd_out )
+                        kmax_factor, rotation, translation, permutation, hd_out, ierr )
     !!
     !! There is no SVD at the end of this routine!
     !!
@@ -819,6 +819,8 @@
     !!    j = permutation(i)
     !!    coords2(:,i) = matmul( rotation, coords2(:,j) ) + tr
 
+    use err_module
+    implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1_in
     real, dimension(3, nat1), intent(in) :: coords1_in
@@ -832,6 +834,7 @@
     real, dimension(3),       intent(out) :: translation
     integer, dimension(nat2), intent(out) :: permutation
     real,                     intent(out) :: hd_out
+    integer,                  intent(out) :: ierr
 
     integer :: i, ii, j, jj
     integer, dimension(nat1) :: typ1
@@ -848,13 +851,15 @@
     logical :: fail
     real :: dist_k
     integer, dimension(3) :: gamma_idx
+    integer :: count
 
+    ierr = 0
 
     !!
     !! REQUIREMENT: nat1 .le. nat2
     if( nat1 .gt. nat2) then
-      write(*,*) 'error in ira_unify: nat1 > nat2',nat1, nat2
-      stop
+      write(*,*) "error in ira_unify: nat1 > nat2",nat1, nat2
+      return
     endif
 
     !! make local copies of input structures
@@ -882,8 +887,9 @@
     end do
 
 
-    hd_old = 999.9
+    hd_old = 999.8
     some_thr = 9999.9
+    count = 0
     !!
     !! for each candidate center in struc 1:
     !!
@@ -988,10 +994,8 @@
           !! get gamma for this central atm
           !!
           call get_gamma_m(nat1, typ1(1:nat1), coords1(1:3,1:nat1), &
-              nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
-              dist_k, gamma, gamma_idx, hd, some_thr )
-
-
+                           nat2, typ2(1:nat2), coords2(1:3,1:nat2), &
+                           dist_k, gamma, gamma_idx, hd, some_thr )
           !!
           !! rotate to found basis
           !!
@@ -1001,6 +1005,8 @@
 
           !! if gamma is found:
           if( gamma_idx(1) .ne. 0 ) then
+            !!
+            count = count + 1
             !!
             !! find permutations
             !!
@@ -1067,6 +1073,18 @@
     !! identical to the input structures
     !!
 
+    !! no attempts have been made, return error (too small dist_k?)
+    if( count .eq. 0 ) then
+       ierr = ERR_TOO_SMALL_KMAX
+       return
+    end if
+
+    !! nothing has been found, this is probably same reason: too small dist_k
+    if( c1min .eq. 0 .or. c2min .eq. 0 ) then
+       ierr = ERR_OTHER
+       return
+    end if
+
 
     !!
     !! set found data
@@ -1111,9 +1129,10 @@
 
 
   subroutine ira_svd( nat1, typ1_in, coords1_in, &
-                      nat2, typ2_in, coords2_in, &
-                      kmax_factor, rotation, translation, permutation, &
-                      hd, rmsd )
+                    nat2, typ2_in, coords2_in, &
+                    kmax_factor, rotation, translation, permutation, &
+                    hd, rmsd, ierr )
+    use err_module, only: get_err_msg
     implicit none
     integer, intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1_in
@@ -1127,6 +1146,7 @@
     integer, dimension(nat2), intent(out) :: permutation
     real, intent(out) :: hd
     real, intent(out) :: rmsd
+    integer, intent(out) :: ierr
 
     integer, dimension(nat1) :: typ1
     real, dimension(3,nat1) :: coords1
@@ -1159,9 +1179,13 @@
     !! call main ira with candidates
     !!
     call ira_unify( nat1, typ1, coords1, candidate_1, &
-        nat2, typ2, coords2, candidate_2, &
-        kmax_factor, rotation, translation, permutation, hd_out)
-
+                    nat2, typ2, coords2, candidate_2, &
+                    kmax_factor, rotation, translation, permutation, hd_out, ierr )
+    if( ierr .ne. 0 ) then
+       ! write(*,*) "error in ira_unify! ierr code:", ierr
+       ! write(*,*) get_err_msg( ierr )
+       return
+    end if
     !!
     !! apply found transformation
     !!
@@ -1220,3 +1244,17 @@
     rmsd = sqrt(rmsd/nat1)
 
   end subroutine ira_svd
+
+
+  subroutine ira_get_errmsg( ierr, msg )
+    use err_module, only: get_err_msg
+    implicit none
+    integer, intent(in) :: ierr
+    character(512), intent(out) :: msg
+
+    character(:), allocatable :: me
+
+    allocate( me, source=get_err_msg(ierr) )
+    msg = me
+    deallocate(me)
+  end subroutine ira_get_errmsg
