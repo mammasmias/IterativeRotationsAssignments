@@ -212,7 +212,11 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   !! call svd
   call svdrot_m( nat1, p_typ1, p_coords1, &
        nat1, ftyp2(1:nat1), fcoords2(:,1:nat1), &
-       srot, str )
+       srot, str, ierr )
+  if( ierr /= 0 ) then
+     return
+  end if
+
 
   !! apply svd
   do i = 1, nat2

@@ -415,7 +415,7 @@
     integer, dimension(nat, nbas), intent(out) :: perm_list
     real, dimension(nbas), intent(out) :: dmax_list
 
-    integer :: i, j
+    integer :: i, j, ierr
     real, dimension(3,3) :: rmat
     integer, dimension(nat) :: t_local
     real, dimension(3,nat) :: c_local
@@ -440,7 +440,8 @@
        ! endif
 
        !! correct with svd tr, rot should be diag(1,1,1), tr could be something small
-       call svd_forcerot( nat, typ, coords, nat, t_local(found), c_local(:,found), svd_rot, svd_tr )
+       call svd_forcerot( nat, typ, coords, nat, t_local(found), c_local(:,found), svd_rot, svd_tr, ierr )
+       if( ierr /= 0 ) return
        ! write(*,*) "rot after svd"
        ! write(*,*) svd_rot(1,:)
        ! write(*,*) svd_rot(2,:)
@@ -668,6 +669,8 @@
     real, dimension(3,nat) :: coords
     real, dimension(3,3) :: svd_r
     real, dimension(3) :: svd_t  !, ax
+
+    integer :: ierr
     ! real :: dd, det1
 
     !! working copies
@@ -691,7 +694,11 @@
       !! call to IRA lib
       !! find correction from svd
       call svd_forcerot( nat_ref, typ_ref, coords_ref, &
-            nat, typ, coords, svd_r, svd_t)
+           nat, typ, coords, svd_r, svd_t, ierr )
+      if( ierr /= 0 ) then
+         return
+      end if
+
 
       !! this shoud not happen, positive determinant is forced by svd_forcerot
       ! call determinant3x3(svd_r,det1)

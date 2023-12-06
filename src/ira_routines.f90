@@ -49,7 +49,7 @@
   end subroutine sort
 
 
-  subroutine svd( m, n, a, u, s, v )
+  subroutine svd( m, n, a, u, s, v, ierr )
     !! routine that calls LAPACK svd routine
     !!=========================================
     !!
@@ -70,6 +70,7 @@
     real, dimension(m,n), intent(out) :: s
     real, dimension(m,n), intent(out) :: u
     real, dimension(m,n), intent(out) :: v
+    integer,              intent(out) :: ierr
 
     real, dimension(m,n) :: a_copy
     real, dimension(min(m,n)) :: sdiag
@@ -77,6 +78,7 @@
     integer :: lwork, i, info, lda, ldu, ldv
     character(len=3) :: jobu,jobv
 
+    ierr = 0
 
     lwork = max ( 3 * min ( m, n ) + max ( m, n ), 5 * min ( m, n ) )
 
@@ -110,6 +112,7 @@
       write ( *, '(a)' ) '  The SVD could not be calculated.'
       write ( *, '(a)' ) '  LAPACK routine DGESVD returned a nonzero'
       write ( *, '(a,i8)' ) '  value of the error flag, INFO = ', info
+      ierr = -1
       return
     end if
     !
@@ -335,7 +338,7 @@
 
   subroutine svdrot_m( nat1, typ1, coords1_in, &
                        nat2, typ2, coords2_in, &
-                       rmat, translate)
+                       rmat, translate, ierr )
     !> @detail
     !! Optimal rotation by SVD.
     !!
@@ -374,6 +377,7 @@
     real, dimension(3,nat2),  intent(in) :: coords2_in
     real,dimension(3,3),      intent(out) :: rmat
     real, dimension(3),       intent(out) :: translate
+    integer,                  intent(out) :: ierr
 
     real, allocatable :: coords1(:,:)
     real, allocatable :: coords2(:,:)
@@ -403,7 +407,27 @@
     matrix = matmul( coords1, transpose(coords2))
 
     !! call svd routine
-    call svd(3, 3, matrix, u, smat, vt )
+    call svd(3, 3, matrix, u, smat, vt, ierr )
+    if( ierr/= 0 ) then
+       write(*,*) "error in svd for strucs:"
+       write(*,*) nat1
+       write(*,*) "struc1"
+       do i = 1, nat1
+          write(*,*) typ1(i), coords1(:,i)
+       end do
+       write(*,*) nat2
+       write(*,*) "struc2"
+       do i = 1, nat2
+          write(*,*) typ2(i), coords2(:,i)
+       end do
+       write(*,*) "With the H matrix:"
+       do i = 1, 3
+          write(*,'(3f12.6)') matrix(i,:)
+       end do
+       flush(5)
+       return
+    end if
+
 
     !! set final rotation
     rmat = matmul(u, vt)
@@ -434,7 +458,7 @@
 
   subroutine svd_forcerot( nat1, typ1, coords1_in, &
                        nat2, typ2, coords2_in, &
-                       rmat, translate)
+                       rmat, translate, ierr )
     !> @detail
     !! Optimal rotation by SVD.
     !!
@@ -472,6 +496,7 @@
     real, dimension(3,nat2),  intent(in) :: coords2_in
     real,dimension(3,3),      intent(out) :: rmat
     real, dimension(3),       intent(out) :: translate
+    integer,                  intent(out) :: ierr
 
     real, allocatable :: coords1(:,:)
     real, allocatable :: coords2(:,:)
@@ -507,7 +532,26 @@
 
 
     !! call svd routine
-    call svd(3, 3, matrix, u, smat, vt )
+    call svd(3, 3, matrix, u, smat, vt, ierr )
+    if( ierr /= 0 ) then
+       write(*,*) "error in svd for strucs:"
+       write(*,*) nat1
+       write(*,*) "struc1"
+       do i = 1, nat1
+          write(*,*) typ1(i), coords1(:,i)
+       end do
+       write(*,*) nat2
+       write(*,*) "struc2"
+       do i = 1, nat2
+          write(*,*) typ2(i), coords2(:,i)
+       end do
+       write(*,*) "With the H matrix:"
+       do i = 1, 3
+          write(*,'(3f12.6)') matrix(i,:)
+       end do
+       return
+    end if
+
 
     ! call determinant3x3(u, det_u)
     ! write(*,*) 'u:', det_u
@@ -853,7 +897,7 @@
     integer, dimension(3) :: gamma_idx
     integer :: count
 
-    ierr = 0
+    ierr = ERR_OTHER
 
     !!
     !! REQUIREMENT: nat1 .le. nat2
@@ -886,6 +930,12 @@
       permutation(i) = i
     end do
 
+    rotation(:,:) = 0.0
+    rotation(1,1) = 1.0
+    rotation(2,2) = 1.0
+    rotation(3,3) = 1.0
+    translation(:) = 0.0
+    hd_out = 999.9
 
     hd_old = 999.8
     some_thr = 9999.9
@@ -1023,6 +1073,10 @@
 
 
           ! write(*,*) 'aa:',c1, c2, hd, some_thr, hd_old
+          ! write(*,*) "gamma:"
+          ! write(*, '(3f8.4)') gamma(1,:)
+          ! write(*, '(3f8.4)') gamma(2,:)
+          ! write(*, '(3f8.4)') gamma(3,:)
           !!
           if( hd .lt. hd_old ) then
             hd_old = hd
@@ -1068,6 +1122,15 @@
 
     end do
 
+    ! write(*,*) "beta_min:"
+    ! write(*,'(3f8.4)') beta_min(1,:)
+    ! write(*,'(3f8.4)') beta_min(2,:)
+    ! write(*,'(3f8.4)') beta_min(3,:)
+    ! write(*,*) "gamma_min:"
+    ! write(*,'(3f8.4)') gamma_min(1,:)
+    ! write(*,'(3f8.4)') gamma_min(2,:)
+    ! write(*,'(3f8.4)') gamma_min(3,:)
+
     !!
     !! at the end of this loop, the structures 1 and 2 should be
     !! identical to the input structures
@@ -1076,12 +1139,14 @@
     !! no attempts have been made, return error (too small dist_k?)
     if( count .eq. 0 ) then
        ierr = ERR_TOO_SMALL_KMAX
+       ! write(*,*) "count=0", ierr
        return
     end if
 
     !! nothing has been found, this is probably same reason: too small dist_k
     if( c1min .eq. 0 .or. c2min .eq. 0 ) then
        ierr = ERR_OTHER
+       ! write(*,*) "another err"
        return
     end if
 
@@ -1124,6 +1189,7 @@
     !! set hd
     hd_out = maxval(dists(1:nat1))
 
+    ierr = 0
 
   end subroutine ira_unify
 
@@ -1201,7 +1267,11 @@
     !!
     call svdrot_m( nat1, typ1, coords1, &
         nat1, typ2(1:nat1), coords2(:,1:nat1), &
-        svd_rot, svd_tr )
+        svd_rot, svd_tr, ierr )
+    if( ierr /= 0 ) then
+       return
+    end if
+
 
     !!
     !! apply svd
