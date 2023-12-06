@@ -193,35 +193,70 @@
     !! local
     !!
     real, dimension(3) :: rij
-    real, dimension(nat1,nat2) :: chkmat
+    real(kind=4), dimension(3) :: srij, ci, cj
+    real(kind=4) :: dx, dy, dz, th, m_th
+    ! real, dimension(nat1,nat2) :: chkmat
+    real(kind=4), dimension(nat1,nat2) :: chkmat
     integer, dimension(nat1) :: search
-    integer :: i, j, k
+    integer :: i, j, k, ti, tj
     integer :: idx_old
     integer :: n_count, nmax
-    real :: dist, dist_old
+    real(kind=4) :: dist, dist_old, dmin
 
     found(:) = 0
     dists(:) = 999.9
     !!
     !! set up distance matrix
-    chkmat(:,:) = 0.0
+    ! chkmat(:,:) = 0.0
+    chkmat(:,:) = 995.0
     !!
     !! ATTENTION: the double loop needs to go from 1 to nat, for i and j
     !!    because there are permutations in the set, so the distance matrix is
     !!    not symmetric!!!
     !!
+    th = real( some_threshold, 4)
+    m_th = -th
     do i = 1, nat1
+       ti = typ1(i)
+       ci = real( coords1(:,i), 4 )
+       dmin = huge( dmin )
        do j = 1, nat2
           !!
-          rij = coords1(:,i) - coords2(:,j)
-          dist = sqrt( dot_product(rij, rij) )
+          tj = typ2(j)
           !!
           !! if the atoms are not of same typ, set some large distance:
           !! like this they will not be found assigned
           !!
-          if( typ1(i) .ne. typ2(j) ) dist = 990.0
+          if( ti .ne. tj ) then
+             chkmat(i,j) = 990.0
+             cycle
+          end if
           !!
+          cj = real( coords2(:,j), 4)
+          !!
+          !! no need to compute things that will not match due to
+          !! the threshold.
+          !!
+          dx = ci(1) - cj(1)
+          if( dx .lt. m_th ) cycle
+          if( dx .gt. th ) cycle
+          !!
+          dy = ci(2) - cj(2)
+          if( dy .lt. m_th ) cycle
+          if( dy .gt. th ) cycle
+          !!
+          dz = ci(3) - cj(3)
+          if( dz .lt. m_th ) cycle
+          if( dz .gt. th ) cycle
+          !!
+          !!
+          srij = (/ dx, dy, dz /)
+          dist = sqrt( dot_product(srij, srij) )
+
           chkmat(i,j) = dist
+          !!
+          !! keep for minimum row
+          dmin = min( dmin, dist )
           !!
        end do
        !!
@@ -229,7 +264,9 @@
        !! if any row chkmat(i,:) has all values above some_threshold,
        !! then there is no way that Hausdorff distance be lower than some_threshold.
        !! This criterion is used for early return of cshda.
-       if( minval(chkmat(i,:)) .gt. some_threshold ) then
+       ! if( minval(chkmat(i,:)) .gt. real(some_threshold,4) ) then
+       ! if( minval(chkmat(i,:)) .gt. th ) then
+       if( dmin .gt. th ) then
           return
        endif
        !!
@@ -287,7 +324,7 @@
              !! if the previous found is closer, set the current distance
              !! to smth big, so its not found ever again!
              !!
-             chkmat(i,j) = 999.9
+             chkmat(i,j) = 999.0
              !!
              !!
              !! and the current index should be searched again
@@ -300,7 +337,7 @@
              !! if the previous found is larger then the new, the old idx should
              !! be searched again and the same distance should not be found!
              !!
-             chkmat(idx_old, j) = 999.9
+             chkmat(idx_old, j) = 999.0
              search( idx_old ) = 1
              !!
           endif
@@ -310,7 +347,7 @@
        !! set found data
        !!
        found(i) = j
-       dists(i) = dist
+       dists(i) = real(dist)
        !!
        !! early exit idea:
        !!  if any dist is above some_threshold, then Hausdorff cannot be below it.
