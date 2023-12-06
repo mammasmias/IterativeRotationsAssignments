@@ -194,7 +194,7 @@
     !!
     real, dimension(3) :: rij
     real(kind=4), dimension(3) :: srij, ci, cj
-    real(kind=4) :: dx, dy, dz, th, m_th
+    real(kind=4) :: dx, dy, dz, th, m_th, th2
     ! real, dimension(nat1,nat2) :: chkmat
     real(kind=4), dimension(nat1,nat2) :: chkmat
     integer, dimension(nat1) :: search
@@ -202,11 +202,16 @@
     integer :: idx_old
     integer :: n_count, nmax
     real(kind=4) :: dist, dist_old, dmin
+    real(kind=4), dimension(3,nat1) :: c1_4
+    real(kind=4), dimension(3,nat2) :: c2_4
 
+    !! drop precision of coords
+    c1_4 = real( coords1, 4 )
+    c2_4 = real( coords2, 4 )
     found(:) = 0
     dists(:) = 999.9
     !!
-    !! set up distance matrix
+    !! set up distance matrix, compute elements as dist^2, do sqrt at the end
     ! chkmat(:,:) = 0.0
     chkmat(:,:) = 995.0
     !!
@@ -215,10 +220,11 @@
     !!    not symmetric!!!
     !!
     th = real( some_threshold, 4)
+    th2 = th*th
     m_th = -th
     do i = 1, nat1
        ti = typ1(i)
-       ci = real( coords1(:,i), 4 )
+       ci = c1_4(:,i)
        dmin = huge( dmin )
        do j = 1, nat2
           !!
@@ -232,7 +238,8 @@
              cycle
           end if
           !!
-          cj = real( coords2(:,j), 4)
+          ! cj = real( coords2(:,j), 4)
+          cj = c2_4(:,j)
           !!
           !! no need to compute things that will not match due to
           !! the threshold.
@@ -251,7 +258,8 @@
           !!
           !!
           srij = (/ dx, dy, dz /)
-          dist = sqrt( dot_product(srij, srij) )
+          ! dist = sqrt( dot_product(srij, srij) )
+          dist = dot_product(srij, srij)
 
           chkmat(i,j) = dist
           !!
@@ -266,7 +274,8 @@
        !! This criterion is used for early return of cshda.
        ! if( minval(chkmat(i,:)) .gt. real(some_threshold,4) ) then
        ! if( minval(chkmat(i,:)) .gt. th ) then
-       if( dmin .gt. th ) then
+       ! if( dmin .gt. th ) then
+       if( dmin .gt. th2 ) then
           return
        endif
        !!
@@ -370,6 +379,11 @@
        !! add this i to last spot
        k = k + 1
        found(k) = i
+    end do
+
+    !! do sqrt of dists
+    do i = 1, nat2
+       dists(i) = sqrt(dists(i))
     end do
 
   end subroutine cshda
