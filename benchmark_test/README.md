@@ -1,3 +1,16 @@
+=======================
+NOTE:
+=====
+
+The contents of this directory have been moved to: [zenodo](https://zenodo.org/doi/10.5281/zenodo.10568513). 
+The original `README.md` file is kept below, for the sake of completeness.
+
+=======================
+
+
+
+
+
 # Directory contents
 Benchmark test of the IRA algorithm has been done in [[1]](#1). Present directory
 contains the data and software, other than IRA, used in the test.

@@ -22,7 +22,7 @@ SOFI is described in the publication [[3]](#3).
 
  `/benchmark_test`:
    Contains data and other software used for benchmark tests done in [[1]](#1). See
-   also `/benchmark_test/README`.
+   also `/benchmark_test/README`. NOTE: the contents have been moved to [zenodo](https://zenodo.org/doi/10.5281/zenodo.10568513).
 
 
 # Compile and run
