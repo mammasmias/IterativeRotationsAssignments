@@ -52,4 +52,4 @@ November 2021.
 <a id="3">[3]</a>
 Gunde M., Salles N., Grisanti L., Hemeryck A., Martin Samos L.
 *SOFI: Finding point group symmetries in atomic clusters as finding the set of degenerate solutions in a shape-matching problem*,
-Journal of Chemical Information and Modeling (submitted)
+ (submitted)
