@@ -4,7 +4,7 @@ import numpy as np
 # auxiliary function for reading .xyz files
 #
 def read_xyz(fname):
-    typ = np.genfromtxt( fname, skip_header=2, usecols=[0] )
+    typ = np.genfromtxt( fname, skip_header=2, usecols=[0], dtype=None, encoding=None )
     coords = np.genfromtxt( fname, skip_header = 2, usecols = [1,2,3], dtype=np.float64 )
     nat = len( typ )
     cc=np.ndarray( (nat,3), dtype=np.float64, order="C" )
