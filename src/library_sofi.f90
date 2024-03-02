@@ -31,7 +31,7 @@
 subroutine lib_compute_all( nat, typ, coords, sym_thr, &
                             nmat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
-                            ax_list, angle_list, dmax_list, pg ) bind(C, name="lib_compute_all")
+                            ax_list, angle_list, dmax_list, pg, prin_ax ) bind(C, name="lib_compute_all")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
@@ -50,6 +50,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   type( c_ptr ), intent(in) :: angle_list
   type( c_ptr ), intent(in) :: dmax_list
   type( c_ptr ), intent(in) :: pg
+  type( c_ptr ), intent(in) :: prin_ax
 
   !! pointers for c input arrays
   integer(c_int), dimension(:), pointer :: ptyp
@@ -61,6 +62,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   real( c_double ), dimension(:,:), pointer :: pax_list
   real( c_double ), dimension(:), pointer :: pangle_list
   real( c_double ), dimension(:), pointer :: pdmax_list
+  real( c_double ), dimension(:), pointer :: pprin_ax
   character(len=1, kind=c_char), dimension(:), pointer :: pg_char
   character(len=1, kind=c_char), dimension(:), pointer :: op_char
 
@@ -91,6 +93,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   call c_f_pointer( angle_list, pangle_list, [nmax] )
   call c_f_pointer( dmax_list, pdmax_list, [nmax] )
   call c_f_pointer( pg, pg_char, [10+1] )
+  call c_f_pointer( prin_ax, pprin_ax, [3] )
 
   !!
   !! compute SOFI
@@ -98,8 +101,10 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   call sofi_compute_all( nat, ptyp, pcoords, sym_thr, &
        nb, pmat_list, pperm_list, &
        fop_list, pn_list, pp_list, &
-       pax_list, pangle_list, pdmax_list, f_pg )
+       pax_list, pangle_list, pdmax_list, f_pg, pprin_ax )
 
+  write(*,*) "received pax in lib:"
+  write(*,*) pprin_ax
   !! set pg string
   lenc=len_trim(f_pg)
   do i=1, lenc
@@ -182,13 +187,14 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
 end subroutine lib_get_symm_ops
 
 
-subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C, name="lib_get_pg")
+subroutine lib_get_pg( nbas, cptr_op_list, ppg, px, verbose )bind(C, name="lib_get_pg")
   use iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: nbas
   type( c_ptr ), value, intent(in) :: cptr_op_list
   !! c ptr to write output
   type( c_ptr ), intent(in) :: ppg
+  type( c_ptr ), intent(in) :: px
   logical( c_bool ), value, intent(in) :: verbose
 
   !! f pointers
@@ -196,6 +202,7 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C, name="lib_get_p
   real(c_double), dimension(:,:,:), pointer :: op_list
   ! character(len=10, kind=c_char), pointer :: str
   character(len=1, kind=c_char), dimension(:), pointer :: pg_char
+  real( c_double ), dimension(:), pointer :: prin_ax
   !! local
   integer :: i, n
   character(len=10) :: pg
@@ -214,9 +221,10 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, verbose )bind(C, name="lib_get_p
   end do
 
   call c_f_pointer( ppg, pg_char, [11] )
+  call c_f_pointer( px, prin_ax, [3] )
 
   verb = verbose
-  call sofi_get_pg( nbas, op_list, pg, verb )
+  call sofi_get_pg( nbas, op_list, pg, prin_ax, verb )
 
   n = len_trim(pg)
   do i = 1, n

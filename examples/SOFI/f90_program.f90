@@ -18,6 +18,7 @@ program sofi
   integer :: nbas
   integer :: nmax
   character(len=10) :: pg
+  real, dimension(3) :: prin_ax
 
   real, allocatable :: angle_out(:), ax_out(:,:)
   character(len=2), allocatable :: op_out(:)
@@ -63,7 +64,7 @@ program sofi
   allocate( angle_out(1:nmax))
   allocate( dmax_out(1:nmax))
   call sofi_compute_all( nat, typ, coords, sym_thr, &
-       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg )
+       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg, prin_ax )
 
   do i = 1, nbas
      write(*,'(2x,i0)') i
@@ -82,6 +83,7 @@ program sofi
   end do
 
   write(*,*) "PG:",trim(pg)
+  write(*,'(a,1x,3f9.4)') "Principal axis:", prin_ax
   deallocate( bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out )
 
   ! allocate( bas_list(1:3,1:3,1:nmax))

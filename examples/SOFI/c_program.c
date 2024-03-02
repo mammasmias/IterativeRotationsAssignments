@@ -92,6 +92,7 @@ int main( void ){
   double *angle_data;
   double *dmax_data;
   char *pg;
+  double *prin_ax;
 
   /* allocate space up to nmax for all arrays, all arrays are 1d and contiguous */
   /* if you want to reshape the output data into proper dim-arrays, it's up to you. */
@@ -104,6 +105,7 @@ int main( void ){
   dmax_data = malloc( sizeof(double)*nmax);
   op_data = malloc(sizeof(char)*2*nmax+1);
   pg = malloc(sizeof(char)*11);
+  prin_ax = malloc(sizeof(double)*3);
 
 
 
@@ -111,7 +113,7 @@ int main( void ){
   lib_compute_all( nat, typ, &coords[0][0], sym_thr,     \
                    &nmat, &mat_data, &perm_data,  \
                    &op_data, &n_data, &p_data,    \
-                   &ax_data, &angle_data, &dmax_data, &pg );
+                   &ax_data, &angle_data, &dmax_data, &pg, &prin_ax );
 
   printf( "%d\n",nmat);
 
@@ -156,6 +158,7 @@ int main( void ){
   }
 
   printf( "PG is: %s\n",pg);
+  printf( "Principal axis: %lf %lf %lf\n", prin_ax[0], prin_ax[1], prin_ax[2] );
 
   /* free all the allocated memory */
   free( mat_data );
@@ -167,6 +170,7 @@ int main( void ){
   free(angle_data);
   free(dmax_data);
   free(pg);
+  free(prin_ax);
 
   free(typ);
   free(coords[0]);

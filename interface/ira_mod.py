@@ -465,6 +465,9 @@ class sym_data():
     :param pg: point group of the structure
     :type pg: str
 
+    :param prin_ax: principal axis of the PG
+    :type prin_ax: np.array( 3, dtype = float )
+
     :function print: prints the full data of the `sym_data` object
 
     """
@@ -480,6 +483,7 @@ class sym_data():
         self.angle=None
         self.dmax=None
         self.pg=None
+        self.prin_ax=None
 
     def print(self):
         """
@@ -500,6 +504,7 @@ class sym_data():
             print( self.perm[i] )
             print()
         print("The corresponding PG is: %s" % (self.pg) )
+        print("Principal axis: %8.4f %8.4f %8.4f" % (self.prin_ax[0], self.prin_ax[1], self.prin_ax[2] ) )
 
 
 class SOFI(algo):
@@ -549,7 +554,7 @@ class SOFI(algo):
         To access info about symmetry element *i*, get the data as: `sym_data.var[i]`, where `var`
         is one of the variables in the `sym_data` object:
 
-            `n_sym`, `matrix`, `perm`, `op`, `n`, `p`, `axis`, `angle`, `dmax`, `pg`
+            `n_sym`, `matrix`, `perm`, `op`, `n`, `p`, `axis`, `angle`, `dmax`, `pg`, `prin_ax`
 
         see help( ira_mod.sym_data ) for full description of these variables.
 
@@ -572,7 +577,7 @@ class SOFI(algo):
         thr = c_double( sym_thr )
 
 
-        # output data
+        # allocate output data
         nmat = c_int()
         mat_data = (c_double*9*nmax)()
         perm_data = (c_int*nat*nmax)()
@@ -583,6 +588,7 @@ class SOFI(algo):
         angle_data = (c_double*nmax)()
         dmax_data = (c_double*nmax)()
         pg = (c_char*11)()
+        pax_data = (c_double*3)()
 
 
         # have to set argtypes in here, since nat is not know in init
@@ -591,14 +597,15 @@ class SOFI(algo):
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
               POINTER(POINTER(c_char*2*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
-              POINTER(POINTER(c_char*11)) ]
+              POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)) ]
         self.lib.lib_compute_all.restype=None
 
         # call routine from library.f90
         self.lib.lib_compute_all( n, t, c, thr, \
                                   nmat, pointer(mat_data), pointer(perm_data), \
                                   pointer(op_data), pointer(n_data), pointer(p_data), \
-                                  pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg) )
+                                  pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg), \
+                                  pointer(pax_data) )
 
         # cast the result into readable things
         sym.pg = pg.value.decode()
@@ -639,6 +646,10 @@ class SOFI(algo):
         for n in range(n_op):
             sym.dmax[n]=dmax_data[n]
         # sym.dmax = dmax_data[:n_op]
+
+        sym.prin_ax=np.zeros(3, dtype=float)
+        for n in range(3):
+            sym.prin_ax[n]=pax_data[n]
 
         # return the instance of sym_data
         return sym
@@ -739,6 +750,9 @@ class SOFI(algo):
         :param pg: associated Point Group (PG)
         :type pg: string
 
+        :param prin_ax: principal axis of the PG
+        :type prin_ax: np.array( 3, dtype = float )
+
         """
         # input data
         n = c_int( nm_in )
@@ -748,15 +762,19 @@ class SOFI(algo):
 
         # output data
         pg = (c_char*11)()
+        pprin_ax = (c_double*3)()
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_get_pg.argtypes = \
-            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), c_bool ]
+            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), c_bool ]
         self.lib.lib_get_pg.restype=None
-        self.lib.lib_get_pg( n, mats, pointer(pg), cverb)
+        self.lib.lib_get_pg( n, mats, pointer(pg), pointer(pprin_ax), cverb)
 
         pg=pg.value.decode()
-        return pg
+        prin_ax = np.zeros(3, dtype=float)
+        for n in range(3):
+            prin_ax[n] = pprin_ax[n]
+        return pg, prin_ax
 
     def get_unique_ax_angle( self, nm_in, mat_list ):
         """

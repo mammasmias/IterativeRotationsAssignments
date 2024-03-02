@@ -19,12 +19,13 @@ void lib_match(int nat1, int *typ1, double *coords1, int *cand1,\
 void lib_compute_all( int nat, int *typ, double *coords, double sym_thr, \
                       int *nmat, double **mat_data, int **perm_data, \
                       char **op_data, int **n_data, int **p_data,       \
-                      double **ax_data, double **angle_data, double **dmax_data, char **pg);
+                      double **ax_data, double **angle_data, double **dmax_data, char **pg, \
+		      double **prin_ax );
 
 void lib_get_symm_ops( int nat, int *typ, double *coords, double sym_thr, \
                        int *nmat, double **mat_data );
 
-void lib_get_pg( int nmat, double *mat_data, char **pg, int verb);
+void lib_get_pg( int nmat, double *mat_data, char **pg, double **prin_ax, int verb);
 
 void lib_unique_ax_angle( int nmat, double *mat_data, \
                           char **op_data, double **ax_data, double **angle_data);

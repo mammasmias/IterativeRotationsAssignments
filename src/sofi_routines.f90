@@ -16,7 +16,7 @@
   subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
                                nmat, mat_list, perm_list, &
                                op_list, n_list, p_list, &
-                               ax_list, angle_list, dmax_list, pg )
+                               ax_list, angle_list, dmax_list, pg, prin_ax )
     !!
     !! compute all data from SOFI in single routine.
     !! coords are assumed to be already shifted to desired origin on input
@@ -62,6 +62,7 @@
     real, dimension(nmax),         intent(out) :: angle_list
     real, dimension(nmax),         intent(out) :: dmax_list
     character(len=10),             intent(out) :: pg
+    real, dimension(3),            intent(out) :: prin_ax
 
     real :: dum
     integer :: i, ierr
@@ -84,7 +85,7 @@
 
     !! get name of pg
     verb = .false.
-    call sofi_get_pg( nmat, mat_list, pg, verb )
+    call sofi_get_pg( nmat, mat_list, pg, prin_ax, verb )
 
     !! get the p, n values
     do i = 1, nmat
@@ -92,6 +93,8 @@
        call sofi_analmat( rmat, op_list(i), n_list(i), p_list(i), rdum, dum )
     end do
 
+    write(*,*) "pax in compute_all:"
+    write(*,*) prin_ax
   end subroutine sofi_compute_all
 
 
@@ -110,7 +113,7 @@
     integer :: n_op
     integer, allocatable :: perm_list(:,:)
     real, allocatable :: op_list(:,:,:)
-    real, dimension(3) :: gc
+    real, dimension(3) :: gc, prin_ax
     integer :: i, ierr
     integer, dimension(nat) :: typ
     real, dimension(3,nat) :: coords
@@ -143,7 +146,7 @@
     ! call sofi_get_combos( nat, typ, coords, n_op, op_list, perm_list )
 
     !! get new PG name
-    call sofi_get_pg( n_op, op_list, pg, verb )
+    call sofi_get_pg( n_op, op_list, pg, prin_ax, verb )
 
     deallocate( op_list, perm_list )
 
@@ -854,7 +857,7 @@
 
   end subroutine add_sofi
 
-  subroutine sofi_get_pg( nbas, op_list, pg, verb )
+  subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb )
     !! flowchart to determine PG notation from op_list
     !! online: https://symotter.org/assets/flowchart.pdf
     !!
@@ -863,6 +866,7 @@
     integer,                   intent(in) :: nbas
     real, dimension(3,3,nbas), intent(in) :: op_list
     character(len=10),         intent(out) :: pg
+    real, dimension(3),        intent(out) :: prin_ax
     logical,                   intent(in) :: verb
 
     real, dimension(3) :: ax, cn_ax
@@ -1016,6 +1020,9 @@
 
     !! select ax with largest n
     cn_ax = ax_list(:,max_n_loc)
+
+    !! set principal ax for output
+    prin_ax = cn_ax
 
 
     !!
