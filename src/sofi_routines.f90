@@ -93,8 +93,6 @@
        call sofi_analmat( rmat, op_list(i), n_list(i), p_list(i), rdum, dum )
     end do
 
-    write(*,*) "pax in compute_all:"
-    write(*,*) prin_ax
   end subroutine sofi_compute_all
 
 

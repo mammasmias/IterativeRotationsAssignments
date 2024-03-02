@@ -103,8 +103,6 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
        fop_list, pn_list, pp_list, &
        pax_list, pangle_list, pdmax_list, f_pg, pprin_ax )
 
-  write(*,*) "received pax in lib:"
-  write(*,*) pprin_ax
   !! set pg string
   lenc=len_trim(f_pg)
   do i=1, lenc
