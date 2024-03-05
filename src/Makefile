@@ -2,7 +2,6 @@
 # Fortran compiler
 #
 FCOMP = gfortran
-CCOMP=gcc
 
 #
 # archiver
@@ -47,8 +46,6 @@ futils := \
 	$(SRC)/sofi_routines.f90
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
-fread := $(SRC)/read_typ.f90
-oread := $(patsubst $(SRC)%, $(OBJ)%, $(fread:%.f90=%.o))
 
 flib := $(SRC)/library_ira.f90 \
 	$(SRC)/library_sofi.f90
