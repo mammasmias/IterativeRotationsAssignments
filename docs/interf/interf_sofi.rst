@@ -8,3 +8,8 @@ SOFI interface
    :members:
    :special-members: __init__
    :member-order: bysource
+
+
+.. autoclass:: ira_mod.sym_data
+   :members:
+   :member-order: bysource

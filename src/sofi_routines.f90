@@ -1314,7 +1314,7 @@
     !!   To lift the ambiguity the whole list of operations needs to be processed,
     !!   see the routine sofi_unique_ax_angle for an attempt at this.
     !!
-    use sofi_tools, only: diag, gcd_rec
+    use sofi_tools, only: diag, gcd_rec, cross_prod
     implicit none
     real, dimension(3,3), intent(in) :: rmat
     character(len=2),     intent(out) :: op   !! character for operation Id, I, C, S
@@ -1328,6 +1328,10 @@
     real, dimension(3) :: eigvals
     integer :: idx, i, j, nl, pl, gcd
     real :: mindiff
+    real :: flip, epsilon
+    real, dimension(3) :: tmp, tmp2, tmp3
+
+    epsilon = 1e-6
 
     op=''
     pi = 4.0*atan(1.0)
@@ -1417,14 +1421,14 @@
     p = p/gcd
 
 
-    if( angle .lt. 1e-3 ) n = 0
+    if( angle .lt. epsilon ) n = 0
     if( p .eq. 0 ) p = 1
     !!
     !! C0 = Id :: rotation of angle 0 around any axis is identity
-    if( op(1:1)=='C' .and. angle .lt. 1e-6 ) op='Id'
+    if( op(1:1)=='C' .and. angle .lt. epsilon ) op='Id'
     !!
     !! S2 = I :: rotation 0.5 and reflection about any axis is inversion
-    if( op(1:1)=='S' .and. abs(angle-0.5) .lt. 1e-6 ) op='I'
+    if( op(1:1)=='S' .and. abs(angle-0.5) .lt. epsilon ) op='I'
 
     ! write(*,'(a,x,i3,a3,2f9.4)') 'angle:',n, op, angle, (n-1.0/angle)
 
@@ -1435,6 +1439,41 @@
        ! write(*,'(a,2x,a3,x,g0,x,g0)') '::: Error in sofi_analmat',op,n,p
        ! stop
     end if
+
+    !! convention for axis direction:
+    !! flip such that z>0
+    !! if z==0, then flip such that x>0
+    !! if x==0, then flip such that y>0
+    flip = 1.0
+    if( ax(3) .lt. 0.0 ) then
+       !! flip
+       flip = -flip
+    elseif( abs(ax(3)) < epsilon ) then
+       !! z==0, check x
+       if( ax(1) < 0.0 ) then
+          !! flip
+          flip = -flip
+       elseif( abs(ax(1)) < epsilon ) then
+          !! x==0, check y
+          if( ax(2) < 0.0 ) then
+             !! flip
+             flip = -flip
+          end if
+       end if
+    end if
+
+    ax = ax*flip
+
+    !! check if angle is positive/negative according to axis
+    !! generate off-axis tmp vector
+    tmp = ax + (/ax(3)*0.5, ax(1)*0.2, ax(2)/)
+    tmp = tmp/norm2(tmp)
+    !! transform tmp by rmat
+    tmp2 = matmul(rmat, tmp)
+    !! cross product the result with initial
+    call cross_prod( tmp, tmp2, tmp3 )
+    !! if dot( tmp3, ax ) is negative, angle is negative
+    if( dot_product( tmp3, ax ) < -epsilon ) angle = -angle
 
   end subroutine sofi_analmat
 

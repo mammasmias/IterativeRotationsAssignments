@@ -482,7 +482,9 @@ class IRA(algo):
 
 class sym_data():
     """
-    Definition of the object, which is returned by `ira_mod.SOFI.compute()`
+    .. _sym_data:
+
+    Definition of the object, which is returned by :ref:`ira_mod.SOFI.compute() <sofi.compute>`
 
     Members of the object:
 
@@ -593,7 +595,9 @@ class SOFI(algo):
 
     def compute(self, nat, typ_in, coords, sym_thr ):
         """
-        this is a wrapper to lib_compute_all() from library.f90
+        .. _sofi.compute:
+
+        this is a wrapper to lib_compute_all() from library_sofi.f90
         Description: This routine computes all the relevant PG symmetry data of the input structure.
 
         **== input: ==**
@@ -612,7 +616,8 @@ class SOFI(algo):
 
         **== output: ==**
 
-        instance of `ira_mod.sym_data()` object, which cotains the full symmetry data of the input structure.
+        instance of ``ira_mod.sym_data()`` object, which cotains the full symmetry data of the input structure.
+        See `sym_data`_.
 
         object `sym_data` contains the full symmetry data of the input structure.
         To access info about symmetry element *i*, get the data as: `sym_data.var[i]`, where `var`
@@ -721,7 +726,7 @@ class SOFI(algo):
 
     def get_symm_ops(self, nat, typ_in, coords, sym_thr ):
         """
-        Wrapper to the lib_get_symm_ops routine from library.f90.
+        Wrapper to the lib_get_symm_ops routine from library_sofi.f90.
         Description: finds the symmetry operation maytices of the structure in input,
         which fit the threshold `sym_thr`.
 
@@ -789,7 +794,7 @@ class SOFI(algo):
     def get_pg( self, nm_in, mat_list, verb=False):
 
         """
-        wrapper to lib_get_pg() from library.f90
+        wrapper to lib_get_pg() from library_sofi.f90
         Description: find the PG of input list of operations
 
         **== input: ==**
@@ -839,7 +844,7 @@ class SOFI(algo):
 
     def get_unique_ax_angle( self, nm_in, mat_list ):
         """
-        wrapper to lib_get_unique_ax_angle() from library.f90
+        wrapper to lib_get_unique_ax_angle() from library_sofi.f90
         Description: input list of symmetry matrices, output lists
         of op, ax, angle for each symmetry operation in the list, such that
         axes are aligned, and angle has a correspoding +/- sign.
@@ -907,7 +912,7 @@ class SOFI(algo):
 
     def analmat( self, rmat ):
         """
-        wrapper to lib_analmat.f90 from library.f90
+        wrapper to lib_analmat.f90 from library_sofi.f90
         Description: analyse the input matrix, output the Schoenflies notation: Op n^p
         The notation can be transformed into an angle:
 
@@ -985,7 +990,7 @@ class SOFI(algo):
     def ext_Bfield( self, n_mat, mat_list, b_field ):
 
         """
-        wrapper to lib_ext_Bfield() from library.f90
+        wrapper to lib_ext_Bfield() from library_sofi.f90
         Description: Impose a constraint on the relevant symmetry operations,
         in the form of an external magnetic field as arbitrary vector.
 

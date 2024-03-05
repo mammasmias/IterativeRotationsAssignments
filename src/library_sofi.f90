@@ -28,8 +28,46 @@
 
 !!
 
+!> @details
+!!
+!! @note
+!!  the ``nmax`` refers to the value in sofi_tools.f90, which ``nmax=200`` by default.
+!!
+!! The size of variables on input needs to be at least this much.
+!! The actual output is written to the first ``n_mat`` elements of each corresponding array.
+!!
+!! @param[in] nat                 :: number of atoms
+!! @param[in] typ(nat)            :: atomic types
+!! @param[in] coords(3,nat)       :: atomic positions
+!! @param[in] sym_thr             :: threshold for finding symmetries
+!!                                   (not taken into account when making combinations)
+!! @param[in] n_mat               :: number of symmetries found
+!! @param[in] mat_list(3,3,nmax)  :: symmetry matrices
+!! @param[in] perm_list(nat,nmax) :: permutation of atoms after applying each symmetry
+!! @param[in] op_list(nmax)       :: Character "Op" from the Schoenflies notation: Op n^p
+!!                                   (Id = identity, I = inversion, C = rotation, S = (roto-)reflection )
+!! @param[in] n_list(nmax)        :: Schoenflies n value
+!! @param[in] p_list(nmax)        :: Schoenflies p value
+!! @param[in] ax_list(3,nmax)     :: axis of operation of each symmetry
+!! @param[in] angle_list(nmax)    :: angle of each symmetry, in units of 1/2pi,
+         !!                          i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
+!! @param[in] dmax_list(nmax)     :: max difference of atomic positions of before/after symm transformation
+!! @param[in] pg                  :: name of Point group, e.g. D6h
+!! @param[in] prin_ax(3)          :: principal axis of the PG
+!!
+!! @returns n_mat, mat_list, per_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax
+!!
+!! C-header:
+!! ~~~~~~~~~~~~~~~{.c}
+!! void lib_compute_all( int nat, int *typ, double *coords, double sym_thr, \
+!!                       int *n_mat, double **mat_data, int **perm_data, \
+!!                       char **op_data, int **n_data, int **p_data,       \
+!!                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
+!!                       double **prin_ax );
+!! ~~~~~~~~~~~~~~~
+!!
 subroutine lib_compute_all( nat, typ, coords, sym_thr, &
-                            nmat, mat_list, perm_list, &
+                            n_mat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
                             ax_list, angle_list, dmax_list, pg, prin_ax ) bind(C, name="lib_compute_all")
   use iso_c_binding
@@ -40,7 +78,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   type( c_ptr ), value, intent(in) :: coords
   real( c_double ), value, intent(in) :: sym_thr
 
-  integer( c_int ), intent(out) :: nmat
+  integer( c_int ), intent(out) :: n_mat
   type( c_ptr ), intent(in) :: mat_list
   type( c_ptr ), intent(in) :: perm_list
   type( c_ptr ), intent(in) :: op_list
@@ -124,7 +162,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   op_char(n)=c_null_char
 
   !! set output value for nmat
-  nmat = nb
+  n_mat = nb
 
   !! transpose all output matrices to C-order
   do i = 1, nb
@@ -138,7 +176,18 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
 end subroutine lib_compute_all
 
 
-subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
+!> @details
+!!
+!! @param[in] nat                 :: number of atoms
+!! @param[in] typ(nat)            :: atomic types
+!! @param[in] coords(3,nat)       :: atomic positions
+!! @param[in] sym_thr             :: threshold for finding symmetries
+!!                                   (not taken into account when making combinations)
+!! @param[in] n_mat               :: number of symmetries found
+!! @param[in] mat_list(3,3,nmax)  :: symmetry matrices
+!! @returns n_mat, mat_list
+!!
+subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list )&
      bind(C, name="lib_get_symm_ops")
   use iso_c_binding
   use sofi_tools, only: nmax
@@ -149,8 +198,8 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
   type( c_ptr ),    value, intent(in) :: coords
   real( c_double ), value, intent(in) :: symm_thr
   !! "output"
-  integer( c_int ), intent(out) :: n_sym
-  type( c_ptr ),    intent(in) :: sym_list
+  integer( c_int ), intent(out) :: n_mat
+  type( c_ptr ),    intent(in) :: mat_list
 
   !! F pointers
   integer(c_int), dimension(:), pointer :: ptr_typ
@@ -161,34 +210,33 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_sym, sym_list )&
   integer :: ierr
 
   ! write(*,*) 'enter symmop'
-  n_sym = 0_c_int
+  n_mat = 0_c_int
   !!
   !! receive input
   !!
   call c_f_pointer( typ, ptr_typ, [nat] )
   call c_f_pointer( coords, ptr_coords, [3,nat] )
 
-  call c_f_pointer( sym_list, ptr_op, [3,3,nmax] )
+  call c_f_pointer( mat_list, ptr_op, [3,3,nmax] )
 
   call sofi_get_symmops( nat, ptr_typ, ptr_coords, symm_thr, n, ptr_op, ierr )
   if( ierr /= 0 ) return
 
   !! set output data
-  n_sym=n
+  n_mat=n
 
   !! transpose output matrices to C-order
   do i = 1, n
      ptr_op(:,:,i) = transpose( ptr_op(:,:,i) )
   end do
 
-
 end subroutine lib_get_symm_ops
 
 
-subroutine lib_get_pg( nbas, cptr_op_list, ppg, px, verbose )bind(C, name="lib_get_pg")
+subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose )bind(C, name="lib_get_pg")
   use iso_c_binding
   implicit none
-  integer( c_int ), value, intent(in) :: nbas
+  integer( c_int ), value, intent(in) :: n_mat
   type( c_ptr ), value, intent(in) :: cptr_op_list
   !! c ptr to write output
   type( c_ptr ), intent(in) :: ppg
@@ -207,12 +255,12 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, px, verbose )bind(C, name="lib_g
   logical :: verb
 
   !! receive input
-  call c_f_pointer( cptr_op_list, p_lvl2, [9,nbas])
+  call c_f_pointer( cptr_op_list, p_lvl2, [9,n_mat])
 
 
   !! put the array into proper fortran shape
-  allocate( op_list(1:3,1:3,1:nbas))
-  do n = 1, nbas
+  allocate( op_list(1:3,1:3,1:n_mat))
+  do n = 1, n_mat
      op_list(:,:,n)=reshape( p_lvl2(:,n),[3,3])
      !! transpose because it is C-style on input
      op_list(:,:,n) = transpose( op_list(:,:,n) )
@@ -222,7 +270,7 @@ subroutine lib_get_pg( nbas, cptr_op_list, ppg, px, verbose )bind(C, name="lib_g
   call c_f_pointer( px, prin_ax, [3] )
 
   verb = verbose
-  call sofi_get_pg( nbas, op_list, pg, prin_ax, verb )
+  call sofi_get_pg( n_mat, op_list, pg, prin_ax, verb )
 
   n = len_trim(pg)
   do i = 1, n
@@ -375,14 +423,14 @@ subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
 end subroutine lib_ext_bfield
 
 
-subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)&
+subroutine lib_get_perm( nat, typ, coords, n_mat, bas_list, perm_list, dmax_list)&
      bind(C,name="lib_get_perm")
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
   type( c_ptr ),    value, intent(in) :: coords
-  integer( c_int ), value, intent(in) :: nbas
+  integer( c_int ), value, intent(in) :: n_mat
   type( c_ptr ), value,  intent(in) :: bas_list
   !! "output"
   type( c_ptr ), intent(in) :: perm_list
@@ -401,20 +449,20 @@ subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)
   call c_f_pointer( typ, ptr_typ, [nat] )
   call c_f_pointer( coords, ptr_coords, [3,nat] )
 
-  call c_f_pointer( perm_list, pperm_list, [nat,nbas] )
-  call c_f_pointer( dmax_list, pdmax_list, [nbas] )
+  call c_f_pointer( perm_list, pperm_list, [nat,n_mat] )
+  call c_f_pointer( dmax_list, pdmax_list, [n_mat] )
 
-  call c_f_pointer( bas_list, p_lvl2, [9,nbas] )
+  call c_f_pointer( bas_list, p_lvl2, [9,n_mat] )
 
   !! receive input array and reshape into fortran order
-  allocate( ptr_op(1:3,1:3,1:nbas))
-  do i = 1, nbas
+  allocate( ptr_op(1:3,1:3,1:n_mat))
+  do i = 1, n_mat
      ptr_op(:,:,i) = reshape( p_lvl2(:,i),[3,3])
      !! transpose because it is C-order on input
      ptr_op(:,:,i) = transpose( ptr_op(:,:,i) )
   end do
 
-  call sofi_get_perm( nat, ptr_typ, ptr_coords, nbas, ptr_op, pperm_list, pdmax_list )
+  call sofi_get_perm( nat, ptr_typ, ptr_coords, n_mat, ptr_op, pperm_list, pdmax_list )
 
   !! output C-style: start at 0 indices
   pperm_list = pperm_list - 1
@@ -422,7 +470,7 @@ subroutine lib_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list)
 end subroutine lib_get_perm
 
 
-subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out )&
+subroutine lib_get_combos( nat, typ, coords, n_mat_in, bas_in, n_mat_out, bas_out )&
      bind(C,name="lib_get_combos")
   use iso_c_binding
   use sofi_tools, only: nmax
@@ -430,9 +478,9 @@ subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out 
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
   type( c_ptr ),    value, intent(in) :: coords
-  integer( c_int ), value, intent(in) :: nbas_in
+  integer( c_int ), value, intent(in) :: n_mat_in
   type( c_ptr ), value,  intent(in) :: bas_in
-  integer( c_int ), intent(out) :: nbas_out
+  integer( c_int ), intent(out) :: n_mat_out
   type( c_ptr ), intent(in) :: bas_out
 
 
@@ -447,18 +495,18 @@ subroutine lib_get_combos( nat, typ, coords, nbas_in, bas_in, nbas_out, bas_out 
   call c_f_pointer( typ, ptr_typ, [nat] )
   call c_f_pointer( coords, ptr_coords, [3,nat] )
 
-  call c_f_pointer( bas_in, p_lvl2, [9,nbas_in] )
+  call c_f_pointer( bas_in, p_lvl2, [9,n_mat_in] )
 
-  do i = 1, nbas_in
+  do i = 1, n_mat_in
      bas_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
      bas_list(:,:,i) = transpose(bas_list(:,:,i))
   end do
 
-  m = nbas_in
+  m = n_mat_in
 
   call sofi_get_combos( nat, ptr_typ, ptr_coords, m, bas_list )
 
-  nbas_out = m
+  n_mat_out = m
   call c_f_pointer( bas_out, pcombo_out, [3,3,m] )
   pcombo_out = bas_list(1:3,1:3,1:m)
 
@@ -574,13 +622,13 @@ subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_co
 end subroutine lib_construct_operation
 
 
-subroutine lib_mat_combos( nbas_in, bas_in, nbas_out, bas_out )bind(C,name="lib_mat_combos")
+subroutine lib_mat_combos( n_mat_in, bas_in, n_mat_out, bas_out )bind(C,name="lib_mat_combos")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
-  integer( c_int ), value, intent(in) :: nbas_in
+  integer( c_int ), value, intent(in) :: n_mat_in
   type( c_ptr ), value,  intent(in) :: bas_in
-  integer( c_int ), intent(out) :: nbas_out
+  integer( c_int ), intent(out) :: n_mat_out
   type( c_ptr ), intent(in) :: bas_out
 
 
@@ -588,23 +636,23 @@ subroutine lib_mat_combos( nbas_in, bas_in, nbas_out, bas_out )bind(C,name="lib_
   real( c_double), dimension(:,:,:), pointer :: pcombo_out
 
   real(c_double), dimension(3,3,nmax) :: bas_list
-  real(c_double), dimension(3,3,nbas_in) :: bas_inp
+  real(c_double), dimension(3,3,n_mat_in) :: bas_inp
   integer :: i, m
 
-  call c_f_pointer( bas_in, p_lvl2, [9,nbas_in] )
+  call c_f_pointer( bas_in, p_lvl2, [9,n_mat_in] )
 
-  do i = 1, nbas_in
+  do i = 1, n_mat_in
      bas_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
      bas_list(:,:,i) = transpose(bas_list(:,:,i))
   end do
 
-  m = nbas_in
+  m = n_mat_in
 
-  bas_inp(:,:,:) = bas_list(:,:,1:nbas_in)
+  bas_inp(:,:,:) = bas_list(:,:,1:n_mat_in)
 
-  call sofi_mat_combos( nbas_in, bas_inp, m, bas_list )
+  call sofi_mat_combos( n_mat_in, bas_inp, m, bas_list )
 
-  nbas_out = m
+  n_mat_out = m
   call c_f_pointer( bas_out, pcombo_out, [3,3,m] )
   pcombo_out = bas_list(1:3,1:3,1:m)
 

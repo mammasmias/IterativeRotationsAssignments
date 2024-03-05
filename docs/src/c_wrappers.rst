@@ -6,7 +6,7 @@ The C-bound API
 
 The API is defined in files ``library_ira.f90`` and ``library_sofi.f90``. It can be used
 to call IRA/SOFI routines directly from C. Calling from other languages needs an interface, see
-:ref:`py_interf`.
+for example :ref:`py_interf`.
 
 .. note::
 
@@ -21,6 +21,10 @@ to call IRA/SOFI routines directly from C. Calling from other languages needs an
     The routines here receive C-pointers to the memory where output should be
     written. Therefore, **the output data appears as "intent(in)"**.
 
+.. note::
+
+   There is no automatic checking of the type/kind/shape of arguments in the API.
+   The **programmer is trusted** that her/his calls to the API functions are correct.
 
 .. contents:: Contents
    :local:
@@ -36,6 +40,12 @@ IRA
 
 SOFI
 ====
+
+.. note::
+
+   The size of arguments in many of the SOFI functions are pre-defined with the ``nmax`` variable, which
+   is by default ``nmax=200``. The actual output is written to the first ``n_mat`` elements, where ``n_mat``
+   is the number of matrices/symmtry operations.
 
 .. doxygenfile:: library_sofi.f90
    :project: lib_IRA
