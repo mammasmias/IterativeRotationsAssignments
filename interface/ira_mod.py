@@ -20,6 +20,26 @@ from os.path import dirname,abspath,join
 from inspect import getsourcefile
 
 class algo():
+    """
+    This is the python interface to the IRA and SOFI shared library file `libira.so`.
+    In order to use it, the path to this file should be added to
+    the environment variable PYTHONPATH:
+
+    .. code-block:: bash
+
+        export PYTHONPATH=$PYTHONPATH:/your/path/to/IRA/interface
+
+
+    Then IRA and SOFI can be imported and used in python as:
+
+    >>> import ira_mod
+    >>> ira = ira_mod.IRA()
+    >>> sofi = ira_mod.SOFI( )
+
+
+
+    """
+
     def __init__(self, shlib='' ):
         # path to this file
         mypath=dirname(abspath(getsourcefile(lambda:0)))
@@ -37,6 +57,8 @@ class algo():
     def tf_int(self, arr_in):
         """
         function to transform single array arr_in into array of c_int with unqiue values.
+
+        :meta private:
         """
         u, indices = np.unique( arr_in, return_inverse=True )
         arr_out = np.intc( indices+1 )
@@ -46,6 +68,8 @@ class algo():
         """
         function to transform two integer arrays `arr1_in` and `arr2_in` into arrays of c_int
         with simlutaneously unique values
+
+        :meta private:
         """
         ## get list of unique values
         u=np.unique(arr1_in)
@@ -79,10 +103,13 @@ class IRA(algo):
     designed for matching generic atomic structures.
     It solves the problem:
 
-        P_B B = R A + t
+    .. math::
+        P_B B = \mathbf{R} A + \mathbf{t}
 
-    where `A` and `B` are two atomic structures, `R` is a rotation matrix, `t` is a translation vector,
-    and `P_B` is a permutation matrix.
+
+    where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a rotation matrix,
+    :math:`\mathbf{t}` is a translation vector,
+    and :math:`P_B` is a permutation matrix.
 
     For futher details please see the publication:
 
@@ -95,6 +122,20 @@ class IRA(algo):
     M Gunde: "Development of IRA : a shape matching algorithm, its implementation,
     and utility in a general off-lattice kMC kernel", 2021
     url: https://theses.hal.science/tel-03635139/
+
+
+    In order to use the module, the path to this file should be added to the environment variable PYTHONPATH:
+
+    .. code-block:: bash
+
+        export PYTHONPATH=/your/path/to/IRA/interface
+
+
+    Example import:
+
+    >>> import ira_mod
+    >>> sofi = ira_mod.IRA( )
+
 
     ================================================================================
 
@@ -117,10 +158,10 @@ class IRA(algo):
 
         This is a wrapper to the lib_cshda and lib_cshda_pbc routines from library_ira.f90
 
-        Requirement: nat1 .le. nat2 !!
+        .. note::
+           Requirement: nat1 :math:`\le` nat2
 
-        input:
-        ======
+        **== input: ==**
 
         :param nat1: number of atoms of structure 1
         :type nat1: int
@@ -140,7 +181,7 @@ class IRA(algo):
         :param coords2: atomic positions of structure 2
         :type coords2: np.ndarray( (nat2, 3), dtype = float)
 
-        == optional ==
+        **== optional ==**
 
         :param lat: matrix of lattice vectors in rows. If not None, it triggers `cshda_pbc` routine.
                     Use with care.
@@ -150,11 +191,7 @@ class IRA(algo):
         :type thr: float
 
 
-        :raises ValueError: when the requirement `nat1 =< nat2` is not met.
-
-
-        output:
-        =======
+        **== output: ==**
 
         :param found: array of assignments of atoms of structure1 to structure2,
                       e.g.: `found[3]=4` means the atom index 3 from structure1 has been assigned to
@@ -165,6 +202,10 @@ class IRA(algo):
         :param dists: array of distances from atom index `i` in structure1 to atom `found[i]` in structure2.
                       The Hausdorff distance can be obtained as `dH = np.max( dists )`
         :type dists: np.ndarray( nat1, dtype = float )
+
+
+        :raises ValueError: when the requirement `nat1 =< nat2` is not met.
+
 
         """
 
@@ -231,7 +272,17 @@ class IRA(algo):
         The Iterative Rotatitions and Assignments (IRA) procedure to match two structures, including
         the SVD correction at the end.
 
-        This is a wrapper to the lib_match routine in library_ira.f90
+        This function is a wrapper to the lib_match routine in library_ira.f90
+
+        It returns the solution to:
+
+        .. math::
+            P_B B = \mathbf{R} A + \mathbf{t}
+
+
+        where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a rotation matrix,
+        :math:`\mathbf{t}` is a translation vector,
+        and :math:`P_B` is a permutation matrix.
 
         Solution is to be applied to struc2, as:
 
@@ -248,11 +299,11 @@ class IRA(algo):
             >>> coords2[:] = coords2[permutation]
             >>> typ2[:] = typ2[permutation]
 
-        Requirement: nat1 .le. nat2 !!
-        ==========================
+        .. note::
+            Requirement: nat1 :math:`\le` nat2
 
-        input:
-        ======
+        **== input: ==**
+
         :param nat1: number of atoms of structure 1
         :type nat1: int
 
@@ -277,7 +328,7 @@ class IRA(algo):
                             non-optimal results.
         :type kmax_factor: float
 
-        === optional ===
+        **== optional ==**
         :param candidate1: list of candidate central atoms of structure1. This is useful when some
                            additional information is known about the structures, e.g. we want to impose
                            some specific atoms as possible central atoms. Particularly useful when
@@ -293,8 +344,7 @@ class IRA(algo):
         :raises ValueError: when the requirement `nat1 =< nat2` is not met.
 
 
-        output:
-        =======
+        **== output: ==**
 
         :param rotation: rotation matrix
         :type rotation: np.ndarray( (3,3), dtype = float)
@@ -509,15 +559,30 @@ class sym_data():
 
 class SOFI(algo):
     """
-    This is the python interface to the SOFI shared library file.
-    It should be initialized with the path to the `libsofi.so` file:
 
-    Example:
+    The Symmetry Operation FInder (SOFI) is an algorithm for finding point group symmetry operations of
+    atomic structures. It solves the problem:
+
+    .. math::
+        A = \\theta A
+
+    where :math:`A` is an atomic structure, and :math:`\\theta` is a symmetry operation in the form of
+    3x3 orthonormal matrix.
+
+    The main result of SOFI is a list of operations :math:`\\theta`. This list can be post-processed to
+    obtain the point group name, and other properties associated to each :math:`\\theta`.
+
+    In order to use the module, the path to this file should be added to the environment variable PYTHONPATH:
+
+    .. code-block:: bash
+
+        export PYTHONPATH=/your/path/to/IRA/interface
+
+
+    Example import:
 
     >>> import ira_mod
-    >>> sofi = ira_mod.SOFI( '/path/to/sofi/libsofi.so' )
-
-
+    >>> sofi = ira_mod.SOFI( )
 
     """
 
@@ -530,8 +595,7 @@ class SOFI(algo):
         this is a wrapper to lib_compute_all() from library.f90
         Description: This routine computes all the relevant PG symmetry data of the input structure.
 
-        input:
-        ======
+        **== input: ==**
 
         :param nat: number of atoms in the structure
         :type nat: int
@@ -545,8 +609,7 @@ class SOFI(algo):
         :param sym_thr: symmetry threshold value
         :type sym_thr: float
 
-        output:
-        =======
+        **== output: ==**
 
         instance of `ira_mod.sym_data()` object, which cotains the full symmetry data of the input structure.
 
@@ -661,8 +724,7 @@ class SOFI(algo):
         Description: finds the symmetry operation maytices of the structure in input,
         which fit the threshold `sym_thr`.
 
-        input:
-        ======
+        **== input: ==**
 
         :param nat: number of atoms in the structure
         :type nat: int
@@ -677,8 +739,7 @@ class SOFI(algo):
         :type sym_thr: float
 
 
-        output:
-        =======
+        **== output: ==**
 
         :param n_sym: number of symmetry elements found
         :type n_sym: int
@@ -730,8 +791,7 @@ class SOFI(algo):
         wrapper to lib_get_pg() from library.f90
         Description: find the PG of input list of operations
 
-        input:
-        ======
+        **== input: ==**
 
         :param nm_in: number of matrices in the `mat_list` array
         :type nm_in: integer
@@ -744,8 +804,7 @@ class SOFI(algo):
         :type verb: logical
 
 
-        output:
-        =======
+        **== output: ==**
 
         :param pg: associated Point Group (PG)
         :type pg: string
@@ -785,8 +844,7 @@ class SOFI(algo):
 
         This is a wrapper to lib_unique_ax_angle() routine from library_sofi.f90
 
-        input:
-        ======
+        **== input: ==**
 
         :param nm_in: number of matrices in the `mat_list` array
         :type nm_in: integer
@@ -795,8 +853,7 @@ class SOFI(algo):
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
-        output:
-        =======
+        **== output: ==**
 
         :param op: Schoeflies Op name, possible values:
                          - "Id" = identity
@@ -860,15 +917,13 @@ class SOFI(algo):
 
         This is a wrapper to lib_analmat() routine from library_sofi.f90
 
-        input:
-        ======
+        **== input: ==**
 
         :param rmat: input matrix
         :type rmat: np.ndarray((3, 3), dtype = float )
 
 
-        output:
-        =======
+        **== output: ==**
 
         :param op: Schoeflies Op name, possible values:
                          - "Id" = identity
@@ -889,6 +944,9 @@ class SOFI(algo):
 
         :param angle: the angle of rotation of matrix `rmat`, in units of 1/2pi, is the ratio p/n
         :type angle: float
+
+        .. note::
+            the angle returned by this routine is always positive. The axis might be either :math:`\pm` direction.
 
         """
 
@@ -940,8 +998,7 @@ class SOFI(algo):
         The magnetic field acts as an "external constraint" on the symmetry matrices,
         and can thus be seen as a post-processing of the unconstrained (full) PG of a structure.
 
-        Input:
-        ======
+        **== Input: ==**
 
         :param n_mat: number of matrices in the input `mat_list`
         :type n_mat: integer
@@ -953,8 +1010,7 @@ class SOFI(algo):
         :type b_field: 3d vector, np.ndarray(3, dtype = float )
 
 
-        output:
-        =======
+        **== output: ==**
 
         :param n_op: number of operations that fulfill the constraint of the desired magnetic field
         :type n_op: integer
@@ -999,8 +1055,7 @@ class SOFI(algo):
 
         This is a wrapper to lib_get_perm() from library_sofi.f90
 
-        Input:
-        ======
+        **== Input: ==**
 
         :param nat: number of atoms in the structure
         :type nat: integer
@@ -1017,8 +1072,7 @@ class SOFI(algo):
         :param mat_list: list of input matrices
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
-        Output:
-        =======
+        **== Output: ==**
 
         :param perm: list of permutations corresponding to each matrix operation in input
         :type perm: np.ndarray( (nm_in, nat), dtype = integer )
@@ -1076,8 +1130,7 @@ class SOFI(algo):
 
         This is a wrapper to the routine lib_get_combos() from library_sofi.f90
 
-        Input:
-        ======
+        **== Input: ==**
 
         :param nat: number of atoms in the structure
         :type nat: integer
@@ -1095,8 +1148,8 @@ class SOFI(algo):
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
-        Output:
-        =======
+        **== Output: ==**
+
         :param nm_out: number of matrices in the output list `mat_out`
         :type nm_out: integer
 
@@ -1154,8 +1207,7 @@ class SOFI(algo):
 
         This is a wrapper to lib_try_mat() routine from library_sofi.f90
 
-        Input:
-        ======
+        **== Input: ==**
 
         :param nat: number of atoms in the structure
         :type nat: integer
@@ -1170,8 +1222,7 @@ class SOFI(algo):
         :type theta: np.ndarray((3,3), dtype = float)
 
 
-        Output:
-        =======
+        **== Output: ==**
 
         :param dh: the Hausdorff distance value
         :type dh: float
@@ -1215,8 +1266,7 @@ class SOFI(algo):
 
         This is a wrapper to lib_construct_operation() routine from library_sofi.f90
 
-        Input:
-        ======
+        **== Input: ==**
 
         :param op: Schoeflies Op name, possible values:
                          - "Id" = identity
@@ -1234,19 +1284,17 @@ class SOFI(algo):
         :type angle: float
 
 
-        Output:
-        =======
+        **== Output: ==**
 
         :param matrix: the matrix representation of desired operation
         :type matrix: 3x3 matrix, np.ndarray((3, 3), dtype = float )
 
 
-        NOTE:
-        =====
+        .. note::
+            The operation "Id" is equivalent to "C" about any axis for angle=0.0; and
+            similarly the operation "I" is equivalent to "S" with angle=0.5 about any axis.
+            The operation "S" with angle=0.0 is a reflection.
 
-        The operation "Id" is equivalent to "C" about any axis for angle=0.0; and
-        similarly the operation "I" is equivalent to "S" with angle=0.5 about any axis.
-        The operation "S" with angle=0.0 is a reflection.
 
         '''
         c_op=op.encode()
@@ -1278,8 +1326,8 @@ class SOFI(algo):
 
         This is a wrapper to routine lib_mat_combos() from library_sofi.f90
 
-        Input:
-        ======
+        **== Input: ==**
+
         :param nm_in: number of matrices in the `mat_list` input
         :typ nm_in: integer
 
@@ -1287,8 +1335,8 @@ class SOFI(algo):
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
 
-        Output:
-        =======
+        **== Output: ==**
+
         :param nm_out: number of matrices in the output list `mat_out`
         :type nm_out: integer
 
