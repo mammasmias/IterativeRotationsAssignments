@@ -1,0 +1,76 @@
+name: deploy page
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: node.js thing
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # installation
+      - name: install deps
+        run: |
+         python3 -m pip install numpy==1.24.2
+         python3 -m pip install six==1.16.0
+         python3 -m pip install sphinx==5.3.0
+         python3 -m pip install sphinx-rtd-theme==1.1.1
+         python3 -m pip install sphinx-sitemap==2.2.1
+         python3 -m pip install breathe==4.34.0
+         python3 -m pip install sphinx-fortran==1.1.1
+
+
+      - name: build
+        run: ls -a ${{github.workspace }} && cd docs && make html
+        #run: sphinx-build -b html docs public
+      #- run: make html
+      
+      - name: Archive artifact
+        shell: sh
+        if: runner.os == 'Linux'
+        run: |
+          ls -a ${{github.workspace }}
+          tar \
+          --dereference --hard-dereference \
+          --exclude=.git \
+          --exclude=.github \
+          -cvf "$RUNNER_TEMP/artifact.tar" \
+          --directory=docs/_build/html .
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Specify runner + deployment step
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action
