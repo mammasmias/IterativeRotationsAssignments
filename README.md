@@ -3,6 +3,8 @@
 This is the repository of shape matching algorithm
 Iterative Rotations and Assignments (IRA), and the Symmetry Operations FInder (SOFI) algorithm.
 
+Online documentation: [LINK](https://mammasmias.github.io/IterativeRotationsAssignments/).
+
 IRA is described in the publication [[1]](#1).
 It is also the main subject of the dissertation [[2]](#2), where a workflow
 inserting IRA into an off-lattice kMC algorithm is developed.
