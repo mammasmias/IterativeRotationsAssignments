@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v3
 
       # Runs a single command using the runners shell
-      - name: node.js thing
+      - name: the node.js thing
         uses: actions/setup-node@v3
         with:
           node-version: 20
