@@ -329,6 +329,7 @@ class IRA(algo):
         :type kmax_factor: float
 
         **== optional ==**
+
         :param candidate1: list of candidate central atoms of structure1. This is useful when some
                            additional information is known about the structures, e.g. we want to impose
                            some specific atoms as possible central atoms. Particularly useful when
@@ -604,7 +605,7 @@ class SOFI(algo):
         :type typ_in: string or int
 
         :param coords: the atomic positions of the structure
-        :tpye coords: np.array((nat,3), dtype=float)
+        :type coords: np.array((nat,3), dtype=float)
 
         :param sym_thr: symmetry threshold value
         :type sym_thr: float
@@ -733,7 +734,7 @@ class SOFI(algo):
         :type typ_in: string or int
 
         :param coords: the atomic positions of the structure
-        :tpye coords: np.array((nat,3), dtype=float)
+        :type coords: np.array((nat,3), dtype=float)
 
         :param sym_thr: symmetry threshold value
         :type sym_thr: float
@@ -799,7 +800,8 @@ class SOFI(algo):
         :param mat_list: list of matrices containging symmetry operations
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
 
-        == optional ==
+        **== optional ==**
+
         :param verb: verbosity of the output, verb=True outputs a report from get_pg() routine.
         :type verb: logical
 
@@ -917,6 +919,10 @@ class SOFI(algo):
 
         This is a wrapper to lib_analmat() routine from library_sofi.f90
 
+        .. note::
+            the angle returned by this routine is always positive. The axis might be either :math:`\pm` direction.
+
+
         **== input: ==**
 
         :param rmat: input matrix
@@ -944,9 +950,6 @@ class SOFI(algo):
 
         :param angle: the angle of rotation of matrix `rmat`, in units of 1/2pi, is the ratio p/n
         :type angle: float
-
-        .. note::
-            the angle returned by this routine is always positive. The axis might be either :math:`\pm` direction.
 
         """
 
@@ -1067,7 +1070,7 @@ class SOFI(algo):
         :type coords: np.ndarray((nat, 3), dtype = float )
 
         :param nm_in: number of matrices in the `mat_list` input
-        :typ nm_in: integer
+        :type nm_in: integer
 
         :param mat_list: list of input matrices
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
@@ -1142,7 +1145,7 @@ class SOFI(algo):
         :type coords: np.ndarray((nat, 3), dtype = float )
 
         :param nm_in: number of matrices in the `mat_list` input
-        :typ nm_in: integer
+        :type nm_in: integer
 
         :param mat_list: list of input matrices
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )
@@ -1329,7 +1332,7 @@ class SOFI(algo):
         **== Input: ==**
 
         :param nm_in: number of matrices in the `mat_list` input
-        :typ nm_in: integer
+        :type nm_in: integer
 
         :param mat_list: list of input matrices
         :type mat_list: np.ndarray( (nm_in, 3, 3), dtype = float )

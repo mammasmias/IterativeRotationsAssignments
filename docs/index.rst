@@ -13,6 +13,7 @@ IRA library documentation
    :caption: Reference
 
    src/refs
+   src/c_wrappers
    interf/py_interf
 
 

@@ -4,4 +4,11 @@
 Fortran source
 ##############
 
-doxygen stuff
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contains
+
+   cshda
+   ira
+   sofi

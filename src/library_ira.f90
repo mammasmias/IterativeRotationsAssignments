@@ -26,17 +26,45 @@
 !! stored. Therefore, the output data appears as "intent(in)".
 !!==============================================================================
 
+
+!> @brief wrapper to the cshda routine from cshda.f90
+!!
+!! @details
+!! All parameters are as intent(in). The output is written into arrays
+!! ``found`` and ``dists``, which are assumed to be allocated by the caller
+!! to their correct size. ``size(found) = size(dists) = [nat2]``
+!!
+!! @param[in]  nat1    -> number of atoms in structure 1
+!! @param[in]  typ1    -> atomic types of structure 1
+!! @param[in]  coords1 -> atomic positions of structure 1
+!! @param[in]  nat2    -> number of atoms in structure 2
+!! @param[in]  typ2    -> atomic types of structure 2
+!! @param[in]  coords2 -> atomic positions of structure 2
+!! @param[in]  thr     -> threshold for the Hausdorff distance, used for early exit;
+!! @param[in]  found   -> list of assigned atoms of conf 2 to conf 1:
+!!                        e.g. found(3) = 9 means atom 3 from conf 1 is assigned
+!!                        to atom 9 in conf 2;
+!! @param[in]  dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
+!! @return found, dists
+!!
+!!
+!! C-header:
+!! ~~~~~~~~~~~~~~~{.c}
+!! void lib_cshda( int nat1, int *typ1, double *coords1, \
+!!                 int nat2, int *typ2, double *coords2, \
+!!                 double thr, int **found, double **dists);
+!! ~~~~~~~~~~~~~~~
+!!
 subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )&
      bind(C, name="lib_cshda")
-  !! wrapper to the cshda routine from cshda.f90
   use iso_c_binding
   implicit none
-  integer(c_int), value, intent(in) :: nat1
-  type( c_ptr ), value, intent(in) :: typ1
-  type( c_ptr ), value, intent(in) :: coords1
-  integer(c_int), value, intent(in) :: nat2
-  type( c_ptr ), value, intent(in) :: typ2
-  type( c_ptr ), value, intent(in) :: coords2
+  integer(c_int),   value, intent(in) :: nat1
+  type( c_ptr ),    value, intent(in) :: typ1
+  type( c_ptr ),    value, intent(in) :: coords1
+  integer(c_int),   value, intent(in) :: nat2
+  type( c_ptr ),    value, intent(in) :: typ2
+  type( c_ptr ),    value, intent(in) :: coords2
   real( c_double ), value, intent(in) :: thr
   !!
   type( c_ptr ), intent(in) :: found
@@ -73,7 +101,35 @@ subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dist
 end subroutine lib_cshda
 
 
-
+!> @brief wrapper to the cshda_pbc routine from cshda.f90
+!!
+!! @details
+!! All parameters are as intent(in). The output is written into arrays
+!! ``found`` and ``dists``, which are assumed to be allocated by the caller
+!! to their correct size. ``size(found) = size(dists) = [nat2]``
+!!
+!! @param[in]  nat1    -> number of atoms in structure 1
+!! @param[in]  typ1    -> atomic types of structure 1
+!! @param[in]  coords1 -> atomic positions of structure 1
+!! @param[in]  nat2    -> number of atoms in structure 2
+!! @param[in]  typ2    -> atomic types of structure 2
+!! @param[in]  coords2 -> atomic positions of structure 2
+!! @param[in]  lat2    -> lattice vectors of conf 2;
+!! @param[in]  thr     -> threshold for the Hausdorff distance, used for early exit;
+!! @param[in]  found   -> list of assigned atoms of conf 2 to conf 1:
+!!                        e.g. found(3) = 9 means atom 3 from conf 1 is assigned
+!!                        to atom 9 in conf 2;
+!! @param[in]  dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
+!! @return found, dists
+!!
+!!
+!! C-header:
+!! ~~~~~~~~~~~~~~~{.c}
+!! void lib_cshda_pbc( int nat1, int *typ1, double *coords1, \
+!!                     int nat2, int *typ2, double *coords2, double * lat2, \
+!!                     double thr, int **found, double **dists);
+!! ~~~~~~~~~~~~~~~
+!!
 subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, found, dists )&
      bind(C, name="lib_cshda_pbc")
   !! wrapper to the cshda_pbc routine from cshda.f90
@@ -129,33 +185,59 @@ subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, fo
 
 end subroutine lib_cshda_pbc
 
-
+!> @brief the IRA matching procedure
+!!
+!! @details
+!! wrapper call to match two structures. This includes call to ira_unify to get apx,
+!! and then call to svdrot_m to obtain final match. Routines from ira_routines.f90
+!!
+!! @note
+!!  Warning:
+!!  the indices in candidate1, and candidate2 need to be F-style (start by 1) on input!
+!!
+!! The result can be applied to struc2, as:
+!! ~~~~~~~~~~~~~~~{.f90}
+!!    idx = permutation(i)
+!!    coords2(:,i) = matmul( rotation, coords2(:,idx) ) + translation
+!! ~~~~~~~~~~~~~~~
+!!
+!! @param[in]  nat1    -> number of atoms in structure 1
+!! @param[in]  typ1    -> atomic types of structure 1
+!! @param[in]  coords1 -> atomic positions of structure 1
+!! @param[in]  candidate1 -> list of candidate central atoms in structure 1
+!! @param[in]  nat2    -> number of atoms in structure 2
+!! @param[in]  typ2    -> atomic types of structure 2
+!! @param[in]  coords2 -> atomic positions of structure 2
+!! @param[in]  candidate2 -> list of candidate central atoms in structure 2
+!! @param[in]  kmax_factor -> the factor to multiply kmax (should be > 1.0)
+!! @param[in]  rotation -> the 3x3 rotation matrix
+!! @param[in]  translation -> the 3D translation vector
+!! @param[in]  permutation -> the atomic permutations
+!! @param[out]  hd -> final value of the Hausdorff distance
+!! @param[out]  cerr -> error value (negative on error, zero otherwise)
+!! @returns rotation, translation, permutation, hd, cerr
+!!
+!! C-header:
+!! ~~~~~~~~~~~~~~~{.c}
+!! void lib_match(int nat1, int *typ1, double *coords1, int *cand1,\
+!!                int nat2, int *typ2, double *coords2, int *cand2, \
+!!                double km_factor, double **rmat, double **tr, \
+!!                int **perm, double *hd, int *cerr);
+!! ~~~~~~~~~~~~~~~
 subroutine lib_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
      kmax_factor, rotation, translation, permutation, hd, cerr ) bind(C, name="lib_match")
-  !!
-  !! wrapper call to match two structures. This includes call to ira_unify to get apx,
-  !! and then call to svdrot_m to obtain final match. Routines from ira_routines.f90
-  !!
-  !! Warning:
-  !! the indices in candidate1, and candidate2 need to be F-style (start by 1) on input!
-  !!
-  !! The result can be applied to struc2, as:
-  !!
-  !!   idx = permutation(i)
-  !!   coords2(:,i) = matmul( rotation, coords2(:,idx) ) + translation
-  !!
   use iso_c_binding
   use err_module, only: get_err_msg
   implicit none
   integer(c_int), value, intent(in) :: nat1
-  type( c_ptr ), value, intent(in) :: typ1
-  type( c_ptr ), value, intent(in) :: coords1
-  type( c_ptr ), value, intent(in) :: candidate1
+  type( c_ptr ), value,  intent(in) :: typ1
+  type( c_ptr ), value,  intent(in) :: coords1
+  type( c_ptr ), value,  intent(in) :: candidate1
   integer(c_int), value, intent(in) :: nat2
-  type( c_ptr ), value, intent(in) :: typ2
-  type( c_ptr ), value, intent(in) :: coords2
-  type( c_ptr ), value, intent(in) :: candidate2
+  type( c_ptr ), value,  intent(in) :: typ2
+  type( c_ptr ), value,  intent(in) :: coords2
+  type( c_ptr ), value,  intent(in) :: candidate2
   real( c_double ), value, intent(in) :: kmax_factor
   !!
   type( c_ptr ), intent(in) :: rotation

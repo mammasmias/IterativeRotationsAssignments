@@ -52,7 +52,6 @@
 
 
       subroutine cart_to_crist(xpp,ct)
-        !> @detail
         !!----------------------------
         !! cartesian to crystallographic coordinates transform, in 3-dimension
         !! v_crist = B^-1 * R_cart; where B is the matrix formed by unit cell vectors
@@ -112,7 +111,6 @@
 
 
       subroutine crist_to_cart(xpp,bt)
-        !> @detail
         !!--------------------------------
         !! crystallographic to cartesian transformation in 3-dimensions
         !! R_cart = B * v_crist; where B is the matrix formed by cell vectors vertically
@@ -153,32 +151,32 @@
 
 
 
+  !> @details
+  !! Linear Assignment Problem (LAP) algorithm:
+  !! Constrained Shortest Distance Assignment (CShDA).
+  !!
+  !! Assign atoms of configuration 1 to atoms of configuration 2 based on
+  !! the CShDA algorithm.
+  !!
+  !! @note
+  !!  WARNING nat1 must be lower or equal nat2!
+  !!
+  !!================================================
+  !! @param[in]    nat1    -> number of atoms in conf 1;
+  !! @param[in]    typ1    -> atomic types in conf 1;
+  !! @param[in]    coords1 -> coordinates of conf 1;
+  !! @param[in]    nat2    -> number of atoms in conf 2;
+  !! @param[in]    typ2    -> atomic types in conf 2;
+  !! @param[in]    coords2 -> coordinates of conf 2;
+  !! @param[in]    some_threshold -> threshold for the Hausdorff distance, used for early exit;
+  !! @param[out]   found   -> list of assigned atoms of conf 2 to conf 1:
+  !!                         e.g. found(3) = 9 means atom 3 from conf 1 is assigned
+  !!                         to atom 9 in conf 2;
+  !! @param[out]   dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
+  !!
   subroutine cshda( nat1, typ1, coords1, &
                     nat2, typ2, coords2, &
                     some_threshold, found, dists )
-
-    !> @detail
-    !! Linear Assignment Problem (LAP) algorithm:
-    !! Constrained Shortest Distance Assignment (CShDA).
-    !!
-    !! Assign atoms of configuration 1 to atoms of configuration 2 based on
-    !! the CShDA algorithm.
-    !!
-    !! WARNING nat1 must be lower or equal nat2!
-    !!
-    !!================================================
-    !! nat1    -> number of atoms in conf 1;
-    !! typ1    -> atomic types in conf 1;
-    !! coords1 -> coordinates of conf 1;
-    !! nat2    -> number of atoms in conf 2;
-    !! typ2    -> atomic types in conf 2;
-    !! coords2 -> coordinates of conf 2;
-    !! some_threshold -> threshold for the Hausdorff distance, used for early exit;
-    !! found   -> list of assigned atoms of conf 2 to conf 1:
-    !!            e.g. found(3) = 9 means atom 3 from conf 1 is assigned
-    !!            to atom 9 in conf 2;
-    !! dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
-    !!
     implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1
@@ -389,34 +387,35 @@
   end subroutine cshda
 
 
+  !> @details
+  !! Linear Assignment Problem (LAP) algorithm:
+  !! Constrained Shortest Distance Assignment (CShDA).
+  !!
+  !! Assign atoms of configuration 1 to atoms of configuration 2 based on
+  !! the CShDA algorithm. The configuration 2 is periodic with given lattice.
+  !!
+  !!
+  !! @note
+  !!  WARNING nat1 must be lower or equal nat2!
+  !!
+  !!================================================
+  !! @param[in]  nat1    -> number of atoms in conf 1;
+  !! @param[in]  typ1    -> atomic types in conf 1;
+  !! @param[in]  coords1 -> coordinates of conf 1;
+  !! @param[in]  nat2    -> number of atoms in conf 2;
+  !! @param[in]  typ2    -> atomic types in conf 2;
+  !! @param[in]  coords2 -> coordinates of conf 2;
+  !! @param[in]  lat2    -> lattice vectors of conf 2;
+  !! @param[in]  some_thr -> threshold for hd;
+  !! @param[out]  found   -> list of paired atoms of conf 2 to conf 1:
+  !!                         e.g. found(3) = 9 means atom 3 from conf 1 is paired
+  !!                         to atom 9 in conf 2;
+  !! @param[out]  dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
+  !!
   subroutine cshda_pbc( nat1, typ1, coords1, &
                    nat2, typ2, coords2, lat2, &
                    some_thr, found, dists )
 
-    !> @detail
-    !! Linear Assignment Problem (LAP) algorithm:
-    !! Constrained Shortest Distance Assignment (CShDA).
-    !!
-    !! Assign atoms of configuration 1 to atoms of configuration 2 based on
-    !! the CShDA algorithm. The configuration 2 is periodic with given lattice.
-    !!
-    !!
-    !! WARNING nat1 must be lower or equal nat2!
-    !!
-    !!================================================
-    !! nat1    -> number of atoms in conf 1;
-    !! typ1    -> atomic types in conf 1;
-    !! coords1 -> coordinates of conf 1;
-    !! nat2    -> number of atoms in conf 2;
-    !! typ2    -> atomic types in conf 2;
-    !! coords2 -> coordinates of conf 2;
-    !! lat2    -> lattice vectors of conf 2;
-    !! some_thr -> threshold for hd;
-    !! found   -> list of paired atoms of conf 2 to conf 1:
-    !!            e.g. found(3) = 9 means atom 3 from conf 1 is paired
-    !!            to atom 9 in conf 2;
-    !! dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
-    !!
     use ira_pbc, only: pbc_vec
     implicit none
     integer,                  intent(in) :: nat1
