@@ -72,19 +72,31 @@
 
     !! get symmetries with sym_thr
     call sofi_get_symmops( nat, typ, coords, sym_thr, nmat, mat_list, ierr )
-    if( ierr /= 0 ) return
+    if( ierr /= 0 ) then
+       write(*,*) "error in get_symmops"
+       ! return
+       stop
+    end if
+
 
     !! get combos, can produce symm above sym_thr
     call sofi_get_combos( nat, typ, coords, nmat, mat_list )
 
     !! get ops, and unique angles and axes
-    call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list )
+    call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
+    if( ierr /= 0 ) then
+       write(*,*) "error in unique_ax_angle"
+       ! return
+       stop
+    end if
+
 
     !! get permuations and dmax
     call sofi_get_perm( nat, typ, coords, nmat, mat_list, perm_list, dmax_list )
 
     !! get name of pg
     verb = .false.
+    ! verb = .true.
     call sofi_get_pg( nmat, mat_list, pg, prin_ax, verb )
 
     !! get the p, n values
@@ -886,6 +898,8 @@
     integer :: k, pg_err
     real :: dotj, dotk
 
+    real, dimension(nbas) :: angle_list
+
     if( verb ) then
        write(*,*) repeat('=',20)
        write(*,*) "number of SymmOps entering get_pg:",nbas
@@ -910,7 +924,8 @@
     do i = 1, nbas
        rmat = op_list(:,:,i)
        call sofi_analmat( rmat, op(i), n_int(i), power(i), ax_list(:,i), angle )
-       if(verb) write(*,'(i2,a3,x,i0,"^",i0,2x,"axis:",x,3(f6.3,x),2x,"angle:",x,g0.4)') &
+       angle_list(i) = angle
+       if(verb) write(*,'(i2,a3,x,i0,"^",i0,2x,"axis:",x,3(f9.6,x),2x,"angle:",x,g0.4)') &
             i, op(i), n_int(i), power(i), ax_list(:,i), angle
     end do
 
@@ -947,7 +962,7 @@
           !!
           if( abs(dot_product(ax, ax_list(:,j))) .gt. 0.999 ) then
              !! is same ax
-             if(verb) write(*,'(a3,g0,a1,g0)') op(j), n_int(j),'^', power(j)
+             if(verb) write(*,'(a3,g0,a1,g0,x,f7.4)') op(j), n_int(j),'^', power(j), angle_list(j)
              skip_ax(j) = 1
              !! keep maximal n value of C operations
              if( op(j) == 'C') max_n_val = max( max_n_val, n_int(j))
@@ -1445,18 +1460,18 @@
     !! if z==0, then flip such that x>0
     !! if x==0, then flip such that y>0
     flip = 1.0
-    if( ax(3) .lt. 0.0 ) then
-       !! flip
+    if( ax(3) .lt. -epsilon ) then
+       !! z is negative, flip
        flip = -flip
     elseif( abs(ax(3)) < epsilon ) then
        !! z==0, check x
-       if( ax(1) < 0.0 ) then
-          !! flip
+       if( ax(1) < -epsilon ) then
+          !! x is negative, flip
           flip = -flip
        elseif( abs(ax(1)) < epsilon ) then
           !! x==0, check y
-          if( ax(2) < 0.0 ) then
-             !! flip
+          if( ax(2) < -epsilon ) then
+             !! y is negative, flip
              flip = -flip
           end if
        end if
@@ -1588,7 +1603,7 @@
 
   end subroutine sofi_construct_operation
 
-  subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out )
+  subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ierr )
     !! This routine is an attempt, should be taken with caution.
     !! Generate list of op, axis, angle which resolves ambiguity for
     !! conjugate operations (transpose)
@@ -1607,13 +1622,16 @@
     character(len=2), dimension(n_mat), intent(out) :: op_out
     real, dimension(3,n_mat),           intent(out) :: ax_out
     real, dimension(n_mat),             intent(out) :: angle_out
+    integer,                            intent(out) :: ierr
 
     integer :: n, i, p, j
-    real :: angle, dotp, angle_diff, dist, dist_neg
+    real :: angle, dotp, angle_diff, angle_sum, dist, dist_neg
     character(len=2), dimension(n_mat) :: op_list
     real, dimension(3) :: ax
     real, dimension(3,3) :: rmat
     real :: dotp_equal
+
+    ierr = 0
 
     !! threshold value for dot product between two vectors which should be equal
     dotp_equal = 0.95
@@ -1625,7 +1643,45 @@
        op_out(i) = op_list(i)
        ax_out(:,i) = ax
        angle_out(i) = angle
+       write(*,'(i4,x,a2,x,i0,"^",i0,x,3f9.4,4x,f9.4)') i, op_out(i),n,p, ax_out(:,i), angle_out(i)
     end do
+
+    !! find operations that are ambiguous:
+    !!   - same ax, same angle
+    !!   - opposite ax, opposite angle
+    do i = 1, n_mat
+       do j = i+1, n_mat
+          if( op_list(i) .ne. op_list(j) ) cycle
+          !! axes
+          dotp=dot_product( ax_out(:,i), ax_out(:,j))
+          !! angles
+          angle_diff = angle_out(i) - angle_out(j)
+          angle_sum = angle_out(i) + angle_out(j)
+          !!
+          !! same ax, same angle
+          if( dotp .gt. dotp_equal .and. &
+               abs(angle_diff) .lt. 1e-2 ) then
+             !! ops are ambiguous
+             write(*,*) i, j
+             write(*,'(3f9.5,2x,f7.4)') ax_out(:,i), angle_out(i)
+             write(*,'(3f9.5,2x,f7.4)') ax_out(:,j), angle_out(j)
+             ierr = -1
+          end if
+          !!
+          !! opposite ax, equal or opposite angle
+          if( dotp .lt. -dotp_equal  )then
+             if( abs( angle_diff ) .lt. 1e-2 .or. &
+                  abs(angle_sum) .lt. 1e-2 ) then
+                !! ops are ambiguous
+                write(*,*) i, j, angle_diff
+                write(*,'(3f9.5,2x,f7.4)') ax_out(:,i), angle_out(i)
+                write(*,'(3f9.5,2x,f7.4)') ax_out(:,j), angle_out(j)
+                ierr = -1
+             endif
+          end if
+       end do
+    end do
+
 
 
     !! flip equivalent axes, if ax flipped, flip also angle
@@ -1642,7 +1698,6 @@
        ! write(*,'(i4,x,3f9.4,4x,f9.4)') i, ax_out(:,i), angle_out(i)
     end do
 
-    !! find operations that are still ambiguous
     do i = 1, n_mat
        ! write(*,'(a,i0,a4,3f9.4,4x,f9.4)') '>>',i, op_list(i), ax_out(:,i), angle_out(i)
        do j = i+1, n_mat
