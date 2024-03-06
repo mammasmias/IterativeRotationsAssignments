@@ -93,6 +93,7 @@ int main( void ){
   double *dmax_data;
   char *pg;
   double *prin_ax;
+  int cerr;
 
   /* allocate space up to nmax for all arrays, all arrays are 1d and contiguous */
   /* if you want to reshape the output data into proper dim-arrays, it's up to you. */
@@ -103,7 +104,7 @@ int main( void ){
   ax_data = malloc( sizeof(double)*3*nmax);
   angle_data = malloc( sizeof(double)*nmax);
   dmax_data = malloc( sizeof(double)*nmax);
-  op_data = malloc(sizeof(char)*2*nmax+1);
+  op_data = malloc(sizeof(char)*1*nmax+1);
   pg = malloc(sizeof(char)*11);
   prin_ax = malloc(sizeof(double)*3);
 
@@ -113,7 +114,15 @@ int main( void ){
   lib_compute_all( nat, typ, &coords[0][0], sym_thr,     \
                    &nmat, &mat_data, &perm_data,  \
                    &op_data, &n_data, &p_data,    \
-                   &ax_data, &angle_data, &dmax_data, &pg, &prin_ax );
+                   &ax_data, &angle_data, &dmax_data, &pg, &prin_ax, &cerr );
+
+  if( cerr < 0 ){
+    char* msg;
+    msg = malloc( sizeof(char)*128);
+    lib_get_err_msg( cerr, &msg );
+    printf( "%s\n", msg);
+    return cerr;
+  }
 
   printf( "%d\n",nmat);
 
@@ -121,13 +130,13 @@ int main( void ){
   int m=0;
   int mm=0;
   int mp=0;
-  char this_op[2]="";
+  char this_op[1]="";
   for ( int i=0; i<nmat; i++)
   {
-    printf( " idx: %d\n", i );
+    printf( " idx: %d\n", i+1 );
 
-    /* op_data is a single string, should be sliced into nmat substrings of size-2 each*/
-    slice( op_data, this_op, i*2, i*2+2 );
+    /* op_data is a single string, should be sliced into nmat substrings of size-1 each*/
+    slice( op_data, this_op, i*1, i*1+1 );
     printf( " operation: %s %d ^ %d \n", this_op, n_data[i], p_data[i]);
     printf( " angle: %f\n",angle_data[i]);
 

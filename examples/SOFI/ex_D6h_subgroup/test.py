@@ -22,7 +22,7 @@ d6h_matrix = np.zeros( (24, 3, 3), dtype = float )
 # fill the theta operations
 
 # identity
-d6h_matrix[0] = sofi.construct_operation( "Id", ax[0], 0.0 )
+d6h_matrix[0] = sofi.construct_operation( "E", ax[0], 0.0 )
 # inversion
 d6h_matrix[1] = sofi.construct_operation( "I", ax[0], 0.0 )
 

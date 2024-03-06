@@ -16,7 +16,8 @@
   subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
                                nmat, mat_list, perm_list, &
                                op_list, n_list, p_list, &
-                               ax_list, angle_list, dmax_list, pg, prin_ax )
+                               ax_list, angle_list, dmax_list, pg, prin_ax, &
+                               ierr )
     !!
     !! compute all data from SOFI in single routine.
     !! coords are assumed to be already shifted to desired origin on input
@@ -35,7 +36,7 @@
     !! mat_list   :: symmetry matrices
     !! perm_list  :: permutation of atoms after applying each symmetry
     !! op_list    :: Character "Op" from the Schoenflies notation: Op n^p
-    !!                (Id = identity, I = inversion, C = rotation, S = (roto-)reflection )
+    !!               (E = identity, I = inversion, C = rotation, S = (roto-)reflection )
     !! n_list     :: Schoenflies n value
     !! p_list     :: Schoenflies p value
     !! ax_list    :: axis of operation of each symmetry
@@ -43,8 +44,10 @@
     !!                i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
     !! dmax_list  :: max difference of atomic positions of before/after symm transformation
     !! pg         :: name of Point group, e.g. D6h
+    !! ierr       :: error value, zero on normal execution, negative otherwise
     !!
     use sofi_tools, only: nmax
+    use err_module
     implicit none
     !! ===== input
     integer,                 intent(in) :: nat
@@ -55,7 +58,7 @@
     integer,                       intent(out) :: nmat
     real, dimension(3,3,nmax),     intent(out) :: mat_list
     integer, dimension(nat, nmax), intent(out) :: perm_list
-    character(len=2), dimension(nmax), intent(out) :: op_list
+    character(len=1), dimension(nmax), intent(out) :: op_list
     integer, dimension(nmax),      intent(out) :: n_list
     integer, dimension(nmax),      intent(out) :: p_list
     real, dimension(3, nmax),      intent(out) :: ax_list
@@ -63,19 +66,22 @@
     real, dimension(nmax),         intent(out) :: dmax_list
     character(len=10),             intent(out) :: pg
     real, dimension(3),            intent(out) :: prin_ax
+    integer,                       intent(out) :: ierr
 
     real :: dum
-    integer :: i, ierr
+    integer :: i
     real, dimension(3) :: rdum
     real, dimension(3,3) :: rmat
     logical :: verb
+    character(:), allocatable :: msg
 
     !! get symmetries with sym_thr
     call sofi_get_symmops( nat, typ, coords, sym_thr, nmat, mat_list, ierr )
     if( ierr /= 0 ) then
        write(*,*) "error in get_symmops"
-       ! return
+       write(*,*) get_err_msg( ierr )
        stop
+       ! return
     end if
 
 
@@ -86,7 +92,8 @@
     call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
     if( ierr /= 0 ) then
        write(*,*) "error in unique_ax_angle"
-       ! return
+       write(*,*) get_err_msg(ierr)
+       return
        stop
     end if
 
@@ -102,7 +109,14 @@
     !! get the p, n values
     do i = 1, nmat
        rmat = mat_list(:,:,i)
-       call sofi_analmat( rmat, op_list(i), n_list(i), p_list(i), rdum, dum )
+       call sofi_analmat( rmat, op_list(i), n_list(i), p_list(i), rdum, dum, ierr )
+       if( ierr /= 0 ) then
+          write(*,*) "error in analmat"
+          write(*,*) get_err_msg( ierr )
+          stop
+          ! return
+       end if
+
     end do
 
   end subroutine sofi_compute_all
@@ -883,8 +897,7 @@
     real, dimension(3,3) :: rmat
     real :: angle, dd, dot, cross
     integer :: i, j
-    real :: pi
-    character(len=2), dimension(nbas) :: op
+    character(len=1), dimension(nbas) :: op
     integer, dimension(nbas) :: n_int, power
     real, dimension(3,nbas) :: ax_list
     integer, dimension(nbas) :: skip_ax
@@ -897,6 +910,7 @@
     real, dimension(3) :: cc
     integer :: k, pg_err
     real :: dotj, dotk
+    integer :: ierr
 
     real, dimension(nbas) :: angle_list
 
@@ -904,8 +918,6 @@
        write(*,*) repeat('=',20)
        write(*,*) "number of SymmOps entering get_pg:",nbas
     endif
-
-    pi=4.0*atan(1.0)
 
     !! start from below
     pg = 'C1'
@@ -923,7 +935,7 @@
     !! classify all op_list
     do i = 1, nbas
        rmat = op_list(:,:,i)
-       call sofi_analmat( rmat, op(i), n_int(i), power(i), ax_list(:,i), angle )
+       call sofi_analmat( rmat, op(i), n_int(i), power(i), ax_list(:,i), angle, ierr )
        angle_list(i) = angle
        if(verb) write(*,'(i2,a3,x,i0,"^",i0,2x,"axis:",x,3(f9.6,x),2x,"angle:",x,g0.4)') &
             i, op(i), n_int(i), power(i), ax_list(:,i), angle
@@ -943,8 +955,8 @@
 
     !! group the Ops of the list by axis
     do i = 1, nbas
-       if( op(i) .eq. 'I' ) cycle
-       if( op(i) .eq. 'Id' ) cycle
+       if( op(i) .eq. OP_INVERSION ) cycle
+       if( op(i) .eq. OP_IDENTITY ) cycle
        !!
        if( skip_ax(i) .eq. 1 ) cycle
        ax = ax_list(:,i)
@@ -956,16 +968,16 @@
 
        max_n_val = 0
        do j = 1, nbas
-          !! skip Id and I
-          if( op(j) == 'Id' )cycle
-          if( op(j) == 'I' )cycle
+          !! skip E and I
+          if( op(j) == OP_IDENTITY )cycle
+          if( op(j) == OP_INVERSION )cycle
           !!
           if( abs(dot_product(ax, ax_list(:,j))) .gt. 0.999 ) then
              !! is same ax
              if(verb) write(*,'(a3,g0,a1,g0,x,f7.4)') op(j), n_int(j),'^', power(j), angle_list(j)
              skip_ax(j) = 1
              !! keep maximal n value of C operations
-             if( op(j) == 'C') max_n_val = max( max_n_val, n_int(j))
+             if( op(j) == OP_PROP_ROT) max_n_val = max( max_n_val, n_int(j))
              !! count how many ops have this ax
              uniq_ax(5,nax) = uniq_ax(5,nax) + 1.0
           end if
@@ -994,9 +1006,9 @@
     !! find largest n of C ops, there are at least 2 ops on list
     max_n_val = 0
     max_n_loc = 2
-    if( count(op .eq. 'C') .gt. 0 ) then
-       max_n_val = maxval( n_int(:), mask=(op .eq. 'C'))
-       max_n_loc = maxloc( n_int(:), dim=1, mask=(op .eq. 'C'))
+    if( count(op .eq. OP_PROP_ROT) .gt. 0 ) then
+       max_n_val = maxval( n_int(:), mask=(op .eq. OP_PROP_ROT))
+       max_n_loc = maxloc( n_int(:), dim=1, mask=(op .eq. OP_PROP_ROT))
     endif
     !!
     !! special case for D2: n of principal ax is equal to n of other C ax
@@ -1007,8 +1019,8 @@
        !! there are axes with multip > 1
        if( multip_ax( max_n_loc) == 1 ) then
           !! we have chosen the wrong axis, choose again among axes with multip > 1
-          max_n_val = maxval( n_int(:), mask=(op .eq. 'C' .and. multip_ax .gt. 1))
-          max_n_loc = maxloc( n_int(:), dim=1, mask=(op .eq. 'C' .and. multip_ax .gt. 1))
+          max_n_val = maxval( n_int(:), mask=(op .eq. OP_PROP_ROT .and. multip_ax .gt. 1))
+          max_n_loc = maxloc( n_int(:), dim=1, mask=(op .eq. OP_PROP_ROT .and. multip_ax .gt. 1))
        endif
     end if
 
@@ -1076,7 +1088,7 @@
     n_c2 = 0
     ! write(*,*) '>> checking c2 perp'
     do i = 1, nbas
-       if( op(i) .ne. 'C') cycle
+       if( op(i) .ne. OP_PROP_ROT) cycle
        if( n_int(i) .ne. 2) cycle
        if( i .eq. max_n_loc ) cycle
        ax = ax_list(:,i)
@@ -1101,7 +1113,7 @@
     !! horizontal refl plane: axis of plane is parallel to principal, dot( ax_s0, principal ) = 1.0
     ! write(*,*) '>> checking sigma_h'
     do i = 1, nbas
-       if( op(i) .ne. 'S') cycle
+       if( op(i) .ne. OP_IMPROP_ROT) cycle
        if( n_int(i) .ne. 0) cycle
        dot = abs( dot_product(cn_ax, ax_list(:,i)))
        if( dot .gt. 0.99 ) has_sigma_h = .true.
@@ -1116,7 +1128,7 @@
     ! write(*,*) '>> checking sigma_v'
     n_in_plane = 0
     do i = 1, nbas
-       if( op(i) .ne. 'S') cycle
+       if( op(i) .ne. OP_IMPROP_ROT) cycle
        if( n_int(i) .ne. 0) cycle
        !! cross prod( ax, cn_ax ) = 1 for ax in plane
        call cross_prod( ax_list(:,i), cn_ax, cc)
@@ -1145,7 +1157,7 @@
 
        !! first, find two C2 axes perpendicular to principal ax: i,j
        lp:do i = 1, nbas
-          if( op(i) .ne. 'C' ) cycle
+          if( op(i) .ne. OP_PROP_ROT ) cycle
           if( n_int(i) .ne. 2) cycle
 
           dot = abs( dot_product( ax_list(:,i), cn_ax))
@@ -1154,7 +1166,7 @@
              !! select another
              do j = 1, nbas
                 if( j .eq. i ) cycle
-                if( op(j) .ne. 'C' ) cycle
+                if( op(j) .ne. OP_PROP_ROT ) cycle
                 if( n_int(j) .ne. 2) cycle
 
                 dotj = abs( dot_product( ax_list(:,j), cn_ax))
@@ -1191,7 +1203,7 @@
                    ! write(*,*) ax
                    !! dot with s0 should be zero -> s0 bisects axes i,j
                    do k = 1, nbas
-                      if( op(k) .ne. 'S') cycle
+                      if( op(k) .ne. OP_IMPROP_ROT) cycle
                       if( n_int(k) .ne. 0) cycle
                       dotk = abs( dot_product(ax, ax_list(:,k)) )
                       call cross_prod( ax_list(:,k), cn_ax, cc)
@@ -1208,7 +1220,7 @@
                    ! write(*,*) ax
                    !! dot with s0 should be zero -> s0 bisects axes i,j
                    do k = 1, nbas
-                      if( op(k) .ne. 'S') cycle
+                      if( op(k) .ne. OP_IMPROP_ROT) cycle
                       if( n_int(k) .ne. 0) cycle
                       dotk = abs( dot_product(ax, ax_list(:,k)) )
                       call cross_prod( ax_list(:,k), cn_ax, cc)
@@ -1225,7 +1237,7 @@
                    ! write(*,*) ax
                    !! dot with s0 should be zero -> s0 bisects axes i,j
                    do k = 1, nbas
-                      if( op(k) .ne. 'S') cycle
+                      if( op(k) .ne. OP_IMPROP_ROT) cycle
                       if( n_int(k) .ne. 0) cycle
                       dotk = abs( dot_product(ax, ax_list(:,k)) )
                       call cross_prod( ax_list(:,k), cn_ax, cc)
@@ -1248,7 +1260,7 @@
 
     !! check if has s2n
     do i = 1, nbas
-       if( op(i) .ne. 'S' ) cycle
+       if( op(i) .ne. OP_IMPROP_ROT ) cycle
        if( n_int(i) .ne. 2*max_n_val) cycle
        has_s2n = .true.
        exit
@@ -1317,7 +1329,7 @@
   end subroutine sofi_get_pg
 
 
-  subroutine sofi_analmat( rmat, op, n, p, ax, angle )
+  subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
     !!
     !! Analyse the input 3x3 matrix rmat, return the Schoenflies PG
     !! notation: "Op n^p", also give axis, angle of the operation.
@@ -1329,27 +1341,28 @@
     !!   To lift the ambiguity the whole list of operations needs to be processed,
     !!   see the routine sofi_unique_ax_angle for an attempt at this.
     !!
-    use sofi_tools, only: diag, gcd_rec, cross_prod
+    use sofi_tools
+    use err_module
     implicit none
     real, dimension(3,3), intent(in) :: rmat
-    character(len=2),     intent(out) :: op   !! character for operation Id, I, C, S
+    character(len=1),     intent(out) :: op   !! character for operation E, I, C, S
     integer,              intent(out) :: n    !! the n for angle
     integer,              intent(out) :: p    !! power for C5^2 kinda stuff...
     real, dimension(3),   intent(out) :: ax   !! the axis
     real,                 intent(out) :: angle
+    integer,              intent(out) :: ierr
 
     real, dimension(3,3) :: rdum
-    real :: det, pi, search_eval, diff, diff_old, cosangl
+    real :: det, search_eval, diff, diff_old, cosangl
     real, dimension(3) :: eigvals
     integer :: idx, i, j, nl, pl, gcd
     real :: mindiff
-    real :: flip, epsilon
+    real :: flip
     real, dimension(3) :: tmp, tmp2, tmp3
 
-    epsilon = 1e-6
+    op = OP_ERROR
+    n = 0; p =0
 
-    op=''
-    pi = 4.0*atan(1.0)
 
     !! working copy
     rdum(:,:) = rmat(:,:)
@@ -1357,6 +1370,16 @@
     !! determinant
     !! IRA routine
     call determinant3x3( rdum, det )
+    if( abs(det) .gt. 1.0 + epsilon ) then
+       write(*,*) "input matrix:"
+       write(*,'(3f9.4)') rdum(1,:)
+       write(*,'(3f9.4)') rdum(2,:)
+       write(*,'(3f9.4)') rdum(3,:)
+       write(*,*) "determinant has value:", det
+       ierr = ERR_DETERMINANT
+       return
+    end if
+
 
     !! diagonalise
     call diag( 3, rdum, eigvals, 1)
@@ -1372,14 +1395,14 @@
        !! there is one eignevalue which is 1.0
        search_eval = 1.0
        ! write(*,*) "matrix is rotation"
-       op(1:1)='C'
+       op(1:1)=OP_PROP_ROT
        !!
     elseif( det .lt. -0.5) then
        !! negative 1.0 determinant, matrix is (roto-)inversion.
        !! There is one eignevalue -1.0
        search_eval = -1.0
        ! write(*,*) "matrix is (roto-)inversion"
-       op(1:1)='S'
+       op(1:1)=OP_IMPROP_ROT
     endif
 
     !! find requested eigenvalue (they are not ordered)
@@ -1401,7 +1424,19 @@
     i = mod(i,3) + 1
     cosangl = eigvals(i)
     !! massage the eigenvalue a bit, since acos is defined strictly on [-1:1]
-    if( cosangl .gt. 1.0 .or. cosangl .lt. -1.0) cosangl = real(nint(cosangl))
+    ! if( cosangl .gt. 1.0 .or. cosangl .lt. -1.0) cosangl = real(nint(cosangl))
+    if( abs(cosangl) .gt. (1.0 + epsilon) ) then
+       !! value cosangl beyond 1.0, or below -1.0, error
+       write(*,'(a,1x,3f9.6)') "eigvals:", eigvals
+       write(*,'(a,1x,f6.2)') "search_eval:", search_eval
+       write(*,'(a,1x,f9.6)') "cosangl has value:",cosangl
+       ierr = ERR_ACOS_ARG
+       return
+    elseif( abs(cosangl) .gt. 1.0 ) then
+       !! value 1.0 within precision, take sign with value 1.0
+       cosangl = sign(1.0, cosangl )
+    end if
+
     angle = acos( cosangl ) / (2.0*pi)
     !! the resulting angle here is always positive
 
@@ -1427,6 +1462,13 @@
           mindiff = abs(diff)
        end if
     end do
+    !!
+    if( nl .eq. n .and. pl .eq. p ) then
+       write(*,'(a,1x,f12.6)') "unable to find n and p for angle:",angle
+       ierr = ERR_OTHER
+       return
+    end if
+
     n = nl
     p = pl
     !! greatest common denominator
@@ -1439,18 +1481,22 @@
     if( angle .lt. epsilon ) n = 0
     if( p .eq. 0 ) p = 1
     !!
-    !! C0 = Id :: rotation of angle 0 around any axis is identity
-    if( op(1:1)=='C' .and. angle .lt. epsilon ) op='Id'
+    !! C0 = E :: rotation of angle 0 around any axis is identity
+    if( op(1:1)==OP_PROP_ROT .and. angle .lt. epsilon ) op=OP_IDENTITY
     !!
     !! S2 = I :: rotation 0.5 and reflection about any axis is inversion
-    if( op(1:1)=='S' .and. abs(angle-0.5) .lt. epsilon ) op='I'
+    if( op(1:1)==OP_IMPROP_ROT .and. abs(angle-0.5) .lt. epsilon ) op=OP_INVERSION
 
     ! write(*,'(a,x,i3,a3,2f9.4)') 'angle:',n, op, angle, (n-1.0/angle)
 
     !! detection of possible errors
     if( &
-         op(1:1)=='C' .and. n==0 &
+         op(1:1)==OP_PROP_ROT .and. n==0 &
          ) then
+       op=OP_ERROR
+       ierr = ERR_OTHER
+       write(*,*) "Unknown error in sofi_analmat!"
+       return
        ! write(*,'(a,2x,a3,x,g0,x,g0)') '::: Error in sofi_analmat',op,n,p
        ! stop
     end if
@@ -1547,7 +1593,7 @@
     op_list(:,:,1:n_op) = op_new(:,:,1:n_op)
 
     if( n_op .lt. 1) then
-       !! should not, at least Id should satisfy!
+       !! should not, at least E should satisfy!
        write(*,*) 'error in sofi_ext_Bfield'
        stop
     endif
@@ -1560,7 +1606,7 @@
     !! angle on input is in units 1/(2pi), e.g. angle=0.5 means half circle
     use sofi_tools, only: construct_rotation, construct_reflection
     implicit none
-    character(len=2),     intent(in) :: op
+    character(len=1),     intent(in) :: op
     real, dimension(3),   intent(in) :: axis
     real,                 intent(in) :: angle
     real, dimension(3,3), intent(out) :: matrix
@@ -1578,7 +1624,7 @@
     matrix(:,:) = 0.0
     !!
     select case( trim(adjustl(op)) )
-    case( 'Id', 'E', 'id', 'e' )
+    case( 'E', 'e' )
        !! identity
        matrix(1,1) = 1.0
        matrix(2,2) = 1.0
@@ -1615,18 +1661,19 @@
     !!         and this also changes the sign of angle. But it is not always that M and M^T have opposite
     !!         direction of axes, the +/- direction after diagonalization is random.
 
-    use sofi_tools, only: matrix_distance
+    use sofi_tools
+    use err_module
     implicit none
     integer,                    intent(in) :: n_mat
     real, dimension(3,3,n_mat), intent(in) :: mat_list
-    character(len=2), dimension(n_mat), intent(out) :: op_out
+    character(len=1), dimension(n_mat), intent(out) :: op_out
     real, dimension(3,n_mat),           intent(out) :: ax_out
     real, dimension(n_mat),             intent(out) :: angle_out
     integer,                            intent(out) :: ierr
 
     integer :: n, i, p, j
     real :: angle, dotp, angle_diff, angle_sum, dist, dist_neg
-    character(len=2), dimension(n_mat) :: op_list
+    character(len=1), dimension(n_mat) :: op_list
     real, dimension(3) :: ax
     real, dimension(3,3) :: rmat
     real :: dotp_equal
@@ -1639,7 +1686,8 @@
     !! get all axes
     do i = 1, n_mat
        rmat = mat_list(:,:,i)
-       call sofi_analmat( rmat, op_list(i), n, p, ax, angle )
+       call sofi_analmat( rmat, op_list(i), n, p, ax, angle, ierr )
+       if( ierr /= 0 ) return
        op_out(i) = op_list(i)
        ax_out(:,i) = ax
        angle_out(i) = angle
@@ -1684,88 +1732,88 @@
 
 
 
-    !! flip equivalent axes, if ax flipped, flip also angle
+    ! !! flip equivalent axes, if ax flipped, flip also angle
+    ! do i = 1, n_mat
+    !    do j = 1, n_mat
+    !       dotp = dot_product( ax_out(:,i), ax_out(:,j) )
+    !       if( abs(dotp) .gt. dotp_equal ) then
+    !          !! axes are equivalent, flip
+    !          ax_out(:,j) = -ax_out(:,j)
+    !          !! flip also angle
+    !          angle_out(j) = -angle_out(j)
+    !       endif
+    !    end do
+    !    ! write(*,'(i4,x,3f9.4,4x,f9.4)') i, ax_out(:,i), angle_out(i)
+    ! end do
+
+    ! do i = 1, n_mat
+    !    ! write(*,'(a,i0,a4,3f9.4,4x,f9.4)') '>>',i, op_list(i), ax_out(:,i), angle_out(i)
+    !    do j = i+1, n_mat
+    !       !!
+    !       dotp=dot_product( ax_out(:,i), ax_out(:,j))
+    !       angle_diff = abs( angle_out(i) - angle_out(j) )
+    !       !!
+    !       ! write(*,*) i,j, dotp, angle_diff
+    !       if( op_list(i) .eq. op_list(j) .and. &
+    !           dotp .gt. dotp_equal .and. &
+    !           angle_diff .lt. 1e-2 ) then
+    !          !!
+    !          !! found ambiguous operations (i,j)
+    !          !! could just randomly decide and flip either, but let's
+    !          !! do it proper.
+    !          !!
+    !          ! write(*,*) 'ambiguous angle with j=',j
+    !          ! write(*,*) 'imat'
+    !          ! write(*,'(3f12.6)') mat_list(1,:,i)
+    !          ! write(*,'(3f12.6)') mat_list(2,:,i)
+    !          ! write(*,'(3f12.6)') mat_list(3,:,i)
+    !          ! write(*,*) 'jmat'
+    !          ! write(*,'(3f12.6)') mat_list(1,:,j)
+    !          ! write(*,'(3f12.6)') mat_list(2,:,j)
+    !          ! write(*,'(3f12.6)') mat_list(3,:,j)
+    !          !!
+    !          !! reconstruct rmat with this ax, +/-angle
+    !          !! imat
+    !          call sofi_construct_operation( op_list(i), ax_out(:,i), angle_out(i), rmat )
+    !          call matrix_distance( mat_list(:,:,i), rmat, dist )
+    !          call sofi_construct_operation( op_list(i), ax_out(:,i), -angle_out(i), rmat )
+    !          call matrix_distance( mat_list(:,:,i), rmat, dist_neg )
+    !          ! write(*,*) 'imat',dist, dist_neg
+    !          if( dist_neg .lt. dist ) then
+    !             !! angle i should be flipped
+    !             ! write(*,*) 'flipping angle i'
+    !             angle_out(i) = -angle_out(i)
+    !          endif
+
+
+    !          !! jmat
+    !          call sofi_construct_operation( op_list(j), ax_out(:,j), angle_out(j), rmat )
+    !          call matrix_distance( mat_list(:,:,j), rmat, dist )
+    !          call sofi_construct_operation( op_list(j), ax_out(:,j), -angle_out(j), rmat )
+    !          call matrix_distance( mat_list(:,:,j), rmat, dist_neg )
+    !          ! write(*,*) 'jmat',dist, dist_neg
+    !          if( dist_neg .lt. dist ) then
+    !             !! angle j should be negative
+    !             ! write(*,*) 'flipping angle j'
+    !             angle_out(j) = -angle_out(j)
+    !          endif
+
+    !          !! the angles should now be different!
+    !          if( abs(angle_out(i) - angle_out(j)) .lt. 0.01 ) then
+    !             !! error!
+    !             write(*,*) ">>>>! ERROR, angles still ambiguous!"
+    !          endif
+
+
+    !       endif
+    !       !!
+    !    end do
+    ! end do
+
+    !! put ax of E or I ops to (1, 0, 0 )
     do i = 1, n_mat
-       do j = 1, n_mat
-          dotp = dot_product( ax_out(:,i), ax_out(:,j) )
-          if( abs(dotp) .gt. dotp_equal ) then
-             !! axes are equivalent, flip
-             ax_out(:,j) = -ax_out(:,j)
-             !! flip also angle
-             angle_out(j) = -angle_out(j)
-          endif
-       end do
-       ! write(*,'(i4,x,3f9.4,4x,f9.4)') i, ax_out(:,i), angle_out(i)
-    end do
-
-    do i = 1, n_mat
-       ! write(*,'(a,i0,a4,3f9.4,4x,f9.4)') '>>',i, op_list(i), ax_out(:,i), angle_out(i)
-       do j = i+1, n_mat
-          !!
-          dotp=dot_product( ax_out(:,i), ax_out(:,j))
-          angle_diff = abs( angle_out(i) - angle_out(j) )
-          !!
-          ! write(*,*) i,j, dotp, angle_diff
-          if( op_list(i) .eq. op_list(j) .and. &
-              dotp .gt. dotp_equal .and. &
-              angle_diff .lt. 1e-2 ) then
-             !!
-             !! found ambiguous operations (i,j)
-             !! could just randomly decide and flip either, but let's
-             !! do it proper.
-             !!
-             ! write(*,*) 'ambiguous angle with j=',j
-             ! write(*,*) 'imat'
-             ! write(*,'(3f12.6)') mat_list(1,:,i)
-             ! write(*,'(3f12.6)') mat_list(2,:,i)
-             ! write(*,'(3f12.6)') mat_list(3,:,i)
-             ! write(*,*) 'jmat'
-             ! write(*,'(3f12.6)') mat_list(1,:,j)
-             ! write(*,'(3f12.6)') mat_list(2,:,j)
-             ! write(*,'(3f12.6)') mat_list(3,:,j)
-             !!
-             !! reconstruct rmat with this ax, +/-angle
-             !! imat
-             call sofi_construct_operation( op_list(i), ax_out(:,i), angle_out(i), rmat )
-             call matrix_distance( mat_list(:,:,i), rmat, dist )
-             call sofi_construct_operation( op_list(i), ax_out(:,i), -angle_out(i), rmat )
-             call matrix_distance( mat_list(:,:,i), rmat, dist_neg )
-             ! write(*,*) 'imat',dist, dist_neg
-             if( dist_neg .lt. dist ) then
-                !! angle i should be flipped
-                ! write(*,*) 'flipping angle i'
-                angle_out(i) = -angle_out(i)
-             endif
-
-
-             !! jmat
-             call sofi_construct_operation( op_list(j), ax_out(:,j), angle_out(j), rmat )
-             call matrix_distance( mat_list(:,:,j), rmat, dist )
-             call sofi_construct_operation( op_list(j), ax_out(:,j), -angle_out(j), rmat )
-             call matrix_distance( mat_list(:,:,j), rmat, dist_neg )
-             ! write(*,*) 'jmat',dist, dist_neg
-             if( dist_neg .lt. dist ) then
-                !! angle j should be negative
-                ! write(*,*) 'flipping angle j'
-                angle_out(j) = -angle_out(j)
-             endif
-
-             !! the angles should now be different!
-             if( abs(angle_out(i) - angle_out(j)) .lt. 0.01 ) then
-                !! error!
-                write(*,*) ">>>>! ERROR, angles still ambiguous!"
-             endif
-
-
-          endif
-          !!
-       end do
-    end do
-
-    !! put ax of Id or I ops to (1, 0, 0 )
-    do i = 1, n_mat
-       if( op_out(i) == "Id" ) ax_out(:,i) = (/ 1.0, 0.0, 0.0 /)
-       if( op_out(i) == "I" ) ax_out(:,i) = (/ 1.0, 0.0, 0.0 /)
+       if( op_out(i) == OP_IDENTITY ) ax_out(:,i) = (/ 1.0, 0.0, 0.0 /)
+       if( op_out(i) == OP_INVERSION ) ax_out(:,i) = (/ 1.0, 0.0, 0.0 /)
     end do
 
 
@@ -1777,6 +1825,7 @@
     ! end do
 
 
+    ! ierr=ERR_OTHER
 
     !! reconstruct each from op, angle, ax
     !! reconstruct + angle
@@ -1837,3 +1886,30 @@
     n_out = nn
 
   end subroutine sofi_mat_combos
+
+
+
+  !> @details
+  !! extract the error message from ira/sofi corresponding to error value ierr
+  !!
+  !! @param[in] ierr :: integer error value
+  !! @param[out] msg(128) :: error message
+  !!
+  subroutine sofi_get_err_msg( ierr, msg )
+    use err_module
+    implicit none
+    integer, intent(in) :: ierr
+    character(len=128), intent(out) :: msg
+    character(:), allocatable :: str
+
+    !! cant output allocatable ... write to fixed length string
+    str = get_err_msg( ierr )
+    if( len(str) .le. len(msg) ) then
+       msg = str
+    else
+       write(*,*) "WARNING: error str longer than given msg variable!"
+       write(*,*) len(msg), len(str)
+       write(*,*) "in: ",__FILE__, __LINE__
+       msg = str(1:len(msg))
+    end if
+  end subroutine sofi_get_err_msg

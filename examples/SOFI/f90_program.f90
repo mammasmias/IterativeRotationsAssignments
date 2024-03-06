@@ -21,16 +21,18 @@ program sofi
   real, dimension(3) :: prin_ax
 
   real, allocatable :: angle_out(:), ax_out(:,:)
-  character(len=2), allocatable :: op_out(:)
+  character(len=1), allocatable :: op_out(:)
 
   integer, allocatable :: n_out(:), p_out(:)
   real, allocatable :: dmax_out(:)
+  integer :: ierr
+  character(128) :: msg
 
   !! nmax is imposed from sofi_tools.f90
   nmax = 200
 
   !! threshold for sym
-  sym_thr = 0.02
+  sym_thr = 0.05
 
   read(*,*) nat
   read(*,*)
@@ -64,7 +66,15 @@ program sofi
   allocate( angle_out(1:nmax))
   allocate( dmax_out(1:nmax))
   call sofi_compute_all( nat, typ, coords, sym_thr, &
-       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg, prin_ax )
+       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg, prin_ax, &
+       ierr )
+  if( ierr /= 0 ) then
+     write(*,*) "f90 prog got ierr"
+     call sofi_get_err_msg( ierr, msg )
+     write(*,*) trim(msg)
+     return
+  end if
+
 
   do i = 1, nbas
      write(*,'(2x,i0)') i

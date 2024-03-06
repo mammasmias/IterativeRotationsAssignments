@@ -38,6 +38,20 @@ module sofi_tools
   ! real, parameter :: m_thr = 0.58
   ! real, parameter :: m_thr = 0.35
 
+
+  !! Schoenflies symbols for operations
+  character(len=1), parameter :: &
+       OP_ERROR      = "X", &
+       OP_IDENTITY   = "E", &
+       OP_INVERSION  = "I", &
+       OP_PROP_ROT   = "C", &
+       OP_IMPROP_ROT = "S", &
+       OP_MIRROR     = "S" !! "M"
+
+
+  real, parameter :: pi = 4.0*atan(1.0)
+  real, parameter :: epsilon = 1e-6
+
 contains
 
 
@@ -343,12 +357,12 @@ contains
     implicit none
     logical :: has_inversion
     integer, intent(in) :: nbas
-    character(len=2), dimension(nbas), intent(in) :: op
+    character(len=1), dimension(nbas), intent(in) :: op
     integer :: i
 
     has_inversion = .false.
     do i = 1, nbas
-       if( op(i) == 'I' ) then
+       if( op(i) == OP_INVERSION ) then
           has_inversion = .true.
        end if
     end do
@@ -361,13 +375,13 @@ contains
     implicit none
     logical :: has_sigma
     integer, intent(in) :: nbas
-    character(len=2), dimension(nbas), intent(in) :: op
+    character(len=1), dimension(nbas), intent(in) :: op
     integer, dimension(nbas), intent(in) :: n_int
     integer :: i
 
     has_sigma = .false.
     do i = 1, nbas
-       if( op(i) .eq. 'S' .and. n_int(i) .eq. 0 ) has_sigma = .true.
+       if( op(i) .eq. OP_IMPROP_ROT .and. n_int(i) .eq. 0 ) has_sigma = .true.
     end do
     return
   end function find_sigma
@@ -377,13 +391,13 @@ contains
     implicit none
     logical :: has_cn
     integer, intent(in) :: nbas
-    character(len=2), dimension(nbas), intent(in) :: op
+    character(len=1), dimension(nbas), intent(in) :: op
     integer, dimension(nbas), intent(in) :: n_int
     integer :: i
 
     has_cn = .false.
     do i = 1, nbas
-       if( op(i) .eq. 'C' .and. n_int(i) .gt. 1 ) has_cn = .true.
+       if( op(i) .eq. OP_PROP_ROT .and. n_int(i) .gt. 1 ) has_cn = .true.
     end do
     return
 

@@ -497,8 +497,8 @@ class sym_data():
     :param perm: the atomic permutation corresponding to application of that symmetry, start by index 0
     :type perm: np.array((n_sym, nat), dtype = int)
 
-    :param op: Schoenflies notation: Op n^p; Id=identity, I=inversion, C=rotation, S=(roto-)inversion
-    :type op: np.array((n_sym), type="U2"); size-2 strings
+    :param op: Schoenflies notation: Op n^p; E=identity, I=inversion, C=rotation, S=(roto-)inversion
+    :type op: np.array((n_sym), type="U1"); size-1 strings
 
     :param n: Schoenflies notation n
     :type n: np.array(n_sym, dtype = int )
@@ -650,7 +650,7 @@ class SOFI(algo):
         nmat = c_int()
         mat_data = (c_double*9*nmax)()
         perm_data = (c_int*nat*nmax)()
-        op_data = (c_char*2*nmax)()
+        op_data = (c_char*1*nmax)()
         n_data = (c_int*nmax)()
         p_data = (c_int*nmax)()
         ax_data = (c_double*3*nmax)()
@@ -664,7 +664,7 @@ class SOFI(algo):
         self.lib.lib_compute_all.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
-              POINTER(POINTER(c_char*2*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
+              POINTER(POINTER(c_char*1*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
               POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)) ]
         self.lib.lib_compute_all.restype=None
@@ -693,7 +693,7 @@ class SOFI(algo):
         for n in range(n_op):
             sym.perm[n]=perm_data[n][:]
 
-        sym.op = np.empty(n_op,dtype="U2")
+        sym.op = np.empty(n_op,dtype="U1")
         for n in range(n_op):
             sym.op[n] = op_data[n][:].decode()
 
@@ -863,11 +863,11 @@ class SOFI(algo):
         **== output: ==**
 
         :param op: Schoeflies Op name, possible values:
-                         - "Id" = identity
+                         - "E" = identity
                          - "I" = inversion
                          - "C" = rotation
                          - "S" = (roto-)reflection
-        :type op: array of length-2 strings, nd.ndarray( nm_in, dtype = "U2" )
+        :type op: array of length-1 strings, nd.ndarray( nm_in, dtype = "U1" )
 
         :param axis: the list of axes along each corresponding matrix acts.
         :type axis: nm_in x 3 vector, np.ndarray((nm_in, 3), dtype = float)
@@ -882,23 +882,27 @@ class SOFI(algo):
         n_m = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
         n_op=nm_in
-        nl = 2*n_op+1
+        nl = n_op+1
 
         # output
         op_data = (c_char*nl)()
         ax_data = (c_double*3*n_op)()
         angle_data = (c_double*n_op)()
+        cerr = c_int()
 
         self.lib.lib_unique_ax_angle.argtypes = \
             [ c_int, POINTER(c_double), POINTER(POINTER(c_char*nl)) , \
-              POINTER(POINTER(c_double*3*n_op)), POINTER(POINTER(c_double*n_op)) ]
+              POINTER(POINTER(c_double*3*n_op)), POINTER(POINTER(c_double*n_op)), POINTER(c_int) ]
         self.lib.lib_unique_ax_angle.restype=None
 
         self.lib.lib_unique_ax_angle( n_m, mats, pointer(op_data), \
-                                      pointer(ax_data), pointer(angle_data) )
-        op = np.empty(n_op,dtype="U2")
+                                      pointer(ax_data), pointer(angle_data), pointer(cerr) )
+        if cerr.value != 0:
+            raise ValueError( "error in unique_ax_angle")
+
+        op = np.empty(n_op,dtype="U1")
         for n in range(n_op):
-            op[n] = op_data[2*n:2*n+2].decode()
+            op[n] = op_data[1*n:1*n+1].decode()
         axis=np.ndarray((n_op,3), dtype=float)
         for n in range(n_op):
             axis[n] = ax_data[n][:]
@@ -937,7 +941,7 @@ class SOFI(algo):
         **== output: ==**
 
         :param op: Schoeflies Op name, possible values:
-                         - "Id" = identity
+                         - "E" = identity
                          - "I" = inversion
                          - "C" = rotation
                          - "S" = (roto-)reflection
@@ -962,14 +966,14 @@ class SOFI(algo):
         mat = rmat.ctypes.data_as( POINTER(c_double) )
 
         # output
-        op=(c_char*3)()
+        op=(c_char*2)()
         n=c_int()
         p=c_int()
         ax=(c_double*3)()
         angle=c_double()
 
         self.lib.lib_analmat.argtypes=\
-            [ POINTER(c_double), POINTER(POINTER(c_char*3)), \
+            [ POINTER(c_double), POINTER(POINTER(c_char*2)), \
               POINTER(c_int), POINTER(c_int), POINTER(POINTER(c_double*3)), \
               POINTER(c_double) ]
         self.lib.lib_analmat.restype=None
@@ -1277,7 +1281,7 @@ class SOFI(algo):
         **== Input: ==**
 
         :param op: Schoeflies Op name, possible values:
-                         - "Id" = identity
+                         - "E" = identity
                          - "I" = inversion
                          - "C" = rotation
                          - "S" = (roto-)reflection
@@ -1299,7 +1303,7 @@ class SOFI(algo):
 
 
         .. note::
-            The operation "Id" is equivalent to "C" about any axis for angle=0.0; and
+            The operation "E" is equivalent to "C" about any axis for angle=0.0; and
             similarly the operation "I" is equivalent to "S" with angle=0.5 about any axis.
             The operation "S" with angle=0.0 is a reflection.
 

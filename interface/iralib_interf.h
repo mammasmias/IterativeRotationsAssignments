@@ -7,7 +7,7 @@ void lib_cshda( int nat1, int *typ1, double *coords1, \
 
 void lib_cshda_pbc( int nat1, int *typ1, double *coords1, \
                     int nat2, int *typ2, double *coords2, double * lat2, \
-                    double the, int **found, double **dists);
+                    double thr, int **found, double **dists);
 
 void lib_match(int nat1, int *typ1, double *coords1, int *cand1,\
                int nat2, int *typ2, double *coords2, int *cand2, \
@@ -20,7 +20,7 @@ void lib_compute_all( int nat, int *typ, double *coords, double sym_thr, \
                       int *nmat, double **mat_data, int **perm_data, \
                       char **op_data, int **n_data, int **p_data,       \
                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
-		      double **prin_ax );
+                      double **prin_ax, int *cerr );
 
 void lib_get_symm_ops( int nat, int *typ, double *coords, double sym_thr, \
                        int *nmat, double **mat_data );
@@ -47,3 +47,4 @@ void lib_mat_combos( int nmat, double *mat_data, int *nmat_out, double **mat_out
 void lib_ext_bfield( int nmat, double *mat_data, double *b_vec, \
                      int *nmat_out, double **mat_out);
 
+void lib_get_err_msg( int ierr, char** msg );

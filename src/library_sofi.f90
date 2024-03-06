@@ -41,19 +41,20 @@
 !! @param[in] coords(3,nat)       :: atomic positions
 !! @param[in] sym_thr             :: threshold for finding symmetries
 !!                                   (not taken into account when making combinations)
-!! @param[in] n_mat               :: number of symmetries found
+!! @param[out] n_mat              :: number of symmetries found
 !! @param[in] mat_list(3,3,nmax)  :: symmetry matrices
 !! @param[in] perm_list(nat,nmax) :: permutation of atoms after applying each symmetry
 !! @param[in] op_list(nmax)       :: Character "Op" from the Schoenflies notation: Op n^p
-!!                                   (Id = identity, I = inversion, C = rotation, S = (roto-)reflection )
+!!                                   (E = identity, I = inversion, C = rotation, S = (roto-)reflection )
 !! @param[in] n_list(nmax)        :: Schoenflies n value
 !! @param[in] p_list(nmax)        :: Schoenflies p value
 !! @param[in] ax_list(3,nmax)     :: axis of operation of each symmetry
 !! @param[in] angle_list(nmax)    :: angle of each symmetry, in units of 1/2pi,
-         !!                          i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
+!!                                   i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
 !! @param[in] dmax_list(nmax)     :: max difference of atomic positions of before/after symm transformation
 !! @param[in] pg                  :: name of Point group, e.g. D6h
 !! @param[in] prin_ax(3)          :: principal axis of the PG
+!! @param[out] cerr               :: error value, negative on error, zero otherwise
 !!
 !! @returns n_mat, mat_list, per_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax
 !!
@@ -69,9 +70,11 @@
 subroutine lib_compute_all( nat, typ, coords, sym_thr, &
                             n_mat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
-                            ax_list, angle_list, dmax_list, pg, prin_ax ) bind(C, name="lib_compute_all")
+                            ax_list, angle_list, dmax_list, pg, prin_ax, &
+                            cerr ) bind(C, name="lib_compute_all")
   use iso_c_binding
   use sofi_tools, only: nmax
+  use err_module
   implicit none
   integer( c_int ), value, intent(in) :: nat
   type( c_ptr ), value, intent(in) :: typ
@@ -89,6 +92,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   type( c_ptr ), intent(in) :: dmax_list
   type( c_ptr ), intent(in) :: pg
   type( c_ptr ), intent(in) :: prin_ax
+  integer( c_int ), intent(out) :: cerr
 
   !! pointers for c input arrays
   integer(c_int), dimension(:), pointer :: ptyp
@@ -107,10 +111,11 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   !! some f-defined memory
   integer( c_int ) :: nb
   character(len=10) :: f_pg
-  character(len=2), dimension(nmax) :: fop_list
-  character(len=2) :: this_op
+  character(len=1), dimension(nmax) :: fop_list
+  character(len=1) :: this_op
 
-  integer :: i, m, n, lenc
+  integer :: i, m, n, lenc, ierr
+  integer :: len_opstr
 
   ! write(*,*) "entering lib"
   !! local arrays for computation
@@ -139,7 +144,14 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   call sofi_compute_all( nat, ptyp, pcoords, sym_thr, &
        nb, pmat_list, pperm_list, &
        fop_list, pn_list, pp_list, &
-       pax_list, pangle_list, pdmax_list, f_pg, pprin_ax )
+       pax_list, pangle_list, pdmax_list, f_pg, pprin_ax, ierr )
+
+  cerr = int( ierr, c_int )
+  if( ierr /= 0 ) then
+     write(*,*) get_err_msg( ierr )
+     return
+  end if
+
 
   !! set pg string
   lenc=len_trim(f_pg)
@@ -149,12 +161,13 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   pg_char(lenc+1)=c_null_char
 
   !! compact the op_list into single string to pass to C
-  lenc=2*nmax
+  len_opstr = len(this_op)
+  lenc=nmax*len_opstr
   call c_f_pointer( op_list, op_char, [lenc+1] )
   n=1
   do i = 1, nb
      this_op=fop_list(i)
-     do m = 1, 2
+     do m = 1, len_opstr
         op_char(n) = this_op(m:m)
         n = n + 1
      end do
@@ -281,9 +294,10 @@ subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose )bind(C, name="lib_
 end subroutine lib_get_pg
 
 
-subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out ) &
+subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out, cerr ) &
      bind(C,name="lib_unique_ax_angle")
   use iso_c_binding
+  use err_module
   implicit none
   integer(c_int), value, intent(in) :: n_mat
   type( c_ptr ), value, intent(in) :: cptr_mat_list
@@ -291,6 +305,7 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out 
   type( c_ptr ), intent(in) :: op_out
   type( c_ptr ), intent(in) :: ax_out
   type( c_ptr ), intent(in) :: angle_out
+  integer( c_int ), intent(out) :: cerr
 
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real(c_double), dimension(:,:,:), pointer :: mat_list
@@ -298,14 +313,15 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out 
   real( c_double ), dimension(:), pointer :: ptr_angle
   character(len=1, kind=c_char), dimension(:), pointer :: op_char
 
-  integer :: i, n, m
-  character(len=2), dimension(n_mat) :: fop_list
-  character(len=2) :: this_op
+  integer :: i, n, m, len_opstr, ierr
+  character(len=1), dimension(n_mat) :: fop_list
+  character(len=1) :: this_op
 
   !! receive input
   call c_f_pointer( cptr_mat_list, p_lvl2, [9,n_mat] )
   call c_f_pointer( ax_out, ptr_ax, [3,n_mat] )
   call c_f_pointer( angle_out, ptr_angle, [n_mat] )
+
 
   !! put arrays into proder fortran order
   allocate( mat_list(1:3,1:3,1:n_mat))
@@ -315,15 +331,21 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out 
      mat_list(:,:,n) = transpose(mat_list(:,:,n) )
   end do
 
-  call sofi_unique_ax_angle( n_mat, mat_list, fop_list, ptr_ax, ptr_angle )
+  call sofi_unique_ax_angle( n_mat, mat_list, fop_list, ptr_ax, ptr_angle, ierr )
+  cerr = int( ierr, c_int )
+  if( ierr /= 0 ) then
+     write(*,*) get_err_msg( ierr )
+     return
+  end if
 
   !! concatenate op strings into single string len(2*nmat+1)
-  n=2*n_mat
+  len_opstr = len(this_op)
+  n=n_mat*len_opstr
   call c_f_pointer( op_out, op_char, [n+1] )
   n=1
   do i = 1, n_mat
      this_op = fop_list(i)
-     do m = 1, 2
+     do m = 1, len_opstr
         op_char(n) = this_op(m:m)
         n = n + 1
      end do
@@ -352,12 +374,12 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analma
 
   !! local mem
   integer :: i, m
-  character(len=2) :: op
+  character(len=1) :: op
 
   !! connect c to f
   call c_f_pointer( c_rmat, rmat, [3,3] )
   rmat = transpose(rmat)
-  call c_f_pointer( c_op, op_fptr, [3] )
+  call c_f_pointer( c_op, op_fptr, [2] )
   call c_f_pointer( c_ax, ax, [3] )
 
   call sofi_analmat( rmat, op, n, p, ax, angle )
@@ -599,11 +621,16 @@ subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_co
 
   real( c_double ), dimension(3,3) :: f_matrix
   character(len=1,kind=c_char), dimension(:), pointer :: ptr_op
-  character(len=2) :: f_op
+  character(len=1) :: f_op
   integer( c_int ) :: i, n
 
   n=c_strlen(op)
   call c_f_pointer( op, ptr_op, [n] )
+  if( n .gt. 1 ) then
+     write(*,*) "expected len-1 string as op, got:",n, ptr_op
+     return
+  end if
+
   f_op=""
   do i = 1, n
      f_op(i:i)=ptr_op(i)
@@ -659,3 +686,23 @@ subroutine lib_mat_combos( n_mat_in, bas_in, n_mat_out, bas_out )bind(C,name="li
 
 end subroutine lib_mat_combos
 
+
+subroutine lib_get_err_msg( cerr, cmsg )bind(C, name="lib_get_err_msg")
+  use iso_c_binding
+  implicit none
+  integer( c_int ), value, intent(in) :: cerr
+  type( c_ptr ), intent(in) :: cmsg
+
+  character(len=1, kind=c_char), dimension(:), pointer :: msg_fptr
+  character(len=128) :: msg
+  integer :: i, n
+
+  call sofi_get_err_msg( int(cerr), msg )
+  n = len_trim(msg)
+  call c_f_pointer( cmsg, msg_fptr, [n+1] )
+  do i = 1, n
+     msg_fptr(i) = msg(i:i)
+  end do
+  msg_fptr(n+1) = c_null_char
+
+end subroutine lib_get_err_msg
