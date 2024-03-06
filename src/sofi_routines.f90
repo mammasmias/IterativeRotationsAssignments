@@ -177,25 +177,32 @@
   end subroutine sofi_struc_pg
 
 
+
+  !> @details
+  !!
+  !! The main SOFI routine
+  !!======================
+  !!
+  !! Find the list of symmetry operations of the atomic structure, with a threshold ``sym_thr``.
+  !!
+  !! - operations from op_list can be applied for example the N-th entry by matmul():
+  !!
+  !!~~~~~~~~~~~~~~{.f90}
+  !!    theta(3,3) = op_list(:, :, N)
+  !!    do i = 1, natoms
+  !!       coords_rot(:,i) = matmul( theta, coords_orig(:,i) )
+  !!    end do
+  !!~~~~~~~~~~~~~~
+  !!
+  !! - and adding permutations from perm_list:
+  !!~~~~~~~~~~~~~~{.f90}
+  !!    coords_rot(:, perm_list(:, N) ) = coords_rot(:,:)
+  !!~~~~~~~~~~~~~~
+  !!
+  !! - after these 2 operations, coords_rot and coords_orig should be equal
+  !!   atom-by-atom ( or within sym_thr )
+  !!
   subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ierr )
-  ! subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, perm_list )
-  !! main SOFI routine
-    !!====================================
-    !!
-    !! - operations from op_list can be applied for example the N-th entry by matmul():
-    !!
-    !!    theta(3,3) = op_list(:, :, N)
-    !!    do i = 1, natoms
-    !!       coords_rot(:,i) = matmul( theta, coords_orig(:,i) )
-    !!    end do
-    !!
-    !! - and adding permutations from perm_list:
-    !!
-    !!    coords_rot(:, perm_list(:, N) ) = coords_rot(:,:)
-    !!
-    !! - after these 2 operations, coords_rot and coords_orig should be equal
-    !!   atom-by-atom ( or within sym_thr )
-    !!
     use sofi_tools, only: nmax, m_thr
     implicit none
     integer,                 intent(in) :: nat        ! number of atoms
@@ -502,11 +509,13 @@
   end subroutine sofi_get_perm
 
 
-  subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
-  ! subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list, perm_list )
+
+  !> @details
   !! find all combos with high sym_thr: this will accept anything.
-    !! However, some strange matrices cannot be constructed from combos of
-    !! matrices which are already found as symmetries with sym_thr value.
+  !! However, some strange matrices cannot be constructed from combos of
+  !! matrices which are already found as symmetries with sym_thr value.
+  !!
+  subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
     use sofi_tools, only: m_thr, nmax
     implicit none
     integer, intent(in) :: nat
@@ -881,9 +890,23 @@
 
   end subroutine add_sofi
 
+
+  !> @details
+  !! flowchart to determine PG notation from op_list
+  !! online: https://symotter.org/assets/flowchart.pdf
+  !!
+  !! @note
+  !!  The principal axis can be ambiguous, for example for Td or Ih groups.
+  !!  Only one axis is currently output as the principal.
+  !!
+  !! @param[in] nbas :: number of symmetry operations
+  !! @param[in] op_list(3,3,nbas) :: the list of symmetry operations (3x3 matrices)
+  !! @param[out] pg(10) :: the point group tag
+  !! @param[out] prin_ax(3) :: principal axis of PG (one of them in case when ambiguous)
+  !! @param[in] verb :: flag for verbosity
+  !! @returnds pg, prin_ax
+  !!
   subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb )
-    !! flowchart to determine PG notation from op_list
-    !! online: https://symotter.org/assets/flowchart.pdf
     !!
     use sofi_tools
     implicit none
@@ -1328,27 +1351,74 @@
 
   end subroutine sofi_get_pg
 
-
+  !> @brief
+  !! Analyse the input 3x3 matrix rmat, return the Schoenflies PG
+  !! notation: "Op n^p", also give axis, angle of the operation.
+  !!
+  !! @details
+  !! The matrices \f$M\f$ corresponding to PG
+  !! symmetry operations are orthonormal (\f$M^{-1}=M^T\f$), non-symmetric matrices
+  !! with real elements, and correspond to either pure rotations (symbol \f$C\f$),
+  !! pure reflections (symbol \f$\sigma\f$), or combinations of both (rotoreflections, symbol \f$S\f$).
+  !!
+  !! The matrix properties are:
+  !! * for C matrices: \f$det=1\f$, \f$\lambda_1 = 1\f$, and \f$\lambda_{2,3}=\exp{(\pm i \alpha)}\f$,
+  !! * for \f$\sigma\f$ matrices: \f$det=-1\f$, \f$\lambda_1=-1\f$, and \f$\lambda_{2,3}=1\f$.
+  !! * for S matrices: \f$det=-1\f$, \f$\lambda_1=-1\f$, and \f$\lambda_{2,3}=\exp{(\pm i\alpha)}\f$.
+  !!
+  !! The axis always corresponds to the eigenvector of \f$\lambda_1\f$.
+  !!
+  !! The approach to characterise the matrices used in this routine is based on value of
+  !! their determinant, eigenvalues, and eigenvectors.
+  !!
+  !! The angle \f$\alpha\f$ in radians is transformed to integers \f$n\f$ and \f$p\f$,
+  !! such that \f${\alpha}/{2\pi} = {p}/{n}\f$.
+  !!
+  !! The use of \f$\sigma\f$ symbol is redundant, since an equivalent notation is a
+  !! rotoreflection \f$S\f$ with angle \f$\alpha=0\f$. We thus label pure reflections as \f$S~0\f$.
+  !!
+  !! The identity E and point-inversion I matrices always have the same form,
+  !! E=diag(1,1,1) and I=diag(-1,-1,-1). Also, E is equivalent to C with angle zero, and I is equivalent to
+  !! S with angle 0.5, regardless of the axis.
+  !!
+  !! @warning
+  !!   Axis output from this routine follows the convention:
+  !!     (1) flip ax such that z>0
+  !!     (2) if z==0, then flip such that x>0
+  !!     (3) if x==0, then flip such that y>0.
+  !!   The value of angle is then relative to this axis convention.
+  !!
+  !! @note
+  !!   The convention for axis oriontation is established due to the reason
+  !!   that two matrices M and M^T can produce the same result from the
+  !!   diagonalisation procedure in this routine, meaning the
+  !!   relative orioentation (positive/negative angle, axis direction)
+  !!   can be ambiguous.
+  !!
+  !! @note
+  !!   A different method (potentially faster) to get the angles could be based on the trace of matrix,
+  !!   which should be 3 for E, -3 for I, 1 for s, 2cos(a)+1 for C, 2cos(a)-1 for S.
+  !!   The axis can be obtained by summing all transformations of a generic vector with all matrices
+  !!   of the same operation and order (all p from 1 to n, or 2n for S_odd). Multiply by det(M) for S cases.
+  !!
+  !! @param[in] rmat(3,3) :: the input matrix
+  !! @param[out] op(1) :: character for operation E, I, C, S
+  !! @param[out] n :: the order of operation
+  !! @param[out] p :: the power for C5^2 kinda things
+  !! @param[out] ax(3) :: the axis of operation, according to convention
+  !! @param[out] angle :: angle in units of 1/2pi, e.g. value 0.5 is half the circle
+  !! @param[out] ierr :: error value, zero on normal execution, negative otherwise
+  !! @returns op, n, p, ax, angle, ierr
+  !!
   subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
-    !!
-    !! Analyse the input 3x3 matrix rmat, return the Schoenflies PG
-    !! notation: "Op n^p", also give axis, angle of the operation.
-    !! The angle is strictly positive value on output
-    !! The +/- orientation of axis can be arbitrary, since it comes from eigenvector
-    !!
-    !! NOTE: two matrices M and M^T can produce the same result from this routine,
-    !!   the relative orientation of operation can be lost (ambiguous).
-    !!   To lift the ambiguity the whole list of operations needs to be processed,
-    !!   see the routine sofi_unique_ax_angle for an attempt at this.
-    !!
     use sofi_tools
     use err_module
     implicit none
     real, dimension(3,3), intent(in) :: rmat
-    character(len=1),     intent(out) :: op   !! character for operation E, I, C, S
-    integer,              intent(out) :: n    !! the n for angle
-    integer,              intent(out) :: p    !! power for C5^2 kinda stuff...
-    real, dimension(3),   intent(out) :: ax   !! the axis
+    character(len=1),     intent(out) :: op
+    integer,              intent(out) :: n
+    integer,              intent(out) :: p
+    real, dimension(3),   intent(out) :: ax
     real,                 intent(out) :: angle
     integer,              intent(out) :: ierr
 
@@ -1415,9 +1485,9 @@
           idx = i
        end if
     end do
-
     !! ax is the corresponding eigenvector
     ax = rdum(:,idx)
+
     !! cosine of the angle is given by two other degenerate eigvals, select one.
     !! they are not sorted after diag...
     i = idx+1
@@ -1446,7 +1516,7 @@
     !! Schoenflies notation: "OP n^p"
     !! primitive way to find n and p. There should be a better way for this...!
     !! loop over 12 => 1/12 seems to be smallest angle of rotation in a PG.
-    !! Go beyond 12 ... ?
+    !! Go beyond 12 ... ? Ok, go to 24.
     n = 0
     p = 1
     nl = n
@@ -1490,15 +1560,11 @@
     ! write(*,'(a,x,i3,a3,2f9.4)') 'angle:',n, op, angle, (n-1.0/angle)
 
     !! detection of possible errors
-    if( &
-         op(1:1)==OP_PROP_ROT .and. n==0 &
-         ) then
+    if( op(1:1)==OP_PROP_ROT .and. n==0) then
        op=OP_ERROR
        ierr = ERR_OTHER
        write(*,*) "Unknown error in sofi_analmat!"
        return
-       ! write(*,'(a,2x,a3,x,g0,x,g0)') '::: Error in sofi_analmat',op,n,p
-       ! stop
     end if
 
     !! convention for axis direction:
@@ -1525,8 +1591,8 @@
 
     ax = ax*flip
 
-    !! check if angle is positive/negative according to axis
-    !! generate off-axis tmp vector
+    !! check if angle is positive/negative according to axis:
+    !! generate generic off-axis tmp vector
     tmp = ax + (/ax(3)*0.5, ax(1)*0.2, ax(2)/)
     tmp = tmp/norm2(tmp)
     !! transform tmp by rmat
@@ -1534,25 +1600,34 @@
     !! cross product the result with initial
     call cross_prod( tmp, tmp2, tmp3 )
     !! if dot( tmp3, ax ) is negative, angle is negative
+    !! if it's zero, the only possibility is angle=0.5, in which case M=M^T
     if( dot_product( tmp3, ax ) < -epsilon ) angle = -angle
 
   end subroutine sofi_analmat
 
 
 
+  !> @details
+  !! Impose the action of an external magnetic field to the symmetry
+  !! elements of the PG.
+  !!
+  !! The effect of external B field on PG is to filter the list of Ops,
+  !! only those which satisfy:
+  !!
+  !!    det( M ) M B = B
+  !!
+  !! are valid, where M is the symmOp matrix.
+  !!
+  !! See Eq(2) of:
+  !! A. Pausch, M Gebele, W. Klopper, J. Chem. Phys. 155, 201101 (2021)
+  !! https://doi.org/10.1063/5.0069859
+  !!
+  !! @param[inout] n_op :: number of symmetry operations
+  !! @param[inout] op_list(3,3,n_op) :: the list of symmetry operations
+  !! @param[in] b_field(3) :: direction of the B field
+  !! @returns n_op, op_list
+  !!
   subroutine sofi_ext_Bfield( n_op, op_list, b_field )
-    !! the effect of external B field on PG is to filter the list of Ops,
-    !! only those which satisfy:
-    !!
-    !!    det( M ) M B = B
-    !!
-    !! are valid, where M is the symmOp matrix.
-    !!
-    !!==================================================
-    !! see Eq(2) of:
-    !! A. Pausch, M Gebele, W. Klopper, J. Chem. Phys. 155, 201101 (2021)
-    !! https://doi.org/10.1063/5.0069859
-    !!==================================================
     use sofi_tools, only: op_valid_ext_b
     implicit none
     integer,                           intent(inout) :: n_op
@@ -1580,7 +1655,7 @@
        valid = op_valid_ext_b( rmat, b_field )
        !!
        if( valid ) then
-       !! M satisfy the Eq.2
+          !! M satisfy the Eq.2
           which(i) = 1
           n_op_new = n_op_new + 1
           op_new(:,:,n_op_new) = rmat
@@ -1594,7 +1669,7 @@
 
     if( n_op .lt. 1) then
        !! should not, at least E should satisfy!
-       write(*,*) 'error in sofi_ext_Bfield'
+       write(*,*) 'heavy error in sofi_ext_Bfield'
        stop
     endif
 
@@ -1602,8 +1677,27 @@
   end subroutine sofi_ext_Bfield
 
 
+  !> @details
+  !! construct a 3x3 matrix from input data of Op, axis, and angle.
+  !!
+  !! A pure rotation matrix \f$C\f$ can be constructed from knowing the angle and
+  !! axis of rotation, for example by the well-known Euler-Rodrigues rotation formula.
+  !! See: https://www.wikipedia/rotation_matrix#quaternion
+  !!
+  !! A reflection matrix \f$\sigma\f$ can be constructed from knowing the normal vector of
+  !! the plane of reflection \f$\ket{x}\f$ by \f$\sigma=E - 2\ket{x}\bra{x}\f$, where \f$E\f$ is
+  !! the identity matrix, and \f$\ket{.}\bra{.}\f$ indicates the outer product.
+  !!
+  !! Matrices corresponding to rotoreflections \f$S\f$ can be constructed from combination of pure
+  !! rotation and pure reflection matrices, \f$S = \sigma C\f$, where \f$\sigma\f$ and \f$C\f$
+  !! have the same vector as the axis of rotation, and the normal of the plane of reflection.
+  !!
+  !! @param[in] op(1) :: character of symmetry operation E, I, C, S
+  !! @param[in] axis(3) :: the axis
+  !! @param[in] angle :: the angle in units 1/(2pi), e.g. angle=0.5 means half circle
+  !! @param[out] matrix(3,3) :: the orthonormal matrix
+  !!
   subroutine sofi_construct_operation( op, axis, angle, matrix )
-    !! angle on input is in units 1/(2pi), e.g. angle=0.5 means half circle
     use sofi_tools, only: construct_rotation, construct_reflection
     implicit none
     character(len=1),     intent(in) :: op
