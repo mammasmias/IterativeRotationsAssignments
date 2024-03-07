@@ -170,8 +170,8 @@
   !! @param[in]    coords2 -> coordinates of conf 2;
   !! @param[in]    some_threshold -> threshold for the Hausdorff distance, used for early exit;
   !! @param[out]   found   -> list of assigned atoms of conf 2 to conf 1:
-  !!                         e.g. found(3) = 9 means atom 3 from conf 1 is assigned
-  !!                         to atom 9 in conf 2;
+  !!                          e.g. found(3) = 9 means atom 3 from conf 1 is assigned
+  !!                          to atom 9 in conf 2;
   !! @param[out]   dists   -> distances from atom i in conf 1 to atom found(i) in conf 2;
   !!
   subroutine cshda( nat1, typ1, coords1, &

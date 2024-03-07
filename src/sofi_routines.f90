@@ -184,36 +184,48 @@
   !!======================
   !!
   !! Find the list of symmetry operations of the atomic structure, with a threshold ``sym_thr``.
+  !! The symmetry operations are in form of 3x3 matrices.
   !!
-  !! - operations from op_list can be applied for example the N-th entry by matmul():
+  !! When distortions are present in the atomic structure, the distance between the original
+  !! structure \f$A\f$ and the symmetry-transformed structure \f$\theta A\f$ is some small
+  !! nonzero value. This distance is computed as largest distance of any atom after the transformation
+  !! from the position of the corresponding atom in the original structure (Hausdorff distance).
+  !! The threshold ``sym_thr`` gives the upper limit for this distance value.
+  !!
+  !! @note
+  !!  The output ``op_list`` is assumed to be allocated by the caller, and has the size [3,3,nmax],
+  !!  where ``nmax=200`` by default, but can be adjusted in sofi_tools.f90
+  !!
+  !! The operations from ``op_list`` can be applied by matmul(), for example the N-th entry:
   !!
   !!~~~~~~~~~~~~~~{.f90}
   !!    theta(3,3) = op_list(:, :, N)
   !!    do i = 1, natoms
-  !!       coords_rot(:,i) = matmul( theta, coords_orig(:,i) )
+  !!       coords_transformed(:,i) = matmul( theta, coords_original(:,i) )
   !!    end do
   !!~~~~~~~~~~~~~~
   !!
-  !! - and adding permutations from perm_list:
-  !!~~~~~~~~~~~~~~{.f90}
-  !!    coords_rot(:, perm_list(:, N) ) = coords_rot(:,:)
-  !!~~~~~~~~~~~~~~
-  !!
-  !! - after these 2 operations, coords_rot and coords_orig should be equal
-  !!   atom-by-atom ( or within sym_thr )
+  !! @param[in] nat           :: number of atoms
+  !! @param[in] typ_in(nat)      :: integer atomic types
+  !! @param[in] coords_in(3,nat) :: positions of atoms
+  !! @param[in] sym_thr       :: threshold for finding symmetries, in terms of Hausdorff distance
+  !! @param[out] n_so :: number of found symmetry operations
+  !! @param[out] op_list :: the list of operations
+  !! @param[out] ierr :: error value, negative on error, zero otherwise
+  !! @returns n_so, op_list, ierr
   !!
   subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ierr )
     use sofi_tools, only: nmax, m_thr
+    use err_module
     implicit none
-    integer,                 intent(in) :: nat        ! number of atoms
-    integer, dimension(nat), intent(in) :: typ_in     ! atomic types
-    real, dimension(3,nat),  intent(in) :: coords_in  ! atomic xyz
-    real,                    intent(in) :: sym_thr    ! threshold for symmetry (in terms of hausdorff dist.)
+    integer,                 intent(in) :: nat
+    integer, dimension(nat), intent(in) :: typ_in
+    real, dimension(3,nat),  intent(in) :: coords_in
+    real,                    intent(in) :: sym_thr
     !!
-    integer,                           intent(out) :: n_so       ! number of found symm operations
-    real, dimension(3,3,nmax),         intent(out) :: op_list   ! the list of operations
+    integer,                           intent(out) :: n_so
+    real, dimension(3,3,nmax),         intent(out) :: op_list
     integer,                           intent(out) :: ierr
-    ! integer, dimension(1:nat, 1:nmax), intent(out) :: perm_list  ! list of associated permutations
 
     !! local
     integer, dimension(nat) :: typ
@@ -221,27 +233,24 @@
     real, allocatable :: d_o(:,:)
     integer :: i, j, k, l, m, mm
     real, dimension(3,3) :: theta, beta, gamma
-    ! real, dimension(3) :: ax, ax1
     logical :: fail1
     real :: dd, d_i, d_j, dh
     integer :: nbas, nn
     integer :: ti, tj
     real :: small_norm
-    ! real, dimension(3) :: v1, v2
 
     ierr = 0
 
-    ! if( size(op_list,3) .ne. nmax .or. size(perm_list,2) .ne. nmax ) then
     if( size(op_list,3) .ne. nmax ) then
+       ierr = ERR_SIZE_NMAX
        write(*,*) 'the op_list on input should have maxsize:',nmax
-       ierr = -1
+       write(*,*) "at:",__FILE__,"line:",__LINE__
        return
     end if
 
     !! zero the output data
     nbas = 0
     op_list(:,:,:) = 0.0
-    ! perm_list(:,:) = 0
 
     !! set local copy
     typ(:) = typ_in(:)
@@ -279,8 +288,12 @@
       theta(i,i) = 1.0
     end do
 
-    call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5 )
-    ! call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, perm_list, dh, 0.5 )
+    call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, ierr )
+    if( ierr /= 0 ) then
+       write(*,*) "at:",__FILE__,"line:",__LINE__
+       return
+    end if
+
 
     !! try inversion
     theta(:,:) = 0.0
@@ -288,12 +301,11 @@
       theta(i,i) = -1.0
     end do
 
-    call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5 )
-    ! call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, perm_list, dh, 0.5 )
-
-    ! do i = 1, nat
-    !    write(*,*) i, norm2( coords(:,i))
-    ! end do
+    call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, ierr )
+    if( ierr /= 0 ) then
+       write(*,*) "at:",__FILE__,"line:",__LINE__
+       return
+    end if
 
 
     !! set beta
@@ -301,6 +313,7 @@
     small_norm = max(sym_thr, 1e-1)
     ! small_norm = sym_thr
     ! small_norm = 5e-1
+    fail1 = .true.
     do i = 1, nat
       if( norm2( coords(:,i)) .lt. small_norm) cycle
       do j = 1, nat
@@ -316,7 +329,7 @@
     end do
 
     ! write(*,*) i,j
-    if( i .gt. nat .or. j .gt. nat ) then
+    if( fail1 .or. i .gt. nat .or. j .gt. nat ) then
       write(*,*) repeat('%',40)
       write(*,*) "ERROR: cannot set beta. Linear structure? Or not properly shifted?"
       write(*,*) repeat('%',40)
@@ -326,7 +339,8 @@
       do i = 1, nat
          write(*,*) typ(i), coords(:,i)
       end do
-      ierr = -2
+      ierr = ERR_BETA
+      write(*,*) "at:",__FILE__,"line:",__LINE__
       return
     endif
 
@@ -386,14 +400,15 @@
             ! write(*,*) theta(1,:)
             ! write(*,*) theta(2,:)
             ! write(*,*) theta(3,:)
-            ! call sofi_analmat( theta, ... )
-            call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, m_thr )
-            ! call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, perm_list, dh, m_thr )
+            call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, m_thr, ierr )
+            if( ierr /= 0 ) then
+               write(*,*) "at:",__FILE__,"line:",__LINE__
+               return
+            end if
+
             ! write(*,*) 'op exiting try_sofi:'
             ! call sofi_analmat( theta, ... )
             ! write(*,'(2i4,3f9.5,x,f9.4,a5,f9.4)') k,l,ax1,d1,'dh:',dh
-            ! theta = matmul(beta,transpose(gamma))
-            ! call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, perm_list, dh, m_thr )
           end do
        end do
     end do
@@ -418,7 +433,7 @@
     !       do j = 1, nbas
     !         ! write(*,*) 'combo',i,j
     !         theta = matmul( op_list(:,:,i), op_list(:,:,j))
-    !         call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, op_list, perm_list, dh, m_thr )
+    !         call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, op_list, perm_list, dh, m_thr, ierr )
     !         ! write(*,*) i,j,dh
     !         ! write(*,'(3f9.4)') theta(1,:)
     !         ! write(*,'(3f9.4)') theta(2,:)
@@ -439,15 +454,36 @@
   end subroutine sofi_get_symmops
 
 
+
+  !> @details
+  !! Obtain the permutations of atoms associated to each of the symmetry operations in
+  !! the list. Also compute the dmax of each operation.
+  !!
+  !! This consists of computing P by cshda, permuting, applying SVD, and finally computing dmax.
+  !!
+  !! Applying the permutation associated to N-th symmetry operation:
+  !!~~~~~~~~~~~~~~{.f90}
+  !!    coords(:, perm_list(:, N) ) = coords(:,:)
+  !!~~~~~~~~~~~~~~
+  !!
+  !! @param[in] nat :: number of atoms
+  !! @param[in] typ(nat) :: atomic types
+  !! @param[in] coords(3,nat) :: atomic positions
+  !! @param[in] nbas :: number of operations in the list
+  !! @param[in] bas_list(3,3,nbas) :: list of symmetry operations
+  !! @param[out] perm_list(nat,nbas) :: list of permutations
+  !! @param[out] dmax_list(nbas) :: list of dmax
+  !! @returns perm_list, dmax_list
+  !!
   subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list )
     implicit none
-    integer, intent(in) :: nat
-    integer, dimension(nat), intent(in) :: typ
-    real, dimension(3,nat), intent(in) :: coords
-    integer, intent(in) :: nbas
+    integer,                   intent(in) :: nat
+    integer, dimension(nat),   intent(in) :: typ
+    real, dimension(3,nat),    intent(in) :: coords
+    integer,                   intent(in) :: nbas
     real, dimension(3,3,nbas), intent(in) :: bas_list
     integer, dimension(nat, nbas), intent(out) :: perm_list
-    real, dimension(nbas), intent(out) :: dmax_list
+    real, dimension(nbas),     intent(out) :: dmax_list
 
     integer :: i, j, ierr
     real, dimension(3,3) :: rmat
@@ -525,7 +561,7 @@
     real, dimension(3, 3, nmax), intent(inout) :: bas_list
     ! integer, dimension(nat, nmax), intent(inout) :: perm_list
 
-    integer :: m, i, j, ii
+    integer :: m, i, j, ii, ierr
     real, dimension(3,3) :: theta
     real :: dh, dd, sym_thr
 
@@ -547,8 +583,7 @@
           do j = 1, nbas
              ! write(*,*) 'combo',i,j
              theta = matmul( bas_list(:,:,i), bas_list(:,:,j))
-             call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, bas_list, dh, m_thr )
-             ! call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, bas_list, perm_list, dh, m_thr )
+             call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, bas_list, dh, m_thr, ierr )
              ! if( dh .lt. sym_thr ) then
              !    write(*,*) i,j,dh
              !    write(*,'(3f9.4)') theta(1,:)
@@ -566,11 +601,28 @@
   end subroutine sofi_get_combos
 
 
-
-  subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, dh, m_thr )
-  ! subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, perm_list, dh, m_thr )
-  !! try if the matrix theta gives dH within 5*sym_thr, then send it to refine.
-    !! If matrix is valid and new, add it to op_list, and perm_list
+  !> @details
+  !!
+  !! Try if the matrix ``theta`` gives dH within 5*sym_thr, then send it to refine.
+  !! If matrix is valid and new, add it to op_list
+  !!
+  !! ``nbas`` and ``op_list`` on input contain the currently known symmetry operations,
+  !! and on output the same info updated accordingly if ``theta`` is new or not.
+  !!
+  !! @param[inout] theta :: 3x3 trial matrix
+  !! @param[in] nat :: number of atoms
+  !! @param[in] typ_in(nat) :: atomic species
+  !! @param[in] coords_in(3,nat) :: atomic positions
+  !! @param[in] sym_thr :: symmery threshold in terms of dH
+  !! @param[in] dd :: thr for first cshda, "smallest atom-atom distance"
+  !! @param[inout] nbas :: number of operations
+  !! @param[inout] op_list(3,3,nbas) :: list of operations
+  !! @param[out] dh :: Hausdorff distance value
+  !! @param[in] m_thr :: threshold for matrix_distance checking if matrix is new or not
+  !! @param[out] ierr :: error value, negative on error, zero otherwise
+  !! @returns theta, nbas, op_list, dh
+  !!
+  subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, dh, m_thr, ierr )
     use sofi_tools, only: nmax
     implicit none
     real, dimension(3,3),          intent(inout) :: theta
@@ -578,12 +630,12 @@
     integer, dimension(nat),       intent(in) :: typ_in
     real, dimension(3,nat),        intent(in) :: coords_in
     real,                          intent(in) :: sym_thr
-    real,                          intent(in) :: dd !! thr for first cshda, "smallest atom-atom distance"
+    real,                          intent(in) :: dd
     integer,                       intent(inout) :: nbas
     real, dimension(3,3,nmax),     intent(inout) :: op_list
-    ! integer, dimension(nat, nmax), intent(inout) :: perm_list
     real,                          intent(out) :: dh
-    real,                          intent(in) ::m_thr
+    real,                          intent(in) :: m_thr
+    integer,                       intent(out) :: ierr
 
     integer, dimension(nat) :: typ
     real, dimension(3,nat) :: coords
@@ -593,7 +645,6 @@
     logical :: not_crazy, is_new
     logical :: is_valid
 
-    ! write(*,*) '>> entering try_sofi'
     !! local copy
     typ = typ_in
     coords = coords_in
@@ -669,9 +720,11 @@
       call is_new_sofi( theta, nbas, op_list, m_thr, is_new )
       if( is_new ) then
           ! write(*,*) ':: adding'
-          ! perm = found
-          ! call add_sofi( nat, theta, perm, nbas, op_list, perm_list )
-          call add_sofi( nat, theta, nbas, op_list )
+         call add_sofi( nat, theta, nbas, op_list, ierr )
+         if( ierr /= 0 ) then
+            write(*,*) "at:",__FILE__,"line:",__LINE__
+            return
+         end if
       end if
     end if
 
@@ -682,11 +735,29 @@
   end subroutine try_sofi
 
 
+  !> @details
+  !! Refine the ``theta`` matrix, which is on input "close-to" some real symmetry operation,
+  !! and on output should be the matrix of symmetry operation that minimizes SVD.
+  !!
+  !! Do few steps of ICP-like algo... until n steps, or until no new permutations are found.
+  !!
+  !! @note
+  !!  assume atoms are already permuted at input
+  !!
+  !! *_ref is static, original structure, *_in is the structure transformed by theta and P on input
+  !!
+  !! @param[in] nat_ref :: number of atoms
+  !! @param[in] typ_ref(nat_ref) :: atomic types
+  !! @param[in] coords_ref(3,nat_ref) :: atomic positions
+  !! @param[in] nat :: number of atoms
+  !! @param[in] typ_in(nat) :: atomic types
+  !! @param[in] coords_in(3,nat) :: atomic positions
+  !! @param[inout] theta(3,3) :: trial matrix
+  !! @param[inout] dh :: Hausdorff value
+  !! @param[out] perm(nat) :: final permutation
+  !! @returns theta, dh, perm
+  !!
   subroutine refine_sofi( nat_ref, typ_ref, coords_ref, nat, typ_in, coords_in, theta, dh, perm )
-    !! few steps of ICP-like algo...
-    !! NOTE: assume atoms are already permuted at input
-    !! *_ref is static, original structure
-    !!
     implicit none
     integer,                     intent(in) :: nat_ref
     integer, dimension(nat_ref), intent(in) :: typ_ref
@@ -732,6 +803,7 @@
       call svd_forcerot( nat_ref, typ_ref, coords_ref, &
            nat, typ, coords, svd_r, svd_t, ierr )
       if( ierr /= 0 ) then
+         write(*,*) "at:",__FILE__,"line:",__LINE__
          return
       end if
 
@@ -796,8 +868,19 @@
   end subroutine refine_sofi
 
 
+  !> @details
+  !! Check if rmat is new in op_list.
+  !! The choice is made by computing matrix_distance between rmat and all matrices in op_list,
+  !! if the distance is below m_thr for any matrix, then rmat is considered already known.
+  !!
+  !! @param[in] rmat(3,3) :: trial matrix
+  !! @param[in] nbas :: number of operations in the list
+  !! @param[in] op_list(3,3,nmax) :: list of symmetry operations to check
+  !! @param[in] m_thr :: threshold for matrix_distance
+  !! @param[out] is_new :: true if rmat is new, and should be added to op_list
+  !! @returns is_new
+  !!
   subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
-  !! check if rmat is new in op_list
     use sofi_tools, only: nmax, matrix_distance
     implicit none
     real, dimension(3,3),      intent(in) :: rmat
@@ -807,7 +890,7 @@
     logical,                   intent(out) :: is_new
 
     integer :: i
-    logical :: eq_perm, eq_rmat
+    logical :: eq_rmat
     real :: dd
     real :: det1, det2, ddet
     real :: matrix_thr
@@ -818,6 +901,9 @@
     !! permutations in 'perm_list', since each symmOp should have a unique permutation.
     !! Or not? Mirror triangle over the plane gives same permutation as orig...
 
+    !! This could not be decided only based on det and tr of matrices,
+    !! since M and M^T have identical values for det and tr.
+    !! The axes and angles of each operation are not known at this point.
 
     !! threshold on equivalence of matrices, higher value can speed up overall calc,
     !! but too high can think different matrices are equal.
@@ -829,7 +915,6 @@
 
     !! initial values
     is_new = .true.
-    eq_perm = .false.
     eq_rmat = .false.
 
     do i = 1, nbas
@@ -855,7 +940,6 @@
           ! write(*,'(3f9.4)') op_list(:,:,i)
       endif
 
-      ! is_new = .not.(eq_perm .and. eq_rmat)
       is_new = .not.eq_rmat
 
       if( .not. is_new ) return
@@ -865,28 +949,29 @@
   end subroutine is_new_sofi
 
 
-  subroutine add_sofi( nat, rmat, nbas, mat_list )
-  ! subroutine add_sofi( nat, rmat, perm, nbas, op_list, perm_list )
-  !! add rmat into mat_list, add perm in perm_list
+  !> @details
+  !! Add rmat into mat_list, increase nbas by 1.
+  subroutine add_sofi( nat, rmat, nbas, mat_list, ierr )
     use sofi_tools, only: nmax
+    use err_module
     implicit none
     integer,                      intent(in) :: nat
     real, dimension(3,3),         intent(in) :: rmat
-    ! integer, dimension(nat),      intent(in) :: perm
     integer,                      intent(inout) :: nbas
     real, dimension(3,3,nmax),    intent(inout) :: mat_list
-    ! integer, dimension(nat,nmax), intent(inout) :: perm_list
+    integer,                      intent(out) :: ierr
 
 
     !! increment nbas
     nbas = nbas + 1
     if( nbas .gt. nmax ) then
       write(*,*) "subroutine add_sofi::: ERROR ADDING RMAT, LIST TOO SMALL"
+      write(*,*) "at:"__FILE__,"line:",__LINE__
+      ierr = ERR_LIST_TOO_SMALL
       return
     end if
 
     mat_list(:,:,nbas) = rmat
-    ! perm_list(:,nbas) = perm
 
   end subroutine add_sofi
 
@@ -904,7 +989,7 @@
   !! @param[out] pg(10) :: the point group tag
   !! @param[out] prin_ax(3) :: principal axis of PG (one of them in case when ambiguous)
   !! @param[in] verb :: flag for verbosity
-  !! @returnds pg, prin_ax
+  !! @returns pg, prin_ax
   !!
   subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb )
     !!
@@ -1602,6 +1687,11 @@
     !! if dot( tmp3, ax ) is negative, angle is negative
     !! if it's zero, the only possibility is angle=0.5, in which case M=M^T
     if( dot_product( tmp3, ax ) < -epsilon ) angle = -angle
+
+
+    !! put ax of E or I ops to (1, 0, 0 )
+    if( op(1:1) == OP_IDENTITY ) ax = (/ 1.0, 0.0, 0.0 /)
+    if( op(1:1) == OP_INVERSION ) ax = (/ 1.0, 0.0, 0.0 /)
 
   end subroutine sofi_analmat
 

@@ -9,10 +9,13 @@ module err_module
        !! IRA errors
        ERR_TOO_SMALL_KMAX = -1, &
        ERR_OTHER          = -2, &
+       ERR_BETA           = -3, &
        !!
        !! SOFI errors
-       ERR_DETERMINANT    = -3, &
-       ERR_ACOS_ARG       = -4
+       ERR_DETERMINANT    = -4, &
+       ERR_ACOS_ARG       = -5, &
+       ERR_SIZE_NMAX      = -6, &
+       ERR_LIST_TOO_SMALL = -7
 
   character(len=*), parameter :: warn = "WARNING FROM IRA/SOFI library :::"
   character(len=*), parameter :: err = "ERROR FROM IRA/SOFI library :::"
@@ -34,6 +37,10 @@ contains
        write(str, "(5x,a,1x,a,1x,i0)") err, &
             "Some other error has occured ... ierr =",ierr
 
+    case( ERR_BETA )
+       write(str, "(5x,a,1x,a)") err, &
+            "Cannot set beta basis!"
+
     case( ERR_DETERMINANT )
        write(str, "(5x,a,1x,a)") err, &
             "Value of matrix determinant out of range!"
@@ -41,6 +48,14 @@ contains
     case( ERR_ACOS_ARG )
        write(str, "(5x,a,1x,a)") err, &
             "Invalid value for acos argument, should be strictly on range [-1:1]"
+
+    case( ERR_SIZE_NMAX )
+       write(str, "(5x,a,1x,a)") err, &
+            "The size of list for symmetry operation matrices is not nmax!"
+
+    case( ERR_LIST_TOO_SMALL )
+       write(str, "(5x,a,1x,a)") err, &
+            "Number of symm operations exceeds the list size! Check your configuration."
 
     case default
        write(str, "(5x, a,1x,a,1x,i0)") warn, &
