@@ -990,8 +990,7 @@ subroutine add_sofi( nat, rmat, nbas, mat_list, ierr )
 
   !! increment nbas
   nbas = nbas + 1
-  ! if( nbas .gt. nmax ) then
-  if( nbas .gt. 2 ) then
+  if( nbas .gt. nmax ) then
      write(*,*) "subroutine add_sofi::: ERROR ADDING RMAT, LIST TOO SMALL"
      write(*,*) "origin at: "__FILE__," line:",__LINE__
      ierr = ERR_LIST_TOO_SMALL
