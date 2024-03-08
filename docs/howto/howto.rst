@@ -1,8 +1,8 @@
-.. _howto:
+.. _sofi_howto:
 
-#############
-How-to guides
-#############
+#############################
+SOFI tutorial & How-to guides
+#############################
 
 
 .. note::
@@ -117,6 +117,20 @@ will flip its axis and angle :
    >>> sofi.analmat( matrix )
    ('C', 8, 3, array([ 2.87347886e-01, -9.57826285e-01, -1.60749682e-16]), -0.375 )
 
+.. warning::
+   The computation of ``n`` and ``p`` is limited to a certain order, which is by default 24 at maximum.
+   If the order of a matrix is larger than that, ``analmat`` will return ``n`` and ``p`` which are wrong, but
+   as close as possible to truth, within the `resolution` of 1/24. The ``angle`` will have
+   the correct value in any case. Example:
+
+      >>> ## generate a high-order (small angle) rotation C39^2
+      >>> matrix = sofi.construct_operation( "C", np.array([ 1., 0., 0.] ), 2/39 )
+      >>> ##
+      >>> ## attempt to analyse it: n and p are wrong, angle is correct
+      >>> sofi.analmat( matrix )
+      ('C', 19, 1, array([1., 0., 0.]), 0.051282052)
+      >>> ## notice that C39^2 is between C38^2=C19^1 and C40^2=C20^1
+
 
 Generate a cyclic group from combinations of matrices
 =====================================================
@@ -154,6 +168,7 @@ function:
           [[-1.,  0.,  0.],
            [ 0.,  1.,  0.],
            [ 0.,  0., -1.]]])
+
 
 
 Determine point group from a list of matrices
@@ -201,6 +216,10 @@ The determination follows the standard flowchart, i.e. https://symotter.org/asse
    >>> ## a more verbose output can be obtained by setting `verb=True`:
    >>> sofi.get_pg( n_combo, combo_list, verb = True )
 
+.. warning::
+   SOFI only outputs one principal axis, however there are point groups which exhibit several equivalent axes,
+   for which the choice of principal axis is ambiguous.
+
 
 Test generator elements
 =======================
@@ -224,6 +243,197 @@ For example, the Td point group should be possible to generate from two S4 opera
 
 
 
+Matrix distance, or the resolving power of SOFI
+===============================================
+
+In SOFI, two matrices are considered equal when the function ``matrix_distance()`` returns a
+value below the threshold ``m_thr``, the default value for which is ``m_thr=0.73``. Example:
+
+   >>> ## create two matrices: S4 and C2 on the same axis
+   >>> m1 = sofi.construct_operation( "S", np.array([ 1., 0., 0.]), 1/4 )
+   >>> m2 = sofi.construct_operation( "C", np.array([ 1., 0., 0.]), 1/2 )
+   >>> ##
+   >>> ## compute distance between them
+   >>> sofi.matrix_distance( m1, m2 )
+   2.8284271247461903
+   >>> ##
+   >>> ## create matrices which are similar:
+   >>> m1 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 0.5 )
+   >>> m2 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 0.51 )
+   >>> sofi.matrix_distance( m1, m2 )
+   0.08884304298544585
+
+The value of ``matrix_distance`` can be seen as the order of the matrix needed to transform ``m1`` into ``m2``.
+The threshold ``m_thr`` is set to a value such that the rotation C12^1 can be resolved:
+
+   >>> ## identity
+   >>> m1 = sofi.construct_operation( "E", np.array([1., 0., 0.]), 0. )
+   >>> ## C12^1
+   >>> m2 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 1/12 )
+   >>> sofi.matrix_distance( m1, m2 )
+   0.7320508075688772
+
+
+
+.. note::
+   The value of ``m_thr`` effectively determines the `resolving power` of SOFI. For groups containing
+   operations with order higher than C12, the value should be adjusted, and the ``src`` recompiled.
+   In that case, take care of array sizes, as they might exceed ``nmax``, and to adjust the procedure
+   in ``analmat()``.
+
+
+
+
+Symmetry operations of an atomic structure
+==========================================
+
+Using the ``get_symm_ops()`` function of SOFI to obtain the list of symmetry operations
+of a given atomic structure works like:
+
+   >>> import numpy as np
+   >>> import ira_mod
+   >>> sofi=ira_mod.SOFI()
+   >>> ##
+   >>> ## create a hypothetical atomic structure with 6 atoms:
+   >>> nat = 6
+   >>> ## all atomic types equal, integer value 1
+   >>> typ = np.ones( [nat], dtype=int)
+   >>> ## atomic positions
+   >>> coords = np.array([[-0.65 ,  1.126,  0.   ],
+   ...                    [-0.65 , -1.126,  0.   ],
+   ...                    [ 1.3  , -0.   ,  0.   ],
+   ...                    [-1.04 ,  0.   ,  0.   ],
+   ...                    [ 0.52 , -0.901,  0.   ],
+   ...                    [ 0.52 ,  0.901,  0.   ]])
+   >>> ##
+   >>> ## specify the symmetry threshold value
+   >>> sym_thr = 0.05
+   >>> ##
+   >>> ## get the symmetry operations in form of 3x3 matrices
+   >>> n_mat, mat_list = sofi.get_symm_ops( nat, typ, coords, sym_thr )
+
+The list of matrices can now be input into ``get_pg()``:
+
+   >>> sofi.get_pg( n_mat, mat_list )
+   ('D3h', array([0., 0., 1.]))
+
+Thus, the structure has D3h point group, with principal axis in the (0, 0, 1) direction.
+You can view the hypothetical structure in your favourite visualiser software, and confirm the
+symmetry operations and their axes, listed by SOFI:
+
+   >>> for mat in mat_list:
+   ...   sofi.analmat( mat )
+
+.. note::
+   The structure we have set up as ``coords`` has a geometric mean at (0, 0, 0), it can be confirmed:
+
+      >>> np.mean( coords, axis=0 )
+      array([0., 0., 0.])
+
+   In subsequent how-tos we will work with structures where this is not necessarily the case.
+
+
+
+Applying symmetry operations
+============================
+
+Upon transforming a structure with its symmetry operation, we obtain back the same structure.
+Take the same hypothetical structure from before, it has a C3 operation on axis (0, 0, 1):
+
+   >>> ## create a hypothetical atomic structure with 6 atoms:
+   >>> nat = 6
+   >>> ## all atomic types equal, integer value 1
+   >>> typ = np.ones( [nat], dtype=int)
+   >>> ## atomic positions
+   >>> coords = np.array([[-0.65 ,  1.126,  0.   ],
+   ...                    [-0.65 , -1.126,  0.   ],
+   ...                    [ 1.3  , -0.   ,  0.   ],
+   ...                    [-1.04 ,  0.   ,  0.   ],
+   ...                    [ 0.52 , -0.901,  0.   ],
+   ...                    [ 0.52 ,  0.901,  0.   ]])
+   >>> ##
+   >>> ## create C3 along (0, 0, 1)
+   >>> c3mat = sofi.construct_operation( "C", np.array([0., 0., 1.]), 1/3)
+   >>> ##
+   >>> ## create the transformed coords
+   >>> coords_tf = np.zeros([nat, 3], dtype=float)
+   >>> ##
+   >>> ## apply C3 to original coords through np.matmul()
+   >>> for i, v in enumerate( coords ):
+   ...    coords_tf[i] = np.matmul( c3mat, v )
+   ...
+   >>> ##
+   >>> ## print the transformed structure:
+   >>> coords_tf
+   array([[-6.504e-01, -1.126e+00,  0.000e+00],
+          [ 1.300e+00,  3.576e-05,  0.000e+00],
+          [-6.499e-01,  1.126e+00,  0.000e+00],
+          [ 5.200e-01, -9.009e-01,  0.000e+00],
+          [ 5.205e-01,  9.009e-01,  0.000e+00],
+          [-1.040e+00,  7.153e-06,  0.000e+00]], dtype=float)
+   >>> ##
+   >>> ## notice the vectors are equal (within precision) to the original coords, except permuted.
+
+To obtain the permutation of atoms which happens upon the transformation by a symmetry operation,
+SOFI has the ``try_mat()`` function, which returns the value of distance between the original structure,
+and the structure transformed by a given matrix, and the corresponding permutation of indices:
+
+   >>> dmax, perm = sofi.try_mat( nat, typ, coords, c3mat )
+   >>> ##
+   >>> ## print the permutation
+   >>> perm
+   array([2, 0, 1, 5, 3, 4])
+   >>> ## print the distance
+   >>> dmax
+   0.00033364459005079844
+
+
+The low value of ``dmax`` confirms that ``c3mat`` is indeed a symmetry operation of the structure defined above.
+If you now take ``coords_tf`` from above, permute them by ``perm``, and compute the maximal distance between atoms
+``coords[i]`` and ``coords_tf_perm[i]``, you should obtain the value ``dmax``.
+
+   >>> ## permute coords_tf by perm
+   >>> coords_tf_perm = coords_tf[ perm ]
+   >>> ##
+   >>> ## create array for atom-atom distances
+   >>> d=np.zeros([nat], dtype=float)
+   >>> ##
+   >>> ## compute atom-atom distances between the original coords and coords_tf_perm
+   >>> for i, v in enumerate( coords ):
+   ...    d[i] = np.linalg.norm( v - coords_tf_perm[i] )
+   ...
+   >>> np.max( d )
+   0.000333580064184048
+
+
+.. note::
+   The ``sym_thr`` argument when computing ``get_symm_ops()`` is a threshold in terms of the distance ``dist`` as
+   computed in this section. If an operation returns a distance value beyond ``sym_thr``, then SOFI will not
+   consider that operation as a symmetry operation.
+
+
+
+Disordered structures: missing operations
+=========================================
+
+Perform combinations.
+
+
+
+Put it all together
+===================
+
+   >>> sym = sofi.compute( nat, typ, coords, sym_thr )
+   >>> ##
+   >>> ## see what is in `sym` (use tab)
+   >>> sym.
+   sym.angle    sym.dmax     sym.n        sym.op       sym.perm     sym.prin_ax
+   sym.axis     sym.matrix   sym.n_sym    sym.p        sym.pg       sym.print()
+
+
+
+Choosing the origin point
+=========================
 
 
 wishlist
