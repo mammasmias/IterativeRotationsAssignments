@@ -114,11 +114,11 @@ end subroutine lib_cshda
 !! @param[in]  nat2    :: number of atoms in structure 2
 !! @param[in]  typ2(nat2)    :: atomic types of structure 2
 !! @param[in]  coords2(3,nat2) :: atomic positions of structure 2
-!! @param[in]  lat2(3,3)    :: lattice vectors of conf 2;
+!! @param[in]  lat2(3,3)    :: lattice vectors of conf 2 in C order;
 !! @param[in]  thr     :: threshold for the Hausdorff distance, used for early exit;
 !! @param[in]  found(nat2)   :: list of assigned atoms of conf 2 to conf 1:
 !!                        e.g. found(3) = 9 means atom 3 from conf 1 is assigned
-!!                        to atom 9 in conf 2;
+!!                        to atom 9 in conf 2. Indices in C order (start at 0);
 !! @param[in]  dists(nat2)   :: distances from atom i in conf 1 to atom found(i) in conf 2;
 !! @return found, dists
 !!
@@ -210,9 +210,9 @@ end subroutine lib_cshda_pbc
 !! @param[in]  coords2(3,nat2) :: atomic positions of structure 2
 !! @param[in]  candidate2(nat2) :: list of candidate central atoms in structure 2
 !! @param[in]  kmax_factor :: the factor to multiply kmax (should be > 1.0)
-!! @param[in]  rotation(3,3) :: the 3x3 rotation matrix
+!! @param[in]  rotation(3,3) :: the 3x3 rotation matrix in C order
 !! @param[in]  translation(3) :: the 3D translation vector
-!! @param[in]  permutation(nat2) :: the atomic permutations
+!! @param[in]  permutation(nat2) :: the atomic permutations in C order (start at 0)
 !! @param[out]  hd :: final value of the Hausdorff distance
 !! @param[out]  cerr :: error value (negative on error, zero otherwise)
 !! @returns rotation, translation, permutation, hd, cerr

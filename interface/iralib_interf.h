@@ -23,14 +23,14 @@ void lib_compute_all( int nat, int *typ, double *coords, double sym_thr, \
                       double **prin_ax, int *cerr );
 
 void lib_get_symm_ops( int nat, int *typ, double *coords, double sym_thr, \
-                       int *nmat, double **mat_data );
+                       int *nmat, double **mat_data, int *cerr );
 
-void lib_get_pg( int nmat, double *mat_data, char **pg, double **prin_ax, int verb);
+void lib_get_pg( int nmat, double *mat_data, char **pg, double **prin_ax, int verb, int *cerr);
 
 void lib_unique_ax_angle( int nmat, double *mat_data, \
-                          char **op_data, double **ax_data, double **angle_data);
+                          char **op_data, double **ax_data, double **angle_data, int *cerr);
 
-void lib_analmat( double *mat, char **op, int *n, int *p, double **ax, double *angle);
+void lib_analmat( double *mat, char **op, int *n, int *p, double **ax, double *angle, int *cerr);
 
 void lib_get_perm( int nat, int *typ, double *coords, \
                    int nmat, double *mat_data, int **perm_data, double **dmax_data);
@@ -40,7 +40,7 @@ void lib_get_combos( int nat, int *typ, double *coords, int nmat, double *mat_da
 
 void lib_try_mat( int nat, int *typ, double *coords, double *rmat, double *dh, int **perm);
 
-void lib_construct_operation( char *op, double *axis, double angle, double **rmat);
+void lib_construct_operation( char *op, double *axis, double angle, double **rmat, int *cerr);
 
 void lib_mat_combos( int nmat, double *mat_data, int *nmat_out, double **mat_out);
 

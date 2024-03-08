@@ -29,6 +29,8 @@
 !!
 
 !> @details
+!! Perform the full computation by SOFI.
+!! This is a wrapper to sofi_compute_all() from sofi_routines.f90
 !!
 !! @note
 !!  the ``nmax`` refers to the value in sofi_tools.f90, which ``nmax=200`` by default.
@@ -42,8 +44,8 @@
 !! @param[in] sym_thr             :: threshold for finding symmetries
 !!                                   (not taken into account when making combinations)
 !! @param[out] n_mat              :: number of symmetries found
-!! @param[in] mat_list(3,3,nmax)  :: symmetry matrices
-!! @param[in] perm_list(nat,nmax) :: permutation of atoms after applying each symmetry
+!! @param[in] mat_list(3,3,nmax)  :: symmetry matrices in C order
+!! @param[in] perm_list(nat,nmax) :: permutation of atoms after applying each symmetry, in C format (start at 0)
 !! @param[in] op_list(nmax)       :: Character "Op" from the Schoenflies notation: Op n^p
 !!                                   (E = identity, I = inversion, C = rotation, S = (roto-)reflection )
 !! @param[in] n_list(nmax)        :: Schoenflies n value
@@ -64,7 +66,7 @@
 !!                       int *n_mat, double **mat_data, int **perm_data, \
 !!                       char **op_data, int **n_data, int **p_data,       \
 !!                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
-!!                       double **prin_ax );
+!!                       double **prin_ax, int *cerr );
 !! ~~~~~~~~~~~~~~~
 !!
 subroutine lib_compute_all( nat, typ, coords, sym_thr, &
@@ -148,6 +150,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
 
   cerr = int( ierr, c_int )
   if( ierr /= 0 ) then
+     !! i think here cant call a function like this... call to sofi_get_err_msg(..)
      write(*,*) get_err_msg( ierr )
      return
   end if
@@ -191,16 +194,25 @@ end subroutine lib_compute_all
 
 !> @details
 !!
+!! Get the list of symmetry operations.
+!! This is a wrapper to sofi_get_symmops from sofi_routines.f90
+!!
 !! @param[in] nat                 :: number of atoms
 !! @param[in] typ(nat)            :: atomic types
 !! @param[in] coords(3,nat)       :: atomic positions
 !! @param[in] sym_thr             :: threshold for finding symmetries
 !!                                   (not taken into account when making combinations)
 !! @param[in] n_mat               :: number of symmetries found
-!! @param[in] mat_list(3,3,nmax)  :: symmetry matrices
+!! @param[in] mat_list(3,3,nmax)  :: symmetry matrices in C format
 !! @returns n_mat, mat_list
 !!
-subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list )&
+!! C header:
+!!~~~~~~~~~~~~~~~{.c}
+!! void lib_get_symm_ops( int nat, int *typ, double *coords, double symm_thr, \
+!!                        int *n_mat, double **mat_list, int *cerr );
+!!~~~~~~~~~~~~~~~
+!!
+subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr )&
      bind(C, name="lib_get_symm_ops")
   use iso_c_binding
   use sofi_tools, only: nmax
@@ -213,6 +225,7 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list )&
   !! "output"
   integer( c_int ), intent(out) :: n_mat
   type( c_ptr ),    intent(in) :: mat_list
+  integer( c_int ), intent(out) :: cerr
 
   !! F pointers
   integer(c_int), dimension(:), pointer :: ptr_typ
@@ -233,7 +246,12 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list )&
   call c_f_pointer( mat_list, ptr_op, [3,3,nmax] )
 
   call sofi_get_symmops( nat, ptr_typ, ptr_coords, symm_thr, n, ptr_op, ierr )
-  if( ierr /= 0 ) return
+  cerr = int( ierr, c_int )
+  if( ierr /= 0 ) then
+     write(*,*) "at",__FILE__,"line:",__LINE__
+     return
+  end if
+
 
   !! set output data
   n_mat=n
@@ -246,7 +264,24 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list )&
 end subroutine lib_get_symm_ops
 
 
-subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose )bind(C, name="lib_get_pg")
+!> @details
+!!
+!! Get the point group from a list of matrices, and its principal axis.
+!! This is a wrapper to sofi_get_pg() from sofi_routines.f90
+!!
+!! @param[in] n_mat :: number of matrices
+!! @param[in] cptr_op_list(3,3,n_mat) :: list of matrices in C order
+!! @param[in] ppg :: point group
+!! @param[in] px :: principal axis
+!! @param[in] verbose :: flag of verbosity
+!! @returns ppg, px
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~{.c}
+!! void lib_get_pg( int n_mat, double *mat_data, char **pg, double **prin_ax, int verb, int *cerr);
+!!~~~~~~~~~~~~~~
+!!
+subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, name="lib_get_pg")
   use iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: n_mat
@@ -255,6 +290,7 @@ subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose )bind(C, name="lib_
   type( c_ptr ), intent(in) :: ppg
   type( c_ptr ), intent(in) :: px
   logical( c_bool ), value, intent(in) :: verbose
+  integer( c_int ), intent(out) :: cerr
 
   !! f pointers
   real( c_double ), dimension(:,:), pointer :: p_lvl2
@@ -263,7 +299,7 @@ subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose )bind(C, name="lib_
   character(len=1, kind=c_char), dimension(:), pointer :: pg_char
   real( c_double ), dimension(:), pointer :: prin_ax
   !! local
-  integer :: i, n
+  integer :: i, n, ierr
   character(len=10) :: pg
   logical :: verb
 
@@ -283,7 +319,13 @@ subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose )bind(C, name="lib_
   call c_f_pointer( px, prin_ax, [3] )
 
   verb = verbose
-  call sofi_get_pg( n_mat, op_list, pg, prin_ax, verb )
+  call sofi_get_pg( n_mat, op_list, pg, prin_ax, verb, ierr )
+  cerr = int( ierr, c_int )
+  if( ierr /= 0 ) then
+     write(*,*) "at",__FILE__,"line:",__LINE__
+     return
+  end if
+
 
   n = len_trim(pg)
   do i = 1, n
@@ -355,7 +397,26 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out,
 end subroutine lib_unique_ax_angle
 
 
-subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analmat")
+!> @details
+!!
+!! Analyse the input 3x3 matrix, obtain Op n^p, axis, and angle.
+!! This is a wrapper to sofi_analmat() from sofi_routines.f90
+!!
+!! @param[in] c_rmat(3,3) :: 3x3 input matrix in C order
+!! @param[in] c_op :: Schoenflies symbol of operation E, I, C, S
+!! @param[out] n :: order of operation
+!! @param[out] p :: power
+!! @param[in] c_ax(3) :: axis
+!! @param[out] angle :: angle in units 1/(2pi), e.g. angle=0.5 is half circle
+!! @param[out] cerr :: error value, zero on normal execution, negative otherwise
+!! @returns c_op, n, p, c_ax, angle, cerr
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~{.c}
+!! void lib_analmat( double *mat, char **op, int *n, int *p, double **ax, double *angle, int *cerr);
+!!~~~~~~~~~~~~~~~
+!!
+subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle, cerr )bind(C,name="lib_analmat")
   use iso_c_binding
   implicit none
   !! in
@@ -366,6 +427,7 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analma
   integer(c_int), intent(out) :: p
   type( c_ptr ), intent(in) :: c_ax
   real( c_double ), intent(out) :: angle
+  integer( c_int ), intent(out) :: cerr
 
   !! f pointers
   real(c_double), dimension(:,:), pointer :: rmat
@@ -373,7 +435,7 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analma
   character(len=1, kind=c_char), dimension(:), pointer :: op_fptr
 
   !! local mem
-  integer :: i, m
+  integer :: i, m, ierr
   character(len=1) :: op
 
   !! connect c to f
@@ -382,7 +444,13 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle )bind(C,name="lib_analma
   call c_f_pointer( c_op, op_fptr, [2] )
   call c_f_pointer( c_ax, ax, [3] )
 
-  call sofi_analmat( rmat, op, n, p, ax, angle )
+  call sofi_analmat( rmat, op, n, p, ax, angle, ierr )
+  cerr = int(ierr, c_int )
+  if( ierr /= 0 )then
+     write(*,*) "at:",__FILE__,"line:",__LINE__
+     return
+  end if
+
   m=len_trim(op)
   do i = 1, m
      op_fptr(i) = op(i:i)
@@ -445,6 +513,8 @@ subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
 end subroutine lib_ext_bfield
 
 
+!! bas_list in C order
+!! perm_list in C order (index start at 0)
 subroutine lib_get_perm( nat, typ, coords, n_mat, bas_list, perm_list, dmax_list)&
      bind(C,name="lib_get_perm")
   use iso_c_binding
@@ -599,7 +669,22 @@ subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="lib_try_m
 end subroutine lib_try_mat
 
 
-subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_construct_operation")
+!> @details
+!! Construct a 3x3 matrix from input arguments Op, axis, angle
+!! This is a wrapper to sofi_construct_operation() from sofi_routines.f90
+!!
+!! @param[in] op :: Schoenflies symbol E, I, C, S
+!! @param[in] axis(3) :: desired axis
+!! @param[in] angle :: desired angle in units 1/(2pi), e.g. angle=0.5 means half circle
+!! @param[in] matrix(3,3) :: output matrix in C order
+!! @returns matrix
+!!
+!! C-header:
+!!~~~~~~~~~~~~~{.c}
+!! void lib_construct_operation( char *op, double *axis, double angle, double **rmat, int *cerr);
+!!~~~~~~~~~~~~~
+!!
+subroutine lib_construct_operation( op, axis, angle, matrix, cerr )bind(C,name="lib_construct_operation")
   use iso_c_binding
   implicit none
   interface
@@ -615,6 +700,7 @@ subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_co
   type( c_ptr ), value, intent(in) :: axis
   real( c_double ), value, intent(in) :: angle
   type( c_ptr ), intent(in) :: matrix
+  integer( c_int ), intent(out) :: cerr
 
   real( c_double ), dimension(:), pointer :: ptr_ax
   real(c_double), dimension(:,:), pointer :: ptr_matrix
@@ -623,6 +709,7 @@ subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_co
   character(len=1,kind=c_char), dimension(:), pointer :: ptr_op
   character(len=1) :: f_op
   integer( c_int ) :: i, n
+  integer :: ierr
 
   n=c_strlen(op)
   call c_f_pointer( op, ptr_op, [n] )
@@ -641,7 +728,13 @@ subroutine lib_construct_operation( op, axis, angle, matrix )bind(C,name="lib_co
   call c_f_pointer( axis, ptr_ax, [3] )
   call c_f_pointer( matrix, ptr_matrix, [3,3] )
 
-  call sofi_construct_operation( f_op, ptr_ax, angle, f_matrix )
+  call sofi_construct_operation( f_op, ptr_ax, angle, f_matrix, ierr )
+  cerr = int( ierr, c_int )
+  if( ierr /= 0 ) then
+     write(*,*) "at",__FILE__, "line:",__LINE__
+     return
+  end if
+
 
   !! return C-order matrix
   ptr_matrix = transpose(f_matrix)
@@ -687,6 +780,19 @@ subroutine lib_mat_combos( n_mat_in, bas_in, n_mat_out, bas_out )bind(C,name="li
 end subroutine lib_mat_combos
 
 
+!> @details
+!! get the error message from IRA/SOFI associated to cerr value.
+!! This is a wrapper to sofi_get_err_msg() from sofi_routines.f90
+!!
+!! @param[in] cerr :: integer error value
+!! @param[in] cmsg :: error message string
+!! @returns cmsg
+!!
+!! C-header:
+!!~~~~~~~~~~~~~{.c}
+!! void lib_get_err_msg( int ierr, char** msg );
+!!~~~~~~~~~~~~~
+!!
 subroutine lib_get_err_msg( cerr, cmsg )bind(C, name="lib_get_err_msg")
   use iso_c_binding
   implicit none

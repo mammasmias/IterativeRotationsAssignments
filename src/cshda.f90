@@ -405,7 +405,7 @@
   !! @param[in]  nat2    -> number of atoms in conf 2;
   !! @param[in]  typ2    -> atomic types in conf 2;
   !! @param[in]  coords2 -> coordinates of conf 2;
-  !! @param[in]  lat2    -> lattice vectors of conf 2;
+  !! @param[in]  lat2    -> lattice vectors of conf 2 in rows;
   !! @param[in]  some_thr -> threshold for hd;
   !! @param[out]  found   -> list of paired atoms of conf 2 to conf 1:
   !!                         e.g. found(3) = 9 means atom 3 from conf 1 is paired

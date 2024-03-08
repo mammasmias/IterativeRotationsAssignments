@@ -15,7 +15,8 @@ module err_module
        ERR_DETERMINANT    = -4, &
        ERR_ACOS_ARG       = -5, &
        ERR_SIZE_NMAX      = -6, &
-       ERR_LIST_TOO_SMALL = -7
+       ERR_LIST_TOO_SMALL = -7, &
+       ERR_UNKNOWN_OP     = -8
 
   character(len=*), parameter :: warn = "WARNING FROM IRA/SOFI library :::"
   character(len=*), parameter :: err = "ERROR FROM IRA/SOFI library :::"
@@ -56,6 +57,10 @@ contains
     case( ERR_LIST_TOO_SMALL )
        write(str, "(5x,a,1x,a)") err, &
             "Number of symm operations exceeds the list size! Check your configuration."
+
+    case( ERR_UNKNOWN_OP )
+       write(str, "(5x,a,1x,a)") err, &
+            "Unknown operation!"
 
     case default
        write(str, "(5x, a,1x,a,1x,i0)") warn, &

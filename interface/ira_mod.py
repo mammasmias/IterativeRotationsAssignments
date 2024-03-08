@@ -658,6 +658,7 @@ class SOFI(algo):
         dmax_data = (c_double*nmax)()
         pg = (c_char*11)()
         pax_data = (c_double*3)()
+        cerr = c_int()
 
 
         # have to set argtypes in here, since nat is not know in init
@@ -666,7 +667,7 @@ class SOFI(algo):
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
               POINTER(POINTER(c_char*1*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
-              POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)) ]
+              POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), POINTER(c_int) ]
         self.lib.lib_compute_all.restype=None
 
         # call routine from library.f90
@@ -674,7 +675,9 @@ class SOFI(algo):
                                   nmat, pointer(mat_data), pointer(perm_data), \
                                   pointer(op_data), pointer(n_data), pointer(p_data), \
                                   pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg), \
-                                  pointer(pax_data) )
+                                  pointer(pax_data), cerr )
+        if cerr.value != 0:
+            raise ValueError("nonzero error value obtained from lib_compute_all()")
 
         # cast the result into readable things
         sym.pg = pg.value.decode()
@@ -765,6 +768,7 @@ class SOFI(algo):
         t = typ.ctypes.data_as( POINTER(c_int) )
         c = coords.ctypes.data_as( POINTER(c_double) )
         thr = c_double( sym_thr )
+        cerr = c_int()
 
 
         # output data
@@ -773,10 +777,12 @@ class SOFI(algo):
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_get_symm_ops.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
-              POINTER(c_int), POINTER(POINTER(c_double*9*nmax)) ]
+              POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(c_int) ]
         self.lib.lib_get_symm_ops.restype=None
 
-        self.lib.lib_get_symm_ops( n, t, c, thr, nmat, pointer(mat_data) )
+        self.lib.lib_get_symm_ops( n, t, c, thr, nmat, pointer(mat_data), cerr )
+        if cerr.value != 0:
+            raise ValueError( "nonzero error value obtained form lib_get_symm_ops()")
 
         # cast the result into readable things
         n_op = nmat.value
@@ -824,6 +830,7 @@ class SOFI(algo):
         n = c_int( nm_in )
         mats = mat_list.ctypes.data_as( POINTER(c_double) )
         cverb = c_bool( verb )
+        cerr = c_int()
 
 
         # output data
@@ -832,9 +839,12 @@ class SOFI(algo):
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.lib_get_pg.argtypes = \
-            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), c_bool ]
+            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), \
+              c_bool, POINTER(c_int) ]
         self.lib.lib_get_pg.restype=None
-        self.lib.lib_get_pg( n, mats, pointer(pg), pointer(pprin_ax), cverb)
+        self.lib.lib_get_pg( n, mats, pointer(pg), pointer(pprin_ax), cverb, cerr)
+        if cerr.value != 0 :
+            raise ValueError("nonzero error value ontained from lib_get_pg()")
 
         pg=pg.value.decode()
         prin_ax = np.zeros(3, dtype=float)
@@ -971,24 +981,28 @@ class SOFI(algo):
         p=c_int()
         ax=(c_double*3)()
         angle=c_double()
+        cerr = c_int()
 
         self.lib.lib_analmat.argtypes=\
             [ POINTER(c_double), POINTER(POINTER(c_char*2)), \
               POINTER(c_int), POINTER(c_int), POINTER(POINTER(c_double*3)), \
-              POINTER(c_double) ]
+              POINTER(c_double), POINTER(c_int) ]
         self.lib.lib_analmat.restype=None
 
         self.lib.lib_analmat( mat, pointer(op), pointer(n), pointer(p), \
-                              pointer(ax), pointer(angle) )
-
+                              pointer(ax), pointer(angle), cerr )
+        if cerr.value != 0:
+            raise ValueError( "nonzero error value obtained from lib_analmat()")
 
         op=op.value.decode()
         n=n.value
         p=p.value
         angle=angle.value
-        ax=ax[:]
+        pax = np.zeros([3], dtype=float)
+        for i in range(3):
+            pax[i] = ax[i]
 
-        return op, n, p, ax, angle
+        return op, n, p, pax, angle
 
 
     def ext_Bfield( self, n_mat, mat_list, b_field ):
@@ -1314,12 +1328,15 @@ class SOFI(algo):
         c_angle = c_double(angle)
 
         mat_out=(c_double*9)()
+        cerr = c_int()
 
         self.lib.lib_construct_operation.argtypes = \
-            [ c_char_p, POINTER(c_double), c_double, POINTER(POINTER(c_double*9)) ]
+            [ c_char_p, POINTER(c_double), c_double, POINTER(POINTER(c_double*9)), POINTER(c_int) ]
         self.lib.lib_construct_operation.restype = None
 
-        self.lib.lib_construct_operation( c_op, c_ax, c_angle, pointer(mat_out) )
+        self.lib.lib_construct_operation( c_op, c_ax, c_angle, pointer(mat_out), cerr )
+        if cerr.value != 0:
+            raise ValueError( "nonzero error value obtained from lib_construct_operation()")
 
         matrix = np.ndarray((3,3), dtype=float)
         m=0
