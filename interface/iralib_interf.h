@@ -48,3 +48,5 @@ void lib_ext_bfield( int nmat, double *mat_data, double *b_vec, \
                      int *nmat_out, double **mat_out);
 
 void lib_get_err_msg( int ierr, char** msg );
+
+void lib_matrix_distance( const double *mat1, const double *mat2, double *dist);

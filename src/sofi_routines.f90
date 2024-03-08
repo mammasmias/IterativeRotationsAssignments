@@ -112,7 +112,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
   ! verb = .true.
   call sofi_get_pg( nmat, mat_list, pg, prin_ax, verb, ierr )
   if( ierr /= 0 ) then
-     write(*,*) "error in unique_ax_angle"
+     write(*,*) "at: ",__FILE__," line:",__LINE__
      return
   end if
 
@@ -1915,7 +1915,7 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
   ierr = 0
 
   !! threshold value for dot product between two vectors which should be equal
-  dotp_equal = 0.95
+  dotp_equal = 0.99
 
   !! get all axes
   do i = 1, n_mat

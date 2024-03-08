@@ -926,20 +926,16 @@ class SOFI(algo):
 
     def analmat( self, rmat ):
         """
-        wrapper to lib_analmat.f90 from library_sofi.f90
-        Description: analyse the input matrix, output the Schoenflies notation: Op n^p
-        The notation can be transformed into an angle:
+        Description: analyse the input matrix, output the Schoenflies notation: Op n^p, the
+        axis, and angle.
+        The notation can be transformed into an angle in radians, or degree:
 
-            angle = p / n * 2pi
+            angle_radian = p / n * 2pi
+            angle_degree = p / n * 360
 
-        e.g. C 8^3 corresponds to 3/8th of full circle = 135 degress = 2.3563 radian
-
-        Also return axis and angle of the matrix
+        e.g. C 8^3 corresponds to 3/8th of full circle = 135 degress = 2.3563 radian, p/n = 0.375
 
         This is a wrapper to lib_analmat() routine from library_sofi.f90
-
-        .. note::
-            the angle returned by this routine is always positive. The axis might be either :math:`\pm` direction.
 
 
         **== input: ==**
@@ -968,7 +964,7 @@ class SOFI(algo):
         :type ax: 3D vector, np.ndarray(3, dtype = float)
 
         :param angle: the angle of rotation of matrix `rmat`, in units of 1/2pi, is the ratio p/n
-        :type angle: float
+        :type angle: np.float32
 
         """
 
@@ -979,7 +975,7 @@ class SOFI(algo):
         op=(c_char*2)()
         n=c_int()
         p=c_int()
-        ax=(c_double*3)()
+        cax=(c_double*3)()
         angle=c_double()
         cerr = c_int()
 
@@ -990,19 +986,19 @@ class SOFI(algo):
         self.lib.lib_analmat.restype=None
 
         self.lib.lib_analmat( mat, pointer(op), pointer(n), pointer(p), \
-                              pointer(ax), pointer(angle), cerr )
+                              pointer(cax), pointer(angle), cerr )
         if cerr.value != 0:
             raise ValueError( "nonzero error value obtained from lib_analmat()")
 
         op=op.value.decode()
         n=n.value
         p=p.value
-        angle=angle.value
-        pax = np.zeros([3], dtype=float)
+        angle=np.float32(angle.value)
+        ax = np.zeros([3], dtype=float)
         for i in range(3):
-            pax[i] = ax[i]
+            ax[i] = cax[i]
 
-        return op, n, p, pax, angle
+        return op, n, p, ax, angle
 
 
     def ext_Bfield( self, n_mat, mat_list, b_field ):
@@ -1405,3 +1401,40 @@ class SOFI(algo):
                     m+=1
         return nm_out, mat_out
 
+    def matrix_distance( self, m1, m2 ):
+        '''
+        Compute the distance between two matrices using the ``matrix_distance`` function.
+        This function is used internally in SOFI to determine if two matrices are equal or not,
+        if the value of distance is below ``m_thr``, then the matrices are considered equal.
+        By default, ``m_thr = 0.73`` which should be enough to distinguish matrices separated by
+        operation equivalent to C 12^1. These values can be found in sofi_tools.f90
+
+        **== input ==**
+
+        :param m1: matrix 1
+        :type m1: np.array( [3, 3], dtype = float)
+
+        :param m2: matrix 2
+        :type m2: np.array( [3, 3], dtype = float)
+
+        **== output ==**
+
+        :param d: distance value
+        :type d: float
+
+        '''
+
+        # input
+        mc1 = m1.ctypes.data_as(POINTER(c_double))
+        mc2 = m2.ctypes.data_as(POINTER(c_double))
+
+        # output
+        cd = c_double()
+
+        self.lib.lib_matrix_distance.restype=None
+        self.lib.lib_matrix_distance.argtypes=[POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+
+        self.lib.lib_matrix_distance( mc1, mc2, pointer(cd) )
+
+        d = cd.value
+        return d

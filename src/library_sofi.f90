@@ -779,6 +779,35 @@ subroutine lib_mat_combos( n_mat_in, bas_in, n_mat_out, bas_out )bind(C,name="li
 
 end subroutine lib_mat_combos
 
+!> @details
+!! Compute the distance between two matrices, using the matrix_distance function used
+!! internally by SOFI, to determine if matrices are equal or not.
+!!
+!! @param[in] mat1(3,3) :: matrix in C order
+!! @param[in] mat2(3,3) :: matrix in C order
+!! @param[out] dist :: distance
+subroutine lib_matrix_distance( mat1, mat2, dist )bind(C,name="lib_matrix_distance" )
+  use iso_c_binding
+  use sofi_tools, only: matrix_distance
+  implicit none
+  real( c_double ), dimension(3,3), intent(in) :: mat1
+  real( c_double ), dimension(3,3), intent(in) :: mat2
+  real( c_double ), intent(out) :: dist
+
+  real, dimension(3,3) :: frmat1, frmat2
+  real :: fdist
+
+  !! transpose from C input
+  frmat1 = real( mat1 )
+  frmat2 = real( mat2 )
+  frmat1 = transpose( frmat1 )
+  frmat2 = transpose( frmat2 )
+
+  call matrix_distance( frmat1, frmat2, fdist )
+  dist = real( fdist, c_double )
+
+end subroutine lib_matrix_distance
+
 
 !> @details
 !! get the error message from IRA/SOFI associated to cerr value.
