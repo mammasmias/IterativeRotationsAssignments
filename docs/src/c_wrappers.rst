@@ -31,8 +31,8 @@ for example :ref:`py_interf`.
    :depth: 1
 
 
-IRA
-===
+CShDA & IRA
+===========
 
 .. doxygenfile:: library_ira.f90
    :project: lib_IRA
