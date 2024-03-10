@@ -148,12 +148,12 @@
   ! end subroutine cross_prod
 
 
-
+  !> @details
+  !! permute a real 2D array into order, equivalent to:
+  !!
+  !!   array(:,:) = array(:, order(:) )
+  !!
   subroutine permute_real_2d( n, m, array, order )
-    !! permute a real 2D array into order, equivalent to:
-    !!
-    !!   array(:,:) = array(:, order(:) )
-    !!
     implicit none
     integer, intent(in) :: n
     integer, intent(in) :: m
@@ -175,12 +175,13 @@
 
   end subroutine permute_real_2d
 
+  !> @details
+  !! permute a real 2D array into inverse order,
+  !! equivalent to:
+  !!
+  !!   array(:, order(:) ) = array(:,:)
+  !!
   subroutine permute_real_2d_back( n, m, array, order )
-    !! permute a real 2D array into inverse order,
-    !! equivalent to:
-    !!
-    !!   array(:, order(:) ) = array(:,:)
-    !!
     implicit none
     integer, intent(in) :: n
     integer, intent(in) :: m
@@ -202,12 +203,12 @@
 
   end subroutine permute_real_2d_back
 
-
+  !> @details
+  !! permute an integer 1D array into order, equivalent to:
+  !!
+  !!    array(:) = array( order(:) )
+  !!
   subroutine permute_int_1d( n, array, order )
-    !! permute an integer 1D array into order, equivalent to:
-    !!
-    !!    array(:) = array( order(:) )
-    !!
     implicit none
     integer, intent(in) :: n
     integer, dimension(n), intent(inout) :: array
@@ -228,12 +229,13 @@
 
   end subroutine permute_int_1d
 
+  !> @details
+  !! permute an integer 1D array into inverse order,
+  !! equivalent to:
+  !!
+  !!    array( order(:) ) = array(:)
+  !!
   subroutine permute_int_1d_back( n, array, order )
-    !! permute an integer 1D array into inverse order,
-    !! equivalent to:
-    !!
-    !!    array( order(:) ) = array(:)
-    !!
     implicit none
     integer, intent(in) :: n
     integer, dimension(n), intent(inout) :: array
@@ -254,12 +256,11 @@
 
   end subroutine permute_int_1d_back
 
-
+  !> @brief Set orthonormal basis from input vectors, third is cross of
+  !! the first two, fail happens when input is collinear.
+  !!
+  !! basis on output contains basis vectors in rows.
   subroutine set_orthonorm_bas( vec1, vec2, basis, fail )
-    !> @brief Set orthonormal basis from input vectors, third is cross of
-    !! the first two, fail happens when input is collinear.
-    !!
-    !! basis on output contains basis vectors in rows.
     implicit none
 
     real, dimension(3),   intent(in) :: vec1, vec2
@@ -335,39 +336,40 @@
     return
   end subroutine set_orthonorm_bas
 
-
+  !> @details
+  !! Optimal rotation by SVD.
+  !!
+  !! This rouine allows rotation matrix to be a reflection.
+  !! no 'correction' when determinant is negative
+  !!
+  !! The output can be applied as:
+  !!
+  !!~~~~~~~~~~~~~{.f90}
+  !!     coords2(:,i) = matmul( rmat, coords2(:,i) ) + translate
+  !!~~~~~~~~~~~~~
+  !!
+  !! OR
+  !!
+  !!~~~~~~~~~~~~~~~{.f90}
+  !!     coords1(:,i) = matmul( transpose(rmat), coords1(:,i) ) - &
+  !!                                  matmul( transpose(rmat), translate )
+  !!~~~~~~~~~~~~~~~
+  !!
+  !!
+  !! @param[in] nat1    -> number of atoms in conf 1;
+  !! @param[in] typ1(nat1)    -> atomic types in conf 1;
+  !! @param[in] coords1(3,nat1) -> coordinates of conf 1;
+  !! @param[in] nat2    -> number of atoms in conf 2;
+  !! @param[in] typ2(nat2)    -> atomic types in conf 2;
+  !! @param[in] coords2(3,nat2) -> coordinates of conf 2;
+  !!
+  !! @param[out] rmat(3,3)    -> 3x3 optimal rotation matrix
+  !! @param[out] translate(3) -> optimal translation vector
+  !! @returns rmat, translate
+  !!
   subroutine svdrot_m( nat1, typ1, coords1_in, &
                        nat2, typ2, coords2_in, &
                        rmat, translate, ierr )
-    !> @detail
-    !! Optimal rotation by SVD.
-    !!
-    !! This rouine allows rotation matrix to be a reflection.
-    !! no 'correction' when determinant is negative
-    !!
-    !! The output can be applied as:
-    !!
-    !!     coords2(:,i) = matmul( rmat, coords2(:,i) ) + translate
-    !!
-    !! OR
-    !!
-    !!     coords1(:,i) = matmul( transpose(rmat), coords1(:,i) ) - &
-    !!                                  matmul( transpose(rmat), translate )
-    !!
-    !!================================================
-    !!
-    !! intent(in):
-    !! nat1    -> number of atoms in conf 1;
-    !! typ1    -> atomic types in conf 1;
-    !! coords1 -> coordinates of conf 1;
-    !! nat2    -> number of atoms in conf 2;
-    !! typ2    -> atomic types in conf 2;
-    !! coords2 -> coordinates of conf 2;
-    !!
-    !! intent(out):
-    !! rmat    -> 3x3 optimal rotation matrix
-    !! translate -> optimal translation vector
-    !!
     implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1
@@ -455,38 +457,39 @@
   end subroutine svdrot_m
 
 
-
+  !> @details
+  !! Optimal rotation by SVD.
+  !!
+  !! This routine forces the output rmat to be rotation (determinant = +1)
+  !!
+  !! The output can be applied as:
+  !!
+  !!~~~~~~~~~~~~~{.f90}
+  !!     coords2(:,i) = matmul( rmat, coords2(:,i) ) + translate
+  !!~~~~~~~~~~~~~
+  !!
+  !! OR
+  !!
+  !!~~~~~~~~~~~~~~~{.f90}
+  !!     coords1(:,i) = matmul( transpose(rmat), coords1(:,i) ) - &
+  !!                                  matmul( transpose(rmat), translate )
+  !!~~~~~~~~~~~~~~~
+  !!
+  !!
+  !! @param[in] nat1    -> number of atoms in conf 1;
+  !! @param[in] typ1(nat1)    -> atomic types in conf 1;
+  !! @param[in] coords1(3,nat1) -> coordinates of conf 1;
+  !! @param[in] nat2    -> number of atoms in conf 2;
+  !! @param[in] typ2(nat2)    -> atomic types in conf 2;
+  !! @param[in] coords2(3,nat2) -> coordinates of conf 2;
+  !!
+  !! @param[out] rmat(3,3)    -> 3x3 optimal rotation matrix
+  !! @param[out] translate(3) -> optimal translation vector
+  !! @returns rmat, translate
+  !!
   subroutine svd_forcerot( nat1, typ1, coords1_in, &
                        nat2, typ2, coords2_in, &
                        rmat, translate, ierr )
-    !> @detail
-    !! Optimal rotation by SVD.
-    !!
-    !! This routine forces the output rmat to be rotation (determinant = +1)
-    !!
-    !! The output can be applied as:
-    !!
-    !!     coords2(:,i) = matmul( rmat, coords2(:,i) ) + translate
-    !!
-    !! OR
-    !!
-    !!     coords1(:,i) = matmul( transpose(rmat), coords1(:,i) ) - &
-    !!                                  matmul( transpose(rmat), translate )
-    !!
-    !!================================================
-    !!
-    !! intent(in):
-    !! nat1    -> number of atoms in conf 1;
-    !! typ1    -> atomic types in conf 1;
-    !! coords1 -> coordinates of conf 1;
-    !! nat2    -> number of atoms in conf 2;
-    !! typ2    -> atomic types in conf 2;
-    !! coords2 -> coordinates of conf 2;
-    !!
-    !! intent(out):
-    !! rmat    -> 3x3 optimal rotation matrix
-    !! translate -> optimal translation vector
-    !!
     implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1
@@ -612,39 +615,35 @@
 
   end subroutine svd_forcerot
 
-
+  !> @detail
+  !! Routine that does the loop over coords2 to find U_J, here called gamma.
+  !! This is the main IRA loop over the space of rotations.
+  !! Gamma basis can be returned as 3x3 matrix "gamma", or 3x1 integer
+  !! vector "gamma_idx", which contains indices of atoms that set up the
+  !! "gamma" basis. The first element gamma_idx(1) gives the reflection.
+  !!
+  !!
+  !! @param[in] nat1    -> number of atoms in conf 1;
+  !! @param[in] typ1(nat1)    -> atomic types in conf 1;
+  !! @param[in] coords1(3,nat1) -> coordinates of conf 1;
+  !! @param[in] nat2    -> number of atoms in conf 2;
+  !! @param[in] typ2(nat2)    -> atomic types in conf 2;
+  !! @param[in] coords2(3,nat2) -> coordinates of conf 2;
+  !! @param[in] kmax    -> distance cutoff for atoms included in search;
+  !!
+  !! @param[out] gamma(3,3)   -> The U_J reference frame (here called gamma), as 3x3 matrix;
+  !! @param[out] m_fin   -> Value giving reflection:
+  !!                            m_fin = 1 -> no reflection,
+  !!                            m_fin = -1 -> reflection.
+  !! @param[out] hd_out  -> Hausdorff distance value
+  !! @param[out] gamma_idx(3) -> possible intent(out) array of atomic indices giving gamma,
+  !!                                gamma_idx(1) = m_fin
+  !!
+  !! @param[inout] some_thr  -> threshold for dh, updated in self-sufficient way
+  !!
   subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
                        nat2, typ2_in, coords2_in, &
                        kmax, gamma, gamma_idx, hd_out, some_thr )
-    !> @detail
-    !! Routine that does the loop over coords2 to find U_J, here called gamma.
-    !! This is the main IRA loop over the space of rotations.
-    !! Gamma basis can be returned as 3x3 matrix "gamma", or 3x1 integer
-    !! vector "gamma_idx", which contains indices of atoms that set up the
-    !! "gamma" basis. The first element gamma_idx(1) gives the reflection.
-    !!
-    !!================================================
-    !! intent(in):
-    !! nat1    -> number of atoms in conf 1;
-    !! typ1    -> atomic types in conf 1;
-    !! coords1 -> coordinates of conf 1;
-    !! nat2    -> number of atoms in conf 2;
-    !! typ2    -> atomic types in conf 2;
-    !! coords2 -> coordinates of conf 2;
-    !! kmax    -> distance cutoff for atoms included in search;
-    !!
-    !! intent(out):
-    !! gamma   -> The U_J reference frame (here called gamma), as 3x matrix;
-    !! m_fin   -> Value giving reflection:
-    !!                        m_fin = 1 -> no reflection,
-    !!                        m_fin = -1 -> reflection.
-    !! hd_out  -> Hausdorff distance value
-    !! gamma_idx -> possible intent(out) array of atomic indices giving gamma,
-    !!              gamma_idx(1) = m_fin
-    !!
-    !! intent(inout):
-    !! some_thr  -> threshold for dh, updated in self-sufficient way
-    !!
     implicit none
     integer,                  intent(in) :: nat1
     integer, dimension(nat1), intent(in) :: typ1_in
@@ -851,17 +850,33 @@
     return
   end subroutine get_gamma_m
 
-
+  !! @details
+  !!  Unified call for eq and noneq.
+  !! There is no SVD at the end of this routine!
+  !!
+  !! the result is applied to struc 2:
+  !!
+  !!    j = permutation(i)
+  !!    coords2(:,i) = matmul( rotation, coords2(:,j) ) + tr
+  !!
+  !! @param[in] nat1 :: number of atoms in struc 1
+  !! @param[in] typ1_in(nat1) :: atomic types of struc 1
+  !! @param[in] coords1_in(3,nat1) :: atoms positions of struc1
+  !! @param[in] candidate_1(nat1) :: candidate cenral atom of struc 1
+  !! @param[in] nat2 :: number of atoms of struc 2
+  !! @param[in] typ2_in(nat2) :: atomic types of struc 2
+  !! @param[in] coords2_in(3,nat2) :: atomic positions of struc 2
+  !! @param[in] candidate_2(nat2) :: candidate central atoms of struc 2
+  !! @param[in] kmax_factor :: multiplicative factor for kmax, should > 1.
+  !!
+  !! @param[out] rotation(3,3) :: R_apx rotation matrix after IRA
+  !! @param[out] translation(3) :: translation vector
+  !! @param[out] permutation(nat2) :: atomic permutations
+  !! @param[out] hd_out :: hausdorff distance
+  !! @param[out] ierr :: error value, negative on error, zero otherwise
   subroutine ira_unify( nat1, typ1_in, coords1_in, candidate_1, &
                         nat2, typ2_in, coords2_in, candidate_2, &
                         kmax_factor, rotation, translation, permutation, hd_out, ierr )
-    !!
-    !! There is no SVD at the end of this routine!
-    !!
-    !! the result is applied to struc 2:
-    !!
-    !!    j = permutation(i)
-    !!    coords2(:,i) = matmul( rotation, coords2(:,j) ) + tr
 
     use err_module
     implicit none
@@ -1194,6 +1209,9 @@
   end subroutine ira_unify
 
 
+  !> @details
+  !! set_candidates + ira_unify + svd
+  !! candidates are set as per default: gc if equal, 1st atom in smaller, all in larger
   subroutine ira_svd( nat1, typ1_in, coords1_in, &
                     nat2, typ2_in, coords2_in, &
                     kmax_factor, rotation, translation, permutation, &

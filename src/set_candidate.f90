@@ -1,17 +1,17 @@
+!> @brief
+!! Subroutine to set candidate central atoms for structures 1 and 2.
+!!
+!! The decision is currently based simply on the total number of atoms,
+!! if the number of atoms is equal, then both candidates get a -1 value,
+!! otherwise the value of candidates is the atomic index of desired
+!! central atom.
+!!
+!! UPDATE NEEDED:
+!! candidate central atoms in 2 can only be of the same typ as in 1
 subroutine set_candidates( nat1, typ1, coords1, &
                            nat2, typ2, coords2, &
                            candidate1, candidate2 )
 
-  !> @brief
-  !! Subroutine to set candidate central atoms for structures 1 and 2.
-  !!
-  !! The decision is currently based simply on the total number of atoms,
-  !! if the number of atoms is equal, then both candidates get a -1 value,
-  !! otherwise the value of candidates is the atomic index of desired
-  !! central atom.
-  !!
-  !! UPDATE NEEDED:
-  !! candidate central atoms in 2 can only be of the same typ as in 1
   integer,                  intent(in) :: nat1
   integer, dimension(nat1), intent(in) :: typ1
   real, dimension(3,nat1),  intent(in) :: coords1
