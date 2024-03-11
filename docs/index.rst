@@ -177,7 +177,7 @@ Linking a program to libira
 
 (under construction)
 
-Examples and How-to
+Tutorials and How-to
 ====================
 .. _sec_ex_howto:
 

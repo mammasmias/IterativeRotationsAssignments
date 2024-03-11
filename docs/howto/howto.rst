@@ -407,7 +407,7 @@ If you now take ``coords_tf`` from above, permute them by ``perm``, and compute 
 
 
 .. note::
-   The ``sym_thr`` argument when computing ``get_symm_ops()`` is a threshold in terms of the distance ``dist`` as
+   The ``sym_thr`` argument when computing ``get_symm_ops()`` is a threshold in terms of the distance ``dmax`` as
    computed in this section. If an operation returns a distance value beyond ``sym_thr``, then SOFI will not
    consider that operation as a symmetry operation.
 
