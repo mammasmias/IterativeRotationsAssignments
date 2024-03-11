@@ -172,10 +172,28 @@ For customising the default compilation, see the ``src/Makefile``.
 If you need to specify a custom ``lapack`` location, change the default value ``LIBLAPACK = -llapack`` to your value.
 
 
+
 Linking a program to libira
 ===========================
 
-(under construction)
+A program compiled with ``gcc`` or ``gfortran`` can easily link the IRA library, as-is, by linking either the shared
+library ``libira.so``, or the static version ``libira.a``. They are both located in the ``src/`` directory after
+compilation.
+
+Example:
+
+.. code-block:: bash
+
+   gcc -o c_caller_program.x c_caller_program.c /your/path/to/IRA/src/libira.so
+
+
+You might need to add ``-llapack``, or equivalent to your compilation.
+
+The base-level implementations are not placed in modules, therefore all routines are in principle acessible to the
+caller. Care must be taken to ensure the correct type, kind, shape, etc. of the arguments, i.e. interface matching
+needs to be checked manually.
+
+
 
 Tutorials and How-to
 ====================
@@ -185,7 +203,8 @@ Tutorials and How-to
    :maxdepth: 2
    :caption: How-to guides
 
-   howto/howto
+   howto/ira_howto
+   howto/sofi_howto
 
 aaa
 ===
