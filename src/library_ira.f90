@@ -50,13 +50,13 @@
 !!
 !! C-header:
 !! ~~~~~~~~~~~~~~~{.c}
-!! void lib_cshda( int nat1, int *typ1, double *coords1, \
+!! void libira_cshda( int nat1, int *typ1, double *coords1, \
 !!                 int nat2, int *typ2, double *coords2, \
 !!                 double thr, int **found, double **dists);
 !! ~~~~~~~~~~~~~~~
 !!
-subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )&
-     bind(C, name="lib_cshda")
+subroutine libira_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )&
+     bind(C, name="libira_cshda")
   use iso_c_binding
   implicit none
   integer(c_int),   value, intent(in) :: nat1
@@ -98,7 +98,7 @@ subroutine lib_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dist
   !! output C-style indices, starting at 0
   p_found = p_found - 1
 
-end subroutine lib_cshda
+end subroutine libira_cshda
 
 
 !> @brief wrapper to the cshda_pbc routine from cshda.f90
@@ -125,13 +125,13 @@ end subroutine lib_cshda
 !!
 !! C-header:
 !! ~~~~~~~~~~~~~~~{.c}
-!! void lib_cshda_pbc( int nat1, int *typ1, double *coords1, \
+!! void libira_cshda_pbc( int nat1, int *typ1, double *coords1, \
 !!                     int nat2, int *typ2, double *coords2, double * lat2, \
 !!                     double thr, int **found, double **dists);
 !! ~~~~~~~~~~~~~~~
 !!
-subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, found, dists )&
-     bind(C, name="lib_cshda_pbc")
+subroutine libira_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, found, dists )&
+     bind(C, name="libira_cshda_pbc")
   !! wrapper to the cshda_pbc routine from cshda.f90
   use iso_c_binding
   implicit none
@@ -183,7 +183,7 @@ subroutine lib_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, fo
   !! output C-style array, strating indices at 0
   p_found = p_found - 1
 
-end subroutine lib_cshda_pbc
+end subroutine libira_cshda_pbc
 
 !> @brief the IRA matching procedure
 !!
@@ -219,14 +219,14 @@ end subroutine lib_cshda_pbc
 !!
 !! C-header:
 !! ~~~~~~~~~~~~~~~{.c}
-!! void lib_match(int nat1, int *typ1, double *coords1, int *cand1,\
+!! void libira_match(int nat1, int *typ1, double *coords1, int *cand1,\
 !!                int nat2, int *typ2, double *coords2, int *cand2, \
 !!                double km_factor, double **rmat, double **tr, \
 !!                int **perm, double *hd, int *cerr);
 !! ~~~~~~~~~~~~~~~
-subroutine lib_match( nat1, typ1, coords1, candidate1, &
+subroutine libira_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
-     kmax_factor, rotation, translation, permutation, hd, cerr ) bind(C, name="lib_match")
+     kmax_factor, rotation, translation, permutation, hd, cerr ) bind(C, name="libira_match")
   use iso_c_binding
   use err_module, only: get_err_msg
   implicit none
@@ -278,7 +278,7 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   cerr = int( ierr, c_int )
   write(*,*) "HD after unify",hd
   if( ierr /= 0 ) then
-     write(*,*) "ERROR in lib_match"
+     write(*,*) "ERROR in libira_match"
      write(*,*) get_err_msg( ierr )
      return
   end if
@@ -321,10 +321,23 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
   p_matrix = transpose( p_matrix )
   p_perm(:) = p_perm(:) - 1
 
-end subroutine lib_match
+end subroutine libira_match
 
 
-subroutine lib_get_version( cstring, cdate )bind(C, name="lib_get_version")
+!> @details
+!! Get the IRA version string, and date.
+!! This is a wrapper to get_version from version.f90
+!!
+!! C header:
+!!~~~~~~~~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_get_version( char *string, int *date );
+!!~~~~~~~~~~~~~~~~~~~~~~~~~
+!!
+!! @param[out] cstring(10) :: version string
+!! @param[out] cdate :: version date, format YYYYmm
+!! @returns cstring, cdate
+!!
+subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version")
   use iso_c_binding, only: c_int, c_null_char, c_char
   implicit none
   character(len=1, kind=c_char), dimension(10) :: cstring
@@ -340,4 +353,4 @@ subroutine lib_get_version( cstring, cdate )bind(C, name="lib_get_version")
   end do
   cstring(10) = c_null_char
 
-end subroutine lib_get_version
+end subroutine libira_get_version

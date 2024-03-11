@@ -147,9 +147,9 @@ int main( int argc, char **argv ){
   /* =========================================== */
   /* main call to lib_match from library_ira.f90 */
   /* =========================================== */
-  lib_match( nat1, typ1, &coords1[0][0], candidate1, \
-             nat2, typ2, &coords2[0][0], candidate2, \
-             kmax_factor, &data_rotation, &translation, &perm, &hd, &err );
+  libira_match( nat1, typ1, &coords1[0][0], candidate1, \
+                nat2, typ2, &coords2[0][0], candidate2, \
+                kmax_factor, &data_rotation, &translation, &perm, &hd, &err );
 
   if( err != 0){
     printf(" err code: %d\n", err);

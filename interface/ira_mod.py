@@ -101,12 +101,12 @@ class algo():
         '''
         obtain the IRA library version
         '''
-        self.lib.lib_get_version.restype = None
-        self.lib.lib_get_version.argtypes = [ c_char_p, POINTER(c_int) ]
+        self.lib.libira_get_version.restype = None
+        self.lib.libira_get_version.argtypes = [ c_char_p, POINTER(c_int) ]
         cstring = (c_char*10)()
         cdate = c_int()
 
-        self.lib.lib_get_version( cstring, cdate )
+        self.lib.libira_get_version( cstring, cdate )
 
         string = cstring.value.decode()
         date = cdate.value
@@ -173,7 +173,7 @@ class IRA(algo):
 
         ===========================================
 
-        This is a wrapper to the lib_cshda and lib_cshda_pbc routines from library_ira.f90
+        This is a wrapper to the libira_cshda and libira_cshda_pbc routines from library_ira.f90
 
         .. note::
            Requirement: nat1 :math:`\le` nat2
@@ -252,26 +252,26 @@ class IRA(algo):
         cdists = (c_double*nat2)()
 
         # non-pbc
-        self.lib.lib_cshda.argtypes = \
+        self.lib.libira_cshda.argtypes = \
             [c_int, POINTER(c_int), POINTER(c_double), \
              c_int, POINTER(c_int), POINTER(c_double), \
              c_double, \
              POINTER(POINTER(c_int*nat2)), POINTER(POINTER(c_double*nat2))]
-        self.lib.lib_cshda.restype=None
+        self.lib.libira_cshda.restype=None
         # pbc
-        self.lib.lib_cshda_pbc.argtypes = \
+        self.lib.libira_cshda_pbc.argtypes = \
             [c_int, POINTER(c_int), POINTER(c_double), \
              c_int, POINTER(c_int), POINTER(c_double), \
              POINTER(c_double), c_double,  \
              POINTER(POINTER(c_int*nat2)), POINTER(POINTER(c_double*nat2))]
-        self.lib.lib_cshda_pbc.restype=None
+        self.lib.libira_cshda_pbc.restype=None
 
         if lat is None:
             # call non-pbc
-            self.lib.lib_cshda( n1, t1, c1, n2, t2, c2, cthr, pointer(cfound), pointer(cdists) )
+            self.lib.libira_cshda( n1, t1, c1, n2, t2, c2, cthr, pointer(cfound), pointer(cdists) )
         else:
             # call pbc
-            self.lib.lib_cshda_pbc( n1, t1, c1, n2, t2, c2, l, cthr, pointer(cfound), pointer(cdists) )
+            self.lib.libira_cshda_pbc( n1, t1, c1, n2, t2, c2, l, cthr, pointer(cfound), pointer(cdists) )
 
         ## output
         found=np.ndarray(nat2, dtype=int)
@@ -289,7 +289,7 @@ class IRA(algo):
         The Iterative Rotatitions and Assignments (IRA) procedure to match two structures, including
         the SVD correction at the end.
 
-        This function is a wrapper to the lib_match routine in library_ira.f90
+        This function is a wrapper to the libira_match routine in library_ira.f90
 
         It returns the solution to:
 
@@ -464,14 +464,14 @@ class IRA(algo):
         c_hd = c_double()
         c_err = c_int()
 
-        self.lib.lib_match.argtypes = \
+        self.lib.libira_match.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), POINTER(c_int), \
               c_int, POINTER(c_int), POINTER(c_double), POINTER(c_int), \
               c_double, POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), \
               POINTER(POINTER(c_int*nat2)), POINTER(c_double), POINTER(c_int) ]
-        self.lib.lib_match.restype=None
+        self.lib.libira_match.restype=None
 
-        self.lib.lib_match( n1, t1, c1, cd1, n2, t2, c2, cd2, \
+        self.lib.libira_match( n1, t1, c1, cd1, n2, t2, c2, cd2, \
                             km, pointer(c_rmat), pointer(c_tr), pointer(c_perm), pointer(c_hd), pointer(c_err) )
         if c_err.value != 0:
             msg = "error"
@@ -614,7 +614,7 @@ class SOFI(algo):
         """
         .. _sofi.compute:
 
-        this is a wrapper to lib_compute_all() from library_sofi.f90
+        this is a wrapper to libira_compute_all() from library_sofi.f90
         Description: This routine computes all the relevant PG symmetry data of the input structure.
 
         **== input: ==**
@@ -679,22 +679,22 @@ class SOFI(algo):
 
 
         # have to set argtypes in here, since nat is not know in init
-        self.lib.lib_compute_all.argtypes = \
+        self.lib.libira_compute_all.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
               POINTER(POINTER(c_char*1*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
               POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), POINTER(c_int) ]
-        self.lib.lib_compute_all.restype=None
+        self.lib.libira_compute_all.restype=None
 
         # call routine from library.f90
-        self.lib.lib_compute_all( n, t, c, thr, \
+        self.lib.libira_compute_all( n, t, c, thr, \
                                   nmat, pointer(mat_data), pointer(perm_data), \
                                   pointer(op_data), pointer(n_data), pointer(p_data), \
                                   pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg), \
                                   pointer(pax_data), cerr )
         if cerr.value != 0:
-            raise ValueError("nonzero error value obtained from lib_compute_all()")
+            raise ValueError("nonzero error value obtained from libira_compute_all()")
 
         # cast the result into readable things
         sym.pg = pg.value.decode()
@@ -746,7 +746,7 @@ class SOFI(algo):
 
     def get_symm_ops(self, nat, typ_in, coords, sym_thr ):
         """
-        Wrapper to the lib_get_symm_ops routine from library_sofi.f90.
+        Wrapper to the libira_get_symm_ops routine from library_sofi.f90.
         Description: finds the symmetry operation maytices of the structure in input,
         which fit the threshold `sym_thr`.
 
@@ -792,14 +792,14 @@ class SOFI(algo):
         nmat = c_int()
         mat_data = (c_double*9*nmax)()
         # have to set argtypes in here, since nat is not know in init
-        self.lib.lib_get_symm_ops.argtypes = \
+        self.lib.libira_get_symm_ops.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(c_int) ]
-        self.lib.lib_get_symm_ops.restype=None
+        self.lib.libira_get_symm_ops.restype=None
 
-        self.lib.lib_get_symm_ops( n, t, c, thr, nmat, pointer(mat_data), cerr )
+        self.lib.libira_get_symm_ops( n, t, c, thr, nmat, pointer(mat_data), cerr )
         if cerr.value != 0:
-            raise ValueError( "nonzero error value obtained form lib_get_symm_ops()")
+            raise ValueError( "nonzero error value obtained form libira_get_symm_ops()")
 
         # cast the result into readable things
         n_op = nmat.value
@@ -817,7 +817,7 @@ class SOFI(algo):
     def get_pg( self, nm_in, mat_list, verb=False):
 
         """
-        wrapper to lib_get_pg() from library_sofi.f90
+        wrapper to libira_get_pg() from library_sofi.f90
         Description: find the PG of input list of operations
 
         **== input: ==**
@@ -855,13 +855,13 @@ class SOFI(algo):
         pprin_ax = (c_double*3)()
 
         # have to set argtypes in here, since nat is not know in init
-        self.lib.lib_get_pg.argtypes = \
+        self.lib.libira_get_pg.argtypes = \
             [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), \
               c_bool, POINTER(c_int) ]
-        self.lib.lib_get_pg.restype=None
-        self.lib.lib_get_pg( n, mats, pointer(pg), pointer(pprin_ax), cverb, cerr)
+        self.lib.libira_get_pg.restype=None
+        self.lib.libira_get_pg( n, mats, pointer(pg), pointer(pprin_ax), cverb, cerr)
         if cerr.value != 0 :
-            raise ValueError("nonzero error value ontained from lib_get_pg()")
+            raise ValueError("nonzero error value ontained from libira_get_pg()")
 
         pg=pg.value.decode()
         prin_ax = np.zeros(3, dtype=float)
@@ -871,12 +871,12 @@ class SOFI(algo):
 
     def get_unique_ax_angle( self, nm_in, mat_list ):
         """
-        wrapper to lib_get_unique_ax_angle() from library_sofi.f90
+        wrapper to libira_get_unique_ax_angle() from library_sofi.f90
         Description: input list of symmetry matrices, output lists
         of op, ax, angle for each symmetry operation in the list, such that
         axes are aligned, and angle has a correspoding +/- sign.
 
-        This is a wrapper to lib_unique_ax_angle() routine from library_sofi.f90
+        This is a wrapper to libira_unique_ax_angle() routine from library_sofi.f90
 
         **== input: ==**
 
@@ -917,12 +917,12 @@ class SOFI(algo):
         angle_data = (c_double*n_op)()
         cerr = c_int()
 
-        self.lib.lib_unique_ax_angle.argtypes = \
+        self.lib.libira_unique_ax_angle.argtypes = \
             [ c_int, POINTER(c_double), POINTER(POINTER(c_char*nl)) , \
               POINTER(POINTER(c_double*3*n_op)), POINTER(POINTER(c_double*n_op)), POINTER(c_int) ]
-        self.lib.lib_unique_ax_angle.restype=None
+        self.lib.libira_unique_ax_angle.restype=None
 
-        self.lib.lib_unique_ax_angle( n_m, mats, pointer(op_data), \
+        self.lib.libira_unique_ax_angle( n_m, mats, pointer(op_data), \
                                       pointer(ax_data), pointer(angle_data), pointer(cerr) )
         if cerr.value != 0:
             raise ValueError( "error in unique_ax_angle")
@@ -952,7 +952,7 @@ class SOFI(algo):
 
         e.g. C 8^3 corresponds to 3/8th of full circle = 135 degress = 2.3563 radian, p/n = 0.375
 
-        This is a wrapper to lib_analmat() routine from library_sofi.f90
+        This is a wrapper to libira_analmat() routine from library_sofi.f90
 
 
         **== input: ==**
@@ -996,16 +996,16 @@ class SOFI(algo):
         angle=c_double()
         cerr = c_int()
 
-        self.lib.lib_analmat.argtypes=\
+        self.lib.libira_analmat.argtypes=\
             [ POINTER(c_double), POINTER(POINTER(c_char*2)), \
               POINTER(c_int), POINTER(c_int), POINTER(POINTER(c_double*3)), \
               POINTER(c_double), POINTER(c_int) ]
-        self.lib.lib_analmat.restype=None
+        self.lib.libira_analmat.restype=None
 
-        self.lib.lib_analmat( mat, pointer(op), pointer(n), pointer(p), \
+        self.lib.libira_analmat( mat, pointer(op), pointer(n), pointer(p), \
                               pointer(cax), pointer(angle), cerr )
         if cerr.value != 0:
-            raise ValueError( "nonzero error value obtained from lib_analmat()")
+            raise ValueError( "nonzero error value obtained from libira_analmat()")
 
         op=op.value.decode()
         n=n.value
@@ -1021,7 +1021,7 @@ class SOFI(algo):
     def ext_Bfield( self, n_mat, mat_list, b_field ):
 
         """
-        wrapper to lib_ext_Bfield() from library_sofi.f90
+        wrapper to libira_ext_Bfield() from library_sofi.f90
         Description: Impose a constraint on the relevant symmetry operations,
         in the form of an external magnetic field as arbitrary vector.
 
@@ -1066,12 +1066,12 @@ class SOFI(algo):
         n_out=c_int()
         m_out=(c_double*9*n_mat)()
 
-        self.lib.lib_ext_bfield.argtypes = [ c_int, POINTER(c_double), \
+        self.lib.libira_ext_bfield.argtypes = [ c_int, POINTER(c_double), \
                                              POINTER(c_double), POINTER(c_int), \
                                              POINTER(POINTER(c_double*9*n_mat))]
-        self.lib.lib_ext_bfield.restype=None
+        self.lib.libira_ext_bfield.restype=None
 
-        self.lib.lib_ext_bfield( n_m, pointer(mats), bf, pointer(n_out), pointer(m_out) )
+        self.lib.libira_ext_bfield( n_m, pointer(mats), bf, pointer(n_out), pointer(m_out) )
 
         n_op=n_out.value
         matrix=np.ndarray( (n_op,3,3), dtype=float)
@@ -1092,7 +1092,7 @@ class SOFI(algo):
         Description:
         Obtain the list of permutations and maximal distances for each matrix in input.
 
-        This is a wrapper to lib_get_perm() from library_sofi.f90
+        This is a wrapper to libira_get_perm() from library_sofi.f90
 
         **== Input: ==**
 
@@ -1138,7 +1138,7 @@ class SOFI(algo):
 
 
         # have to set argtypes in here, since nat is not know in init
-        self.lib.lib_get_perm.argtypes = \
+        self.lib.libira_get_perm.argtypes = \
             [ c_int, \
               POINTER(c_int), \
               POINTER(c_double), \
@@ -1146,9 +1146,9 @@ class SOFI(algo):
               POINTER(c_double), \
               POINTER(POINTER(c_int*nat*nm_in)), \
               POINTER(POINTER(c_double*nm_in)) ]
-        self.lib.lib_get_perm.restype=None
+        self.lib.libira_get_perm.restype=None
 
-        self.lib.lib_get_perm( n, t, c, n_m, mats, \
+        self.lib.libira_get_perm( n, t, c, n_m, mats, \
                                pointer(perm_data), pointer(dmax_data) )
 
         # cast the result into readable things
@@ -1167,7 +1167,7 @@ class SOFI(algo):
         Description:
         Obtain all unique combinations of input matrices, which are symmetry operations of given structure.
 
-        This is a wrapper to the routine lib_get_combos() from library_sofi.f90
+        This is a wrapper to the routine libira_get_combos() from library_sofi.f90
 
         **== Input: ==**
 
@@ -1212,7 +1212,7 @@ class SOFI(algo):
         nb_out= c_int()
         cmat_out=(c_double*9*nmax)()
 
-        self.lib.lib_get_combos.argtypes=\
+        self.lib.libira_get_combos.argtypes=\
             [ c_int, \
               POINTER(c_int), \
               POINTER(c_double), \
@@ -1220,9 +1220,9 @@ class SOFI(algo):
               POINTER(c_double), \
               POINTER(c_int), \
               POINTER(POINTER(c_double*9*nmax)) ]
-        self.lib.lib_get_combos.restype=None
+        self.lib.libira_get_combos.restype=None
 
-        self.lib.lib_get_combos( n, t, c, nm, mats, nb_out, pointer(cmat_out) )
+        self.lib.libira_get_combos( n, t, c, nm, mats, nb_out, pointer(cmat_out) )
 
         nm_out=nb_out.value
         mat_out=np.ndarray( (nm_out,3,3), dtype=float)
@@ -1244,7 +1244,7 @@ class SOFI(algo):
         imposes a one-to-one assignment of the atoms. The value of distance corresponds to the maximal value
         of distances between all assigned atomic pairs, which is the Hausdorff distance.
 
-        This is a wrapper to lib_try_mat() routine from library_sofi.f90
+        This is a wrapper to libira_try_mat() routine from library_sofi.f90
 
         **== Input: ==**
 
@@ -1282,12 +1282,12 @@ class SOFI(algo):
         c_dh=c_double()
         c_perm=(c_int*nat)()
 
-        self.lib.lib_try_mat.argtypes = \
+        self.lib.libira_try_mat.argtypes = \
             [ c_int, POINTER(c_int), POINTER(c_double), \
               POINTER(c_double), POINTER(c_double), POINTER(POINTER(c_int*nat)) ]
-        self.lib.lib_try_mat.restype = None
+        self.lib.libira_try_mat.restype = None
 
-        self.lib.lib_try_mat( n, t, c, r, pointer(c_dh), pointer(c_perm) )
+        self.lib.libira_try_mat( n, t, c, r, pointer(c_dh), pointer(c_perm) )
 
 
         dh = c_dh.value
@@ -1303,7 +1303,7 @@ class SOFI(algo):
         Construct the 3x3 matrix corresponding to operation encoded by the Schoenflies Op,
         such that it acts along the desired axis, and given angle.
 
-        This is a wrapper to lib_construct_operation() routine from library_sofi.f90
+        This is a wrapper to libira_construct_operation() routine from library_sofi.f90
 
         **== Input: ==**
 
@@ -1343,13 +1343,13 @@ class SOFI(algo):
         mat_out=(c_double*9)()
         cerr = c_int()
 
-        self.lib.lib_construct_operation.argtypes = \
+        self.lib.libira_construct_operation.argtypes = \
             [ c_char_p, POINTER(c_double), c_double, POINTER(POINTER(c_double*9)), POINTER(c_int) ]
-        self.lib.lib_construct_operation.restype = None
+        self.lib.libira_construct_operation.restype = None
 
-        self.lib.lib_construct_operation( c_op, c_ax, c_angle, pointer(mat_out), cerr )
+        self.lib.libira_construct_operation( c_op, c_ax, c_angle, pointer(mat_out), cerr )
         if cerr.value != 0:
-            raise ValueError( "nonzero error value obtained from lib_construct_operation()")
+            raise ValueError( "nonzero error value obtained from libira_construct_operation()")
 
         matrix = np.ndarray((3,3), dtype=float)
         m=0
@@ -1366,7 +1366,7 @@ class SOFI(algo):
         Obtain all unique combinations of matrices in input, without checking them against any
         specific structure.
 
-        This is a wrapper to routine lib_mat_combos() from library_sofi.f90
+        This is a wrapper to routine libira_mat_combos() from library_sofi.f90
 
         **== Input: ==**
 
@@ -1397,16 +1397,16 @@ class SOFI(algo):
         nb_out= c_int()
         cmat_out=(c_double*9*nmax)()
 
-        self.lib.lib_mat_combos.argtypes=\
+        self.lib.libira_mat_combos.argtypes=\
             [ \
               c_int, \
               POINTER(c_double), \
               POINTER(c_int), \
               POINTER(POINTER(c_double*9*nmax)) \
              ]
-        self.lib.lib_mat_combos.restype=None
+        self.lib.libira_mat_combos.restype=None
 
-        self.lib.lib_mat_combos( nm, mats, nb_out, pointer(cmat_out) )
+        self.lib.libira_mat_combos( nm, mats, nb_out, pointer(cmat_out) )
 
         nm_out=nb_out.value
         mat_out=np.ndarray( (nm_out,3,3), dtype=float)
@@ -1448,10 +1448,10 @@ class SOFI(algo):
         # output
         cd = c_double()
 
-        self.lib.lib_matrix_distance.restype=None
-        self.lib.lib_matrix_distance.argtypes=[POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        self.lib.libira_matrix_distance.restype=None
+        self.lib.libira_matrix_distance.argtypes=[POINTER(c_double), POINTER(c_double), POINTER(c_double)]
 
-        self.lib.lib_matrix_distance( mc1, mc2, pointer(cd) )
+        self.lib.libira_matrix_distance( mc1, mc2, pointer(cd) )
 
         d = cd.value
         return d

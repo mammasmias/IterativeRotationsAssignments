@@ -14,6 +14,20 @@ void slice(const char* str, char* result, size_t start, size_t end)
 
 int main( void ){
 
+
+  /* check IRA version */
+
+  /* char *version; */
+  /* int date; */
+  /* version = malloc( sizeof(char)*10); */
+  /* libira_get_version( &version[0], &date ); */
+  /* printf( "version %s\n", version ); */
+  /* printf( "date %d\n", date); */
+  /* free( version ); */
+
+
+
+
   int nat;
   int *typ;
   double *coords_data;
@@ -111,15 +125,15 @@ int main( void ){
 
 
   /* call SOFI compute_all */
-  lib_compute_all( nat, typ, &coords[0][0], sym_thr,     \
-                   &nmat, &mat_data, &perm_data,  \
-                   &op_data, &n_data, &p_data,    \
-                   &ax_data, &angle_data, &dmax_data, &pg, &prin_ax, &cerr );
+  libira_compute_all( nat, typ, &coords[0][0], sym_thr,     \
+                      &nmat, &mat_data, &perm_data,  \
+                      &op_data, &n_data, &p_data,    \
+                      &ax_data, &angle_data, &dmax_data, &pg, &prin_ax, &cerr );
 
   if( cerr < 0 ){
     char* msg;
     msg = malloc( sizeof(char)*128);
-    lib_get_err_msg( cerr, &msg );
+    libira_get_err_msg( cerr, &msg );
     printf( "%s\n", msg);
     return cerr;
   }
@@ -184,5 +198,6 @@ int main( void ){
   free(typ);
   free(coords[0]);
   free(coords);
+
 
   }

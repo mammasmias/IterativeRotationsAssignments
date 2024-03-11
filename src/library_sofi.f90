@@ -62,18 +62,18 @@
 !!
 !! C-header:
 !! ~~~~~~~~~~~~~~~{.c}
-!! void lib_compute_all( int nat, int *typ, double *coords, double sym_thr, \
+!! void libira_compute_all( int nat, int *typ, double *coords, double sym_thr, \
 !!                       int *n_mat, double **mat_data, int **perm_data, \
 !!                       char **op_data, int **n_data, int **p_data,       \
 !!                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
 !!                       double **prin_ax, int *cerr );
 !! ~~~~~~~~~~~~~~~
 !!
-subroutine lib_compute_all( nat, typ, coords, sym_thr, &
+subroutine libira_compute_all( nat, typ, coords, sym_thr, &
                             n_mat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
                             ax_list, angle_list, dmax_list, pg, prin_ax, &
-                            cerr ) bind(C, name="lib_compute_all")
+                            cerr ) bind(C, name="libira_compute_all")
   use iso_c_binding
   use sofi_tools, only: nmax
   use err_module
@@ -189,7 +189,7 @@ subroutine lib_compute_all( nat, typ, coords, sym_thr, &
   pperm_list = pperm_list-1
 
   ! write(*,*) "exiting lib"
-end subroutine lib_compute_all
+end subroutine libira_compute_all
 
 
 !> @details
@@ -208,12 +208,12 @@ end subroutine lib_compute_all
 !!
 !! C header:
 !!~~~~~~~~~~~~~~~{.c}
-!! void lib_get_symm_ops( int nat, int *typ, double *coords, double symm_thr, \
+!! void libira_get_symm_ops( int nat, int *typ, double *coords, double symm_thr, \
 !!                        int *n_mat, double **mat_list, int *cerr );
 !!~~~~~~~~~~~~~~~
 !!
-subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr )&
-     bind(C, name="lib_get_symm_ops")
+subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr )&
+     bind(C, name="libira_get_symm_ops")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
@@ -261,7 +261,7 @@ subroutine lib_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr )&
      ptr_op(:,:,i) = transpose( ptr_op(:,:,i) )
   end do
 
-end subroutine lib_get_symm_ops
+end subroutine libira_get_symm_ops
 
 
 !> @details
@@ -278,10 +278,10 @@ end subroutine lib_get_symm_ops
 !!
 !! C-header:
 !!~~~~~~~~~~~~~~{.c}
-!! void lib_get_pg( int n_mat, double *mat_data, char **pg, double **prin_ax, int verb, int *cerr);
+!! void libira_get_pg( int n_mat, double *mat_data, char **pg, double **prin_ax, int verb, int *cerr);
 !!~~~~~~~~~~~~~~
 !!
-subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, name="lib_get_pg")
+subroutine libira_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, name="libira_get_pg")
   use iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: n_mat
@@ -333,11 +333,11 @@ subroutine lib_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, name
   end do
   pg_char(n+1)=c_null_char
 
-end subroutine lib_get_pg
+end subroutine libira_get_pg
 
 
-subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out, cerr ) &
-     bind(C,name="lib_unique_ax_angle")
+subroutine libira_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out, cerr ) &
+     bind(C,name="libira_unique_ax_angle")
   use iso_c_binding
   use err_module
   implicit none
@@ -394,7 +394,7 @@ subroutine lib_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out,
   end do
   op_char(n) = c_null_char
 
-end subroutine lib_unique_ax_angle
+end subroutine libira_unique_ax_angle
 
 
 !> @details
@@ -413,10 +413,10 @@ end subroutine lib_unique_ax_angle
 !!
 !! C-header:
 !!~~~~~~~~~~~~~~~{.c}
-!! void lib_analmat( double *mat, char **op, int *n, int *p, double **ax, double *angle, int *cerr);
+!! void libira_analmat( double *mat, char **op, int *n, int *p, double **ax, double *angle, int *cerr);
 !!~~~~~~~~~~~~~~~
 !!
-subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle, cerr )bind(C,name="lib_analmat")
+subroutine libira_analmat( c_rmat, c_op, n, p, c_ax, angle, cerr )bind(C,name="libira_analmat")
   use iso_c_binding
   implicit none
   !! in
@@ -457,11 +457,11 @@ subroutine lib_analmat( c_rmat, c_op, n, p, c_ax, angle, cerr )bind(C,name="lib_
   end do
   op_fptr(m+1)=c_null_char
 
-end subroutine lib_analmat
+end subroutine libira_analmat
 
 
-subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
-     bind(C, name="lib_ext_bfield")
+subroutine libira_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
+     bind(C, name="libira_ext_bfield")
   use iso_c_binding
   implicit none
 
@@ -510,20 +510,36 @@ subroutine lib_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
 
 
 
-end subroutine lib_ext_bfield
+end subroutine libira_ext_bfield
 
 
-!! bas_list in C order
+!> @details Obtain the permutations and dmax for a list of matrices.
+!! This is a wrapper to sofi_get_perm() from sofi_routines.f90
+!!
+!! mat_list in C order
 !! perm_list in C order (index start at 0)
-subroutine lib_get_perm( nat, typ, coords, n_mat, bas_list, perm_list, dmax_list)&
-     bind(C,name="lib_get_perm")
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_get_perm( int nat, int *typ, double *coords, \
+!!                       int nmat, double *mat_data, int **perm_data, double **dmax_data);
+!!~~~~~~~~~~~~~~~~~~~~~~~
+!! @param[in] nat                 :: number of atoms
+!! @param[in] typ(nat)            :: atomic types
+!! @param[in] coords(3,nat)       :: atomic positions
+!! @param[in] n_mat :: number of matrices on list
+!! @param[in] mat_list(3,3,n_mat) :: list of matrices in C order
+!! @param[in] perm_list(nat,n_mat) :: list of permutations for each matrix, in C order (start at 0)
+!! @param[in] dmax_list(n_mat) :: list of dmax values for each matrix
+subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_list)&
+     bind(C,name="libira_get_perm")
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
   type( c_ptr ),    value, intent(in) :: coords
   integer( c_int ), value, intent(in) :: n_mat
-  type( c_ptr ), value,  intent(in) :: bas_list
+  type( c_ptr ), value,  intent(in) :: mat_list
   !! "output"
   type( c_ptr ), intent(in) :: perm_list
   type( c_ptr ), intent(in) :: dmax_list
@@ -544,7 +560,7 @@ subroutine lib_get_perm( nat, typ, coords, n_mat, bas_list, perm_list, dmax_list
   call c_f_pointer( perm_list, pperm_list, [nat,n_mat] )
   call c_f_pointer( dmax_list, pdmax_list, [n_mat] )
 
-  call c_f_pointer( bas_list, p_lvl2, [9,n_mat] )
+  call c_f_pointer( mat_list, p_lvl2, [9,n_mat] )
 
   !! receive input array and reshape into fortran order
   allocate( ptr_op(1:3,1:3,1:n_mat))
@@ -559,11 +575,25 @@ subroutine lib_get_perm( nat, typ, coords, n_mat, bas_list, perm_list, dmax_list
   !! output C-style: start at 0 indices
   pperm_list = pperm_list - 1
 
-end subroutine lib_get_perm
+end subroutine libira_get_perm
 
-
-subroutine lib_get_combos( nat, typ, coords, n_mat_in, bas_in, n_mat_out, bas_out )&
-     bind(C,name="lib_get_combos")
+!> @details perform matrix combinations with checking each matrix against the atomic structure.
+!! This is a wrapper to sofi_get_combos() from sofi_routines.f90
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_get_combos( int nat, int *typ, double *coords, int nmat, double *mat_data, \
+!!                         int *nmat_out, double **mat_out);
+!!~~~~~~~~~~~~~~~~~~~~
+!! @param[in] nat                 :: number of atoms
+!! @param[in] typ(nat)            :: atomic types
+!! @param[in] coords(3,nat)       :: atomic positions
+!! @param[in] n_mat_in :: number of input matrices
+!! @param[in] mat_data(3,3,n_mat_in) :: list of input matrices in C order
+!! @param[out] n_mat_out :: number of output matrices
+!! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
+subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, mat_out )&
+     bind(C,name="libira_get_combos")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
@@ -571,9 +601,9 @@ subroutine lib_get_combos( nat, typ, coords, n_mat_in, bas_in, n_mat_out, bas_ou
   type( c_ptr ),    value, intent(in) :: typ
   type( c_ptr ),    value, intent(in) :: coords
   integer( c_int ), value, intent(in) :: n_mat_in
-  type( c_ptr ), value,  intent(in) :: bas_in
+  type( c_ptr ), value,  intent(in) :: mat_data
   integer( c_int ), intent(out) :: n_mat_out
-  type( c_ptr ), intent(in) :: bas_out
+  type( c_ptr ), intent(in) :: mat_out
 
 
   integer(c_int), dimension(:), pointer :: ptr_typ
@@ -581,32 +611,46 @@ subroutine lib_get_combos( nat, typ, coords, n_mat_in, bas_in, n_mat_out, bas_ou
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double), dimension(:,:,:), pointer :: pcombo_out
 
-  real(c_double), dimension(3,3,nmax) :: bas_list
+  real(c_double), dimension(3,3,nmax) :: mat_list
   integer :: i, m
 
   call c_f_pointer( typ, ptr_typ, [nat] )
   call c_f_pointer( coords, ptr_coords, [3,nat] )
 
-  call c_f_pointer( bas_in, p_lvl2, [9,n_mat_in] )
+  call c_f_pointer( mat_data, p_lvl2, [9,n_mat_in] )
 
   do i = 1, n_mat_in
-     bas_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
-     bas_list(:,:,i) = transpose(bas_list(:,:,i))
+     mat_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
+     mat_list(:,:,i) = transpose(mat_list(:,:,i))
   end do
 
   m = n_mat_in
 
-  call sofi_get_combos( nat, ptr_typ, ptr_coords, m, bas_list )
+  call sofi_get_combos( nat, ptr_typ, ptr_coords, m, mat_list )
 
   n_mat_out = m
-  call c_f_pointer( bas_out, pcombo_out, [3,3,m] )
-  pcombo_out = bas_list(1:3,1:3,1:m)
+  call c_f_pointer( mat_out, pcombo_out, [3,3,m] )
+  pcombo_out = mat_list(1:3,1:3,1:m)
 
 
-end subroutine lib_get_combos
+end subroutine libira_get_combos
 
 
-subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="lib_try_mat")
+
+!> @details
+!! test matrix rmat: manually rotate structure and then compute cshda.
+!!
+!! C header:
+!!~~~~~~~~~~~~~~~~{.c}
+!! void libira_try_mat( int nat, int *typ, double *coords, double *rmat, double *dh, int **perm);
+!!~~~~~~~~~~~~~~~~
+!! @param[in] nat             :: number of atoms
+!! @param[in] typ(nat)        :: atomic types
+!! @param[in] coords(3,nat)   :: atomic positions
+!! @param[in] rmat(3,3)       :: matrix to test in C order
+!! @param[out] dh :: output Hausdorff from CShDA
+!! @param[out] perm :: permutation of atomic indices after application of rmat in C order (start at 0)
+subroutine libira_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="libira_try_mat")
   use iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
@@ -666,7 +710,7 @@ subroutine lib_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="lib_try_m
   dh = maxval(dists)
 
 
-end subroutine lib_try_mat
+end subroutine libira_try_mat
 
 
 !> @details
@@ -681,10 +725,10 @@ end subroutine lib_try_mat
 !!
 !! C-header:
 !!~~~~~~~~~~~~~{.c}
-!! void lib_construct_operation( char *op, double *axis, double angle, double **rmat, int *cerr);
+!! void libira_construct_operation( char *op, double *axis, double angle, double **rmat, int *cerr);
 !!~~~~~~~~~~~~~
 !!
-subroutine lib_construct_operation( op, axis, angle, matrix, cerr )bind(C,name="lib_construct_operation")
+subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,name="libira_construct_operation")
   use iso_c_binding
   implicit none
   interface
@@ -739,54 +783,71 @@ subroutine lib_construct_operation( op, axis, angle, matrix, cerr )bind(C,name="
   !! return C-order matrix
   ptr_matrix = transpose(f_matrix)
 
-end subroutine lib_construct_operation
+end subroutine libira_construct_operation
 
 
-subroutine lib_mat_combos( n_mat_in, bas_in, n_mat_out, bas_out )bind(C,name="lib_mat_combos")
+!> @details
+!! Perform matrix combinations until group completeness, without atomic structure.
+!! This is a wrapper to sofi_mat_combos() from sofi_routines.f90
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_mat_combos( int nmat, double *mat_data, int *nmat_out, double **mat_out);
+!!~~~~~~~~~~~~~~~~~~~~~~
+!!
+!! @param[in] n_mat_in :: number of input matrices
+!! @param[in] mat_data(3,3,n_mat_in) :: list of input matrices in C order
+!! @param[out] n_mat_out :: number of output matrices
+!! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
+subroutine libira_mat_combos( n_mat_in, mat_data, n_mat_out, mat_out )bind(C,name="libira_mat_combos")
   use iso_c_binding
   use sofi_tools, only: nmax
   implicit none
   integer( c_int ), value, intent(in) :: n_mat_in
-  type( c_ptr ), value,  intent(in) :: bas_in
+  type( c_ptr ), value,  intent(in) :: mat_data
   integer( c_int ), intent(out) :: n_mat_out
-  type( c_ptr ), intent(in) :: bas_out
+  type( c_ptr ), intent(in) :: mat_out
 
 
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double), dimension(:,:,:), pointer :: pcombo_out
 
-  real(c_double), dimension(3,3,nmax) :: bas_list
-  real(c_double), dimension(3,3,n_mat_in) :: bas_inp
+  real(c_double), dimension(3,3,nmax) :: mat_list
+  real(c_double), dimension(3,3,n_mat_in) :: mat_datap
   integer :: i, m
 
-  call c_f_pointer( bas_in, p_lvl2, [9,n_mat_in] )
+  call c_f_pointer( mat_data, p_lvl2, [9,n_mat_in] )
 
   do i = 1, n_mat_in
-     bas_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
-     bas_list(:,:,i) = transpose(bas_list(:,:,i))
+     mat_list(:,:,i) = reshape( p_lvl2(:,i),[3,3])
+     mat_list(:,:,i) = transpose(mat_list(:,:,i))
   end do
 
   m = n_mat_in
 
-  bas_inp(:,:,:) = bas_list(:,:,1:n_mat_in)
+  mat_datap(:,:,:) = mat_list(:,:,1:n_mat_in)
 
-  call sofi_mat_combos( n_mat_in, bas_inp, m, bas_list )
+  call sofi_mat_combos( n_mat_in, mat_datap, m, mat_list )
 
   n_mat_out = m
-  call c_f_pointer( bas_out, pcombo_out, [3,3,m] )
-  pcombo_out = bas_list(1:3,1:3,1:m)
+  call c_f_pointer( mat_out, pcombo_out, [3,3,m] )
+  pcombo_out = mat_list(1:3,1:3,1:m)
 
 
-end subroutine lib_mat_combos
+end subroutine libira_mat_combos
 
 !> @details
 !! Compute the distance between two matrices, using the matrix_distance function used
 !! internally by SOFI, to determine if matrices are equal or not.
 !!
+!! C header:
+!!~~~~~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_matrix_distance( double *mat1, double *mat2, double *dist);
+!!~~~~~~~~~~~~~~~~~~~~~~
 !! @param[in] mat1(3,3) :: matrix in C order
 !! @param[in] mat2(3,3) :: matrix in C order
 !! @param[out] dist :: distance
-subroutine lib_matrix_distance( mat1, mat2, dist )bind(C,name="lib_matrix_distance" )
+subroutine libira_matrix_distance( mat1, mat2, dist )bind(C,name="libira_matrix_distance" )
   use iso_c_binding
   use sofi_tools, only: matrix_distance
   implicit none
@@ -806,7 +867,7 @@ subroutine lib_matrix_distance( mat1, mat2, dist )bind(C,name="lib_matrix_distan
   call matrix_distance( frmat1, frmat2, fdist )
   dist = real( fdist, c_double )
 
-end subroutine lib_matrix_distance
+end subroutine libira_matrix_distance
 
 
 !> @details
@@ -819,10 +880,10 @@ end subroutine lib_matrix_distance
 !!
 !! C-header:
 !!~~~~~~~~~~~~~{.c}
-!! void lib_get_err_msg( int ierr, char** msg );
+!! void libira_get_err_msg( int ierr, char** msg );
 !!~~~~~~~~~~~~~
 !!
-subroutine lib_get_err_msg( cerr, cmsg )bind(C, name="lib_get_err_msg")
+subroutine libira_get_err_msg( cerr, cmsg )bind(C, name="libira_get_err_msg")
   use iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: cerr
@@ -840,4 +901,4 @@ subroutine lib_get_err_msg( cerr, cmsg )bind(C, name="lib_get_err_msg")
   end do
   msg_fptr(n+1) = c_null_char
 
-end subroutine lib_get_err_msg
+end subroutine libira_get_err_msg
