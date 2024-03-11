@@ -13,6 +13,7 @@ void lib_match(int nat1, int *typ1, double *coords1, int *cand1,\
                int nat2, int *typ2, double *coords2, int *cand2, \
                double km_factor, double **rmat, double **tr, int **perm, double *hd, int *cerr);
 
+void lib_get_version( char *string, int *date );
 
 
 /* declare functions from library_sofi.f90 */

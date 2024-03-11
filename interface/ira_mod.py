@@ -97,6 +97,23 @@ class algo():
 
         return arr1_out, arr2_out
 
+    def get_version( self ):
+        '''
+        obtain the IRA library version
+        '''
+        self.lib.lib_get_version.restype = None
+        self.lib.lib_get_version.argtypes = [ c_char_p, POINTER(c_int) ]
+        cstring = (c_char*10)()
+        cdate = c_int()
+
+        self.lib.lib_get_version( cstring, cdate )
+
+        string = cstring.value.decode()
+        date = cdate.value
+
+        return string, date
+
+
 class IRA(algo):
     """
     The Iterative Rotatitions and Assignments (IRA) algorithm is a shape matching algorithm

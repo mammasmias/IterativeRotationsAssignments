@@ -323,3 +323,21 @@ subroutine lib_match( nat1, typ1, coords1, candidate1, &
 
 end subroutine lib_match
 
+
+subroutine lib_get_version( cstring, cdate )bind(C, name="lib_get_version")
+  use iso_c_binding, only: c_int, c_null_char, c_char
+  implicit none
+  character(len=1, kind=c_char), dimension(10) :: cstring
+  integer( c_int ) :: cdate
+
+  character(9) :: fstring
+  integer :: fdate, i
+
+  call get_version( fstring, fdate )
+  cdate = int( fdate, c_int )
+  do i = 1, len_trim(fstring)
+     cstring(i) = fstring(i:i)
+  end do
+  cstring(10) = c_null_char
+
+end subroutine lib_get_version

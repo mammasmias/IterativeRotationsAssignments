@@ -38,6 +38,7 @@ SHLIB = libira.so
 # utils
 futils := \
 	$(SRC)/err_module.f90 \
+	$(SRC)/version.f90 \
 	$(SRC)/sorting_module.f90 \
 	$(SRC)/set_candidate.f90 \
 	$(SRC)/cshda.f90 \
