@@ -57,7 +57,7 @@
 !!
 subroutine libira_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )&
      bind(C, name="libira_cshda")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer(c_int),   value, intent(in) :: nat1
   type( c_ptr ),    value, intent(in) :: typ1
@@ -133,7 +133,7 @@ end subroutine libira_cshda
 subroutine libira_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr, found, dists )&
      bind(C, name="libira_cshda_pbc")
   !! wrapper to the cshda_pbc routine from cshda.f90
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat1
   type( c_ptr ), value, intent(in) :: typ1
@@ -227,7 +227,7 @@ end subroutine libira_cshda_pbc
 subroutine libira_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
      kmax_factor, rotation, translation, permutation, hd, cerr ) bind(C, name="libira_match")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use err_module, only: get_err_msg
   implicit none
   integer(c_int), value, intent(in) :: nat1
@@ -338,7 +338,7 @@ end subroutine libira_match
 !! @returns cstring, cdate
 !!
 subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version")
-  use iso_c_binding, only: c_int, c_null_char, c_char
+  use, intrinsic :: iso_c_binding, only: c_int, c_null_char, c_char
   implicit none
   character(len=1, kind=c_char), dimension(10) :: cstring
   integer( c_int ) :: cdate

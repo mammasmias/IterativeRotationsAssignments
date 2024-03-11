@@ -74,7 +74,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
                             op_list, n_list, p_list, &
                             ax_list, angle_list, dmax_list, pg, prin_ax, &
                             cerr ) bind(C, name="libira_compute_all")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
   use err_module
   implicit none
@@ -214,7 +214,7 @@ end subroutine libira_compute_all
 !!
 subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr )&
      bind(C, name="libira_get_symm_ops")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
   implicit none
   !! "input" structure
@@ -282,7 +282,7 @@ end subroutine libira_get_symm_ops
 !!~~~~~~~~~~~~~~
 !!
 subroutine libira_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, name="libira_get_pg")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: n_mat
   type( c_ptr ), value, intent(in) :: cptr_op_list
@@ -338,7 +338,7 @@ end subroutine libira_get_pg
 
 subroutine libira_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out, cerr ) &
      bind(C,name="libira_unique_ax_angle")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use err_module
   implicit none
   integer(c_int), value, intent(in) :: n_mat
@@ -417,7 +417,7 @@ end subroutine libira_unique_ax_angle
 !!~~~~~~~~~~~~~~~
 !!
 subroutine libira_analmat( c_rmat, c_op, n, p, c_ax, angle, cerr )bind(C,name="libira_analmat")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   !! in
   type( c_ptr ), value, intent(in) :: c_rmat
@@ -462,7 +462,7 @@ end subroutine libira_analmat
 
 subroutine libira_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
      bind(C, name="libira_ext_bfield")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
 
   !! input
@@ -533,7 +533,7 @@ end subroutine libira_ext_bfield
 !! @param[in] dmax_list(n_mat) :: list of dmax values for each matrix
 subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_list)&
      bind(C,name="libira_get_perm")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
@@ -594,7 +594,7 @@ end subroutine libira_get_perm
 !! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
 subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, mat_out )&
      bind(C,name="libira_get_combos")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
   implicit none
   integer(c_int), value, intent(in) :: nat
@@ -651,7 +651,7 @@ end subroutine libira_get_combos
 !! @param[out] dh :: output Hausdorff from CShDA
 !! @param[out] perm :: permutation of atomic indices after application of rmat in C order (start at 0)
 subroutine libira_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="libira_try_mat")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
@@ -729,7 +729,7 @@ end subroutine libira_try_mat
 !!~~~~~~~~~~~~~
 !!
 subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,name="libira_construct_operation")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   interface
      FUNCTION c_strlen(str) BIND(C, name='strlen')
@@ -800,7 +800,7 @@ end subroutine libira_construct_operation
 !! @param[out] n_mat_out :: number of output matrices
 !! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
 subroutine libira_mat_combos( n_mat_in, mat_data, n_mat_out, mat_out )bind(C,name="libira_mat_combos")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
   implicit none
   integer( c_int ), value, intent(in) :: n_mat_in
@@ -848,7 +848,7 @@ end subroutine libira_mat_combos
 !! @param[in] mat2(3,3) :: matrix in C order
 !! @param[out] dist :: distance
 subroutine libira_matrix_distance( mat1, mat2, dist )bind(C,name="libira_matrix_distance" )
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use sofi_tools, only: matrix_distance
   implicit none
   real( c_double ), dimension(3,3), intent(in) :: mat1
@@ -884,7 +884,7 @@ end subroutine libira_matrix_distance
 !!~~~~~~~~~~~~~
 !!
 subroutine libira_get_err_msg( cerr, cmsg )bind(C, name="libira_get_err_msg")
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: cerr
   type( c_ptr ), intent(in) :: cmsg
