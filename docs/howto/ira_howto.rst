@@ -56,6 +56,8 @@ Quick help can be accessed by ``help( ira )``, ``help( ira.<function_name> )`` o
 Direct comparison of structures using CShDA
 ===========================================
 
+(under construction)
+
 ideas:
 
  - comparing equal strucs
