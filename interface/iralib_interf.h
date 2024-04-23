@@ -17,13 +17,13 @@ void libira_get_version( char *string, int *date );
 
 
 /* declare functions from library_sofi.f90 */
-void libira_compute_all( int nat, int *typ, double *coords, double sym_thr, \
+void libira_compute_all( int nat, int *typ, double *coords, double sym_thr, int prescreen_ih, \
                          int *n_mat, double **mat_data, int **perm_data, \
                          char **op_data, int **n_data, int **p_data,       \
                          double **ax_data, double **angle_data, double **dmax_data, char **pg, \
                          int* n_prin_ax, double **prin_ax, int *cerr );
 
-void libira_get_symm_ops( int nat, int *typ, double *coords, double sym_thr, \
+void libira_get_symm_ops( int nat, int *typ, double *coords, double sym_thr, int prescreen_ih, \
                           int *nmat, double **mat_data, int *cerr );
 
 void libira_get_pg( int n_mat, double *mat_data, char **pg, int* n_prin_ax, double **prin_ax, int verb, int *cerr);

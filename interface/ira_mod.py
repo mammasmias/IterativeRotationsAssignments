@@ -612,7 +612,7 @@ class SOFI(algo):
     # if you need more than than then change in sofi_tools.f90 and here, and recompile sofi
     _nmax=200
 
-    def compute(self, nat, typ_in, coords, sym_thr ):
+    def compute(self, nat, typ_in, coords, sym_thr, prescreen_ih=False ):
         """
         .. _sofi.compute:
 
@@ -663,6 +663,7 @@ class SOFI(algo):
         t = typ.ctypes.data_as( POINTER(c_int) )
         c = coords.ctypes.data_as( POINTER(c_double) )
         thr = c_double( sym_thr )
+        check_ih = c_bool( prescreen_ih )
 
 
         # allocate output data
@@ -683,7 +684,7 @@ class SOFI(algo):
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.libira_compute_all.argtypes = \
-            [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
+            [ c_int, POINTER(c_int), POINTER(c_double), c_double, c_bool, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
               POINTER(POINTER(c_char*1*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
@@ -691,7 +692,7 @@ class SOFI(algo):
         self.lib.libira_compute_all.restype=None
 
         # call routine from library.f90
-        self.lib.libira_compute_all( n, t, c, thr, \
+        self.lib.libira_compute_all( n, t, c, thr, check_ih, \
                                   nmat, pointer(mat_data), pointer(perm_data), \
                                   pointer(op_data), pointer(n_data), pointer(p_data), \
                                   pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg), \
@@ -748,7 +749,7 @@ class SOFI(algo):
         return sym
 
 
-    def get_symm_ops(self, nat, typ_in, coords, sym_thr ):
+    def get_symm_ops(self, nat, typ_in, coords, sym_thr, prescreen_ih=False ):
         """
         Wrapper to the libira_get_symm_ops routine from library_sofi.f90.
         Description: finds the symmetry operation maytices of the structure in input,
@@ -789,6 +790,7 @@ class SOFI(algo):
         t = typ.ctypes.data_as( POINTER(c_int) )
         c = coords.ctypes.data_as( POINTER(c_double) )
         thr = c_double( sym_thr )
+        check_ih = c_bool( prescreen_ih )
         cerr = c_int()
 
 
@@ -797,11 +799,11 @@ class SOFI(algo):
         mat_data = (c_double*9*nmax)()
         # have to set argtypes in here, since nat is not know in init
         self.lib.libira_get_symm_ops.argtypes = \
-            [ c_int, POINTER(c_int), POINTER(c_double), c_double, \
+            [ c_int, POINTER(c_int), POINTER(c_double), c_double, c_bool, \
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(c_int) ]
         self.lib.libira_get_symm_ops.restype=None
 
-        self.lib.libira_get_symm_ops( n, t, c, thr, nmat, pointer(mat_data), cerr )
+        self.lib.libira_get_symm_ops( n, t, c, thr, check_ih, nmat, pointer(mat_data), cerr )
         if cerr.value != 0:
             raise ValueError( "nonzero error value obtained form libira_get_symm_ops()")
 

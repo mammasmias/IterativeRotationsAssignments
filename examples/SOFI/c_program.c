@@ -109,6 +109,7 @@ int main( void ){
   int n_prin_ax;
   double *prin_ax;
   int cerr;
+  int prescreen_ih;
 
   /* allocate space up to nmax for all arrays, all arrays are 1d and contiguous */
   /* if you want to reshape the output data into proper dim-arrays, it's up to you. */
@@ -124,9 +125,10 @@ int main( void ){
   prin_ax = malloc(sizeof(double)*3*nmax);
 
 
+  prescreen_ih = 1;
 
   /* call SOFI compute_all */
-  libira_compute_all( nat, typ, &coords[0][0], sym_thr,     \
+  libira_compute_all( nat, typ, &coords[0][0], sym_thr, prescreen_ih, \
                       &nmat, &mat_data, &perm_data,  \
                       &op_data, &n_data, &p_data,    \
                       &ax_data, &angle_data, &dmax_data, &pg, &n_prin_ax, &prin_ax, &cerr );

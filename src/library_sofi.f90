@@ -44,6 +44,7 @@
 !! @param[in] coords(3,nat)       :: atomic positions
 !! @param[in] sym_thr             :: threshold for finding symmetries
 !!                                   (not taken into account when making combinations)
+!! @param[in] prescreen_ih        :: logical flag to check early termniation for Ih or not
 !! @param[out] n_mat              :: number of symmetries found
 !! @param[in] mat_list(3,3,nmax)  :: symmetry matrices in C order
 !! @param[in] perm_list(nat,nmax) :: permutation of atoms after applying each symmetry, in C format (start at 0)
@@ -64,14 +65,14 @@
 !!
 !! C-header:
 !! ~~~~~~~~~~~~~~~{.c}
-!! void libira_compute_all( int nat, int *typ, double *coords, double sym_thr, \
+!! void libira_compute_all( int nat, int *typ, double *coords, double sym_thr, int prescreen_ih, \
 !!                       int *n_mat, double **mat_data, int **perm_data, \
 !!                       char **op_data, int **n_data, int **p_data,       \
 !!                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
 !!                       int* n_prin_ax, double **prin_ax, int *cerr );
 !! ~~~~~~~~~~~~~~~
 !!
-subroutine libira_compute_all( nat, typ, coords, sym_thr, &
+subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
                             n_mat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
                             ax_list, angle_list, dmax_list, pg, n_prin_ax, prin_ax, &
@@ -84,6 +85,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   type( c_ptr ), value, intent(in) :: typ
   type( c_ptr ), value, intent(in) :: coords
   real( c_double ), value, intent(in) :: sym_thr
+  logical( c_bool ), value, intent(in) :: prescreen_ih
 
   integer( c_int ), intent(out) :: n_mat
   type( c_ptr ), intent(in) :: mat_list
@@ -121,6 +123,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
 
   integer :: i, m, n, lenc, ierr
   integer :: len_opstr
+  logical :: early_ih
 
   ! write(*,*) "entering lib"
   !! local arrays for computation
@@ -130,6 +133,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   !!
   call c_f_pointer( typ, ptyp, [nat] )
   call c_f_pointer( coords, pcoords, [3,nat] )
+  early_ih = logical( prescreen_ih )
   !!
   !! set pointers from c to f
   !!
@@ -146,7 +150,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   !!
   !! compute SOFI
   !!
-  call sofi_compute_all( nat, ptyp, pcoords, sym_thr, &
+  call sofi_compute_all( nat, ptyp, pcoords, sym_thr, early_ih, &
        nb, pmat_list, pperm_list, &
        fop_list, pn_list, pp_list, &
        pax_list, pangle_list, pdmax_list, f_pg, np, pprin_ax, ierr )
@@ -206,17 +210,18 @@ end subroutine libira_compute_all
 !! @param[in] coords(3,nat)       :: atomic positions
 !! @param[in] sym_thr             :: threshold for finding symmetries
 !!                                   (not taken into account when making combinations)
+!! @param[in] prescreen_ih        :: logical flag to check early termniation for Ih or not
 !! @param[in] n_mat               :: number of symmetries found
 !! @param[in] mat_list(3,3,nmax)  :: symmetry matrices in C format
 !! @returns n_mat, mat_list
 !!
 !! C header:
 !!~~~~~~~~~~~~~~~{.c}
-!! void libira_get_symm_ops( int nat, int *typ, double *coords, double symm_thr, \
+!! void libira_get_symm_ops( int nat, int *typ, double *coords, double symm_thr, bool prescreen_ih, \
 !!                        int *n_mat, double **mat_list, int *cerr );
 !!~~~~~~~~~~~~~~~
 !!
-subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr )&
+subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, prescreen_ih, n_mat, mat_list, cerr )&
      bind(C, name="libira_get_symm_ops")
   use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
@@ -226,6 +231,7 @@ subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr
   type( c_ptr ),    value, intent(in) :: typ
   type( c_ptr ),    value, intent(in) :: coords
   real( c_double ), value, intent(in) :: symm_thr
+  logical( c_bool ), value, intent(in) :: prescreen_ih
   !! "output"
   integer( c_int ), intent(out) :: n_mat
   type( c_ptr ),    intent(in) :: mat_list
@@ -238,6 +244,7 @@ subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr
   !! memory in f
   integer(c_int) :: n, i
   integer :: ierr
+  logical :: early_ih
 
   ! write(*,*) 'enter symmop'
   n_mat = 0_c_int
@@ -249,7 +256,9 @@ subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, n_mat, mat_list, cerr
 
   call c_f_pointer( mat_list, ptr_op, [3,3,nmax] )
 
-  call sofi_get_symmops( nat, ptr_typ, ptr_coords, symm_thr, n, ptr_op, ierr )
+  early_ih = logical( prescreen_ih )
+
+  call sofi_get_symmops( nat, ptr_typ, ptr_coords, symm_thr, early_ih, n, ptr_op, ierr )
   cerr = int( ierr, c_int )
   if( ierr /= 0 ) then
      write(*,*) "at",__FILE__,"line:",__LINE__

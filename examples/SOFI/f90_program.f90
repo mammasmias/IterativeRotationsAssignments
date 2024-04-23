@@ -20,6 +20,7 @@ program sofi
   character(len=10) :: pg
   integer :: n_prin_ax
   real, allocatable :: prin_ax(:,:)
+  logical :: prescreen_ih
 
   real, allocatable :: angle_out(:), ax_out(:,:)
   character(len=1), allocatable :: op_out(:)
@@ -67,7 +68,9 @@ program sofi
   allocate( angle_out(1:nmax))
   allocate( dmax_out(1:nmax))
   allocate( prin_ax(1:3,1:nmax))
-  call sofi_compute_all( nat, typ, coords, sym_thr, &
+  prescreen_ih = .true.
+
+  call sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih,  &
        nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg,&
        n_prin_ax, prin_ax, ierr )
   if( ierr /= 0 ) then

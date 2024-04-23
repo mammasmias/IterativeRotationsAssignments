@@ -36,6 +36,7 @@
 !! @param[in] typ(nat)     :: integer atomic types
 !! @param[in] coords(3,nat) :: positions of atoms
 !! @param[in] sym_thr   :: threshold for finding symmetries (not taken into account when making combinations)
+!! @param[in] prescreen_ih :: flag to check early-termination for Ih groups
 !! @param[out] nmat       :: number of symmetries found
 !! @param[out] mat_list(3,3,nmat)   :: symmetry matrices
 !! @param[out] perm_list(nat, nmat)  :: permutation of atoms after applying each symmetry
@@ -53,7 +54,7 @@
 !! @param[out] ierr       :: error value, zero on normal execution, negative otherwise
 !! @returns nmat, mat_list, perm_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax, ierr
 !!
-subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
+subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      nmat, mat_list, perm_list, &
      op_list, n_list, p_list, &
      ax_list, angle_list, dmax_list, pg, n_prin_ax, prin_ax, &
@@ -66,6 +67,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
   integer, dimension(nat), intent(in) :: typ
   real, dimension(3,nat),  intent(in) :: coords
   real,                    intent(in) :: sym_thr
+  logical,                 intent(in) :: prescreen_ih
   !! ===== output
   integer,                       intent(out) :: nmat
   real, dimension(3,3,nmax),     intent(out) :: mat_list
@@ -89,7 +91,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
   character(:), allocatable :: msg
 
   !! get symmetries with sym_thr
-  call sofi_get_symmops( nat, typ, coords, sym_thr, nmat, mat_list, ierr )
+  call sofi_get_symmops( nat, typ, coords, sym_thr, prescreen_ih, nmat, mat_list, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -170,6 +172,7 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
   integer :: i, ierr
   integer, dimension(nat) :: typ
   real, dimension(3,nat) :: coords
+  logical :: prescreen_ih
 
   pg = ""
 
@@ -188,7 +191,8 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
   end do
 
   !! get list of symm operations
-  call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list, ierr )
+  prescreen_ih = .false.
+  call sofi_get_symmops( nat, typ, coords, sym_thr, prescreen_ih, n_op, op_list, ierr )
   ! call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list, perm_list )
   if( ierr /= 0 ) return
 
@@ -240,12 +244,14 @@ end subroutine sofi_struc_pg
 !! @param[in] typ_in(nat)      :: integer atomic types
 !! @param[in] coords_in(3,nat) :: positions of atoms
 !! @param[in] sym_thr       :: threshold for finding symmetries, in terms of Hausdorff distance
+!! @param[in] prescreen_ih :: flag to check early termniation for Ih
 !! @param[out] n_so :: number of found symmetry operations
 !! @param[out] op_list :: the list of operations
 !! @param[out] ierr :: error value, negative on error, zero otherwise
 !! @returns n_so, op_list, ierr
 !!
-subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ierr )
+! subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ierr )
+subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so, op_list, ierr )
   use sofi_tools, only: nmax, m_thr
   use err_module
   implicit none
@@ -253,6 +259,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
   integer, dimension(nat), intent(in) :: typ_in
   real, dimension(3,nat),  intent(in) :: coords_in
   real,                    intent(in) :: sym_thr
+  logical,                 intent(in) :: prescreen_ih
   !!
   integer,                           intent(out) :: n_so
   real, dimension(3,3,nmax),         intent(out) :: op_list
@@ -269,6 +276,10 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
   integer :: nbas, nn
   integer :: ti, tj
   real :: small_norm
+  !! state
+  logical :: has_sigma, has_inversion, terminate, success
+  integer :: n_old, n_u_c3
+  real :: u_c3(3,5)
 
   ierr = 0
 
@@ -312,6 +323,11 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
      end do
   end do
 
+  !! initialize the state
+  n_u_c3 = 0
+  u_c3(:,:) = 0.0
+  has_sigma = .false.
+  has_inversion = .false.
 
   !! add id
   theta(:,:) = 0.0
@@ -319,7 +335,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
      theta(i,i) = 1.0
   end do
 
-  call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, ierr )
+  call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, success, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -332,7 +348,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
      theta(i,i) = -1.0
   end do
 
-  call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, ierr )
+  call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, success, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -400,7 +416,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
   !! main loop
   !!========
   nn = 0
-  do k = 1, nat
+  kloop_: do k = 1, nat
      if( abs( d_i - norm2(coords(:,k))) .gt. 1.1*sym_thr ) cycle
      if( typ(k) .ne. ti ) cycle
      do l = 1, nat
@@ -431,18 +447,37 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ier
            ! write(*,*) theta(1,:)
            ! write(*,*) theta(2,:)
            ! write(*,*) theta(3,:)
-           call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, m_thr, ierr )
+           call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, m_thr, success, ierr )
            if( ierr /= 0 ) then
               write(*,*) "at: ",__FILE__," line:",__LINE__
               return
            end if
+
+           !! mat is not successful, go to next
+           if( .not. success ) cycle
+
+           if( prescreen_ih ) then
+              n_old = nbas
+              call sofi_get_combos( nat, typ, coords, nbas, op_list )
+              call state_update( n_old, nbas, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
+              ! write(*,*) "current state print:"
+              ! write(*,*) "has_sigma", has_sigma
+              ! write(*,*) "has_inversion",has_inversion
+              ! write(*,*) "n_u_c3", n_u_c3
+              ! write(*,*) "terminate", terminate
+              ! do i = 1, n_u_c3
+              !    write(*,"(3f9.4)") u_c3(:,i)
+              ! end do
+              if( terminate ) exit kloop_
+           end if
+
 
            ! write(*,*) 'op exiting try_sofi:'
            ! call sofi_analmat( theta, ... )
            ! write(*,'(2i4,3f9.5,x,f9.4,a5,f9.4)') k,l,ax1,d1,'dh:',dh
         end do
      end do
-  end do
+  end do kloop_
   ! write(*,*)
   ! write(*,*) 'n tests, nn =',nn
   ! write(*,*) 'loop 0',nbas
@@ -595,6 +630,7 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
   integer :: m, i, j, ii, ierr
   real, dimension(3,3) :: theta
   real :: dh, dd, sym_thr
+  logical :: success
 
   !! hard-coded thresholds (accept anything)
   dd = 10.0
@@ -614,7 +650,7 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
         do j = 1, nbas
            ! write(*,*) 'combo',i,j
            theta = matmul( bas_list(:,:,i), bas_list(:,:,j))
-           call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, bas_list, dh, m_thr, ierr )
+           call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, bas_list, dh, m_thr, success, ierr )
            ! if( dh .lt. sym_thr ) then
            !    write(*,*) i,j,dh
            !    write(*,'(3f9.4)') theta(1,:)
@@ -653,7 +689,7 @@ end subroutine sofi_get_combos
 !! @param[out] ierr :: error value, negative on error, zero otherwise
 !! @returns theta, nbas, op_list, dh
 !!
-subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, dh, m_thr, ierr )
+subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, dh, m_thr, success, ierr )
   use sofi_tools, only: nmax
   implicit none
   real, dimension(3,3),          intent(inout) :: theta
@@ -666,6 +702,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   real, dimension(3,3,nmax),     intent(inout) :: op_list
   real,                          intent(out) :: dh
   real,                          intent(in) :: m_thr
+  logical,                       intent(out) :: success
   integer,                       intent(out) :: ierr
 
   integer, dimension(nat) :: typ
@@ -675,6 +712,9 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   integer, allocatable :: found(:), perm(:)
   logical :: not_crazy, is_new
   logical :: is_valid
+
+  ierr = 0
+  success = .false.
 
   !! local copy
   typ = typ_in
@@ -756,9 +796,9 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
            write(*,*) "at: ",__FILE__," line:",__LINE__
            return
         end if
+        success = .true.
      end if
   end if
-
 
   deallocate( found, dists )
   deallocate( perm )
@@ -2159,6 +2199,81 @@ subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
 
 end subroutine sofi_mat_combos
 
+!! @param[in]
+subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
+  !! update state flags, terminate if condition for Ih is found.
+  !! condition for Ih: has sigma or inversion, and number of unique c3 axes .ge. 5
+  !!
+  !! NOTE: The variables which store the state need to be allocated and initialised in the caller!
+  use sofi_tools, only: OP_PROP_ROT, OP_IMPROP_ROT, OP_INVERSION
+  implicit none
+  integer, intent(in)    :: n_old   !! size of previous call (increments are not always +1)
+  integer, intent(in)    :: n_op
+  real,    intent(in)    :: op_list(3,3,n_op)
+  logical, intent(inout) :: has_sigma          !! state var: sigma is present, init to false
+  logical, intent(inout) :: has_inversion      !! state var: inversion is present, init to false
+  integer, intent(inout) :: n_u_c3             !! state var: number of unique c3 axes, init to zero
+  real,    intent(inout) :: u_c3(3,5)          !! state var: unique c3 axes, init to zero
+  logical, intent(out)   :: terminate
+
+  !!
+  integer :: i, iax, ierr
+  integer :: n_new
+  real, dimension(3,3) :: mat
+  real, dimension(3) :: ax
+  character(len=1) :: op
+  integer :: n, p
+  real :: angle, dotp
+  logical :: unique
+
+  terminate = .false.
+
+  !! check only the new operations
+  n_new = n_op - n_old
+
+  do i = 1, n_new
+     mat = op_list(:,:,n_old + i)
+     call sofi_analmat( mat, op, n, p, ax, angle, ierr )
+     if( ierr /= 0 ) then
+        write(*,*) "got err from:",__FILE__,__LINE__
+        write(*,*) "ierr value:", ierr
+        return
+     end if
+     !!
+     !! flip flags
+     if( .not. has_sigma) then
+        if( op == OP_IMPROP_ROT .and. n==0 ) has_sigma = .true.
+     end if
+     if( .not. has_inversion ) then
+        if( op == OP_INVERSION ) has_inversion = .true.
+     end if
+
+     !! if C3, check the unique axes
+     c3ax: if( op == OP_PROP_ROT .and. n .ge. 3) then
+        !!
+        if( n_u_c3 .ge. 5 ) exit c3ax
+        unique = .true.
+        do iax = 1, n_u_c3
+           dotp = dot_product( ax, u_c3(:,iax))
+           if( abs(dotp) .gt. 0.99 ) unique = .false.
+        end do
+        !!
+        if( unique ) then
+           !! add ax to list of unique c3 axes
+           n_u_c3 = n_u_c3 + 1
+           u_c3(:, n_u_c3 ) = ax
+        end if
+     end if c3ax
+
+     !! check condition for Ih:
+     if( n_u_c3 .ge. 5 ) then
+        if( has_sigma .or. has_inversion ) terminate = .true.
+     end if
+
+  end do
+
+
+end subroutine state_update
 
 
 !> @details

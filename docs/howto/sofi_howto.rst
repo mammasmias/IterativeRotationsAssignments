@@ -516,6 +516,10 @@ we can simply call the ``compute()`` function:
 
 The ``compute()`` function returns a ``sym`` object that contains all data computed by SOFI.
 
+.. note::
+   The ``compute()`` function has an optional logical argument: ``prescreen_ih = False``, which can be set to ``True``
+   for a slight speed-up in finding Ih point groups. It has no effect for other groups.
+
 
 Choosing the origin point
 =========================
@@ -553,3 +557,4 @@ Ideas for how-to/examples:
    - test if particular matrix is a symmetry operation of a structure
    - find symmOps of atomic structure, geo center or specific atom as origin
    - disordered structure, non-complete group, find missing elements
+   - trigger prescreen-Ih
