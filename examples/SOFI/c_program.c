@@ -106,6 +106,7 @@ int main( void ){
   double *angle_data;
   double *dmax_data;
   char *pg;
+  int n_prin_ax;
   double *prin_ax;
   int cerr;
 
@@ -120,7 +121,7 @@ int main( void ){
   dmax_data = malloc( sizeof(double)*nmax);
   op_data = malloc(sizeof(char)*1*nmax+1);
   pg = malloc(sizeof(char)*11);
-  prin_ax = malloc(sizeof(double)*3);
+  prin_ax = malloc(sizeof(double)*3*nmax);
 
 
 
@@ -128,7 +129,7 @@ int main( void ){
   libira_compute_all( nat, typ, &coords[0][0], sym_thr,     \
                       &nmat, &mat_data, &perm_data,  \
                       &op_data, &n_data, &p_data,    \
-                      &ax_data, &angle_data, &dmax_data, &pg, &prin_ax, &cerr );
+                      &ax_data, &angle_data, &dmax_data, &pg, &n_prin_ax, &prin_ax, &cerr );
 
   if( cerr < 0 ){
     char* msg;
@@ -181,7 +182,12 @@ int main( void ){
   }
 
   printf( "PG is: %s\n",pg);
-  printf( "Principal axis: %lf %lf %lf\n", prin_ax[0], prin_ax[1], prin_ax[2] );
+  printf( "List of principal axes, N_prin_ax = %d :\n", n_prin_ax);
+  m=0;
+  for( int i=0; i < n_prin_ax; i++ ){
+     printf( "Principal axis: %lf %lf %lf\n", prin_ax[m+0], prin_ax[m+1], prin_ax[m+2] );
+     m+=3;
+  }
 
   /* free all the allocated memory */
   free( mat_data );

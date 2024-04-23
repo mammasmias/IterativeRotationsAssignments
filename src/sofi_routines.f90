@@ -18,7 +18,7 @@
 !! Compute all data from SOFI in single routine.
 !! This contains getting the list of symmetry operations,
 !! and the associated permutations, Op symbols, n and p integers,
-!! list of axis, angles, and dmax. Also the PG name, and principal axis.
+!! list of axis, angles, and dmax. Also the PG name, and list of principal axes.
 !!
 !! The structure is assumed to be already shifted to desired origin on input.
 !!
@@ -29,7 +29,7 @@
 !!  than ``sym_thr``!
 !!
 !! @note
-!!  All arrays have size ``nmax``, but the actual output values go only up to index ``nmat``,
+!!  All arrays have size ``nmax``, but the actual output values go only up to index ``nmat`` (or ``n_prin_ax``),
 !!  values beyond that index can be random.
 !!
 !! @param[in] nat                        :: number of atoms
@@ -48,13 +48,15 @@
 !!                               i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
 !! @param[out] dmax_list(nmat)  :: max difference of atomic positions of before/after symm transformation
 !! @param[out] pg         :: name of Point group, e.g. D6h
+!! @param[out] n_prin_ax  :: number of equivalent principal axes
+!! @param[out] prin_ax(3,n_prin_ax) :: list of equivalent principal axes.
 !! @param[out] ierr       :: error value, zero on normal execution, negative otherwise
 !! @returns nmat, mat_list, perm_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax, ierr
 !!
 subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
      nmat, mat_list, perm_list, &
      op_list, n_list, p_list, &
-     ax_list, angle_list, dmax_list, pg, prin_ax, &
+     ax_list, angle_list, dmax_list, pg, n_prin_ax, prin_ax, &
      ierr )
   use sofi_tools, only: nmax
   use err_module
@@ -75,7 +77,8 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
   real, dimension(nmax),         intent(out) :: angle_list
   real, dimension(nmax),         intent(out) :: dmax_list
   character(len=10),             intent(out) :: pg
-  real, dimension(3),            intent(out) :: prin_ax
+  integer,                       intent(out) :: n_prin_ax
+  real, dimension(3,nmax),       intent(out) :: prin_ax
   integer,                       intent(out) :: ierr
 
   real :: dum
@@ -110,7 +113,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, &
   !! get name of pg
   verb = .false.
   ! verb = .true.
-  call sofi_get_pg( nmat, mat_list, pg, prin_ax, verb, ierr )
+  call sofi_get_pg( nmat, mat_list, pg, n_prin_ax, prin_ax, verb, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -161,7 +164,9 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
   integer :: n_op
   integer, allocatable :: perm_list(:,:)
   real, allocatable :: op_list(:,:,:)
-  real, dimension(3) :: gc, prin_ax
+  real, dimension(3) :: gc
+  real, allocatable :: prin_ax(:,:)
+  integer :: n_prin_ax
   integer :: i, ierr
   integer, dimension(nat) :: typ
   real, dimension(3,nat) :: coords
@@ -170,6 +175,7 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
 
   allocate( op_list(1:3,1:3,1:nmax) )
   allocate( perm_list(1:nat, 1:nmax) )
+  allocate( prin_ax(1:3,1:nmax) )
 
   !! working copies
   typ = typ_in
@@ -194,10 +200,10 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
   ! call sofi_get_combos( nat, typ, coords, n_op, op_list, perm_list )
 
   !! get new PG name
-  call sofi_get_pg( n_op, op_list, pg, prin_ax, verb, ierr )
+  call sofi_get_pg( n_op, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   if( ierr /= 0 ) return
 
-  deallocate( op_list, perm_list )
+  deallocate( op_list, perm_list, prin_ax )
 
 end subroutine sofi_struc_pg
 
@@ -998,6 +1004,7 @@ subroutine add_sofi( nat, rmat, nbas, mat_list, ierr )
   end if
 
   mat_list(:,:,nbas) = rmat
+  ierr = 0
 
 end subroutine add_sofi
 
@@ -1007,8 +1014,9 @@ end subroutine add_sofi
 !! online: https://symotter.org/assets/flowchart.pdf
 !!
 !! @note
-!!  The principal axis can be ambiguous, for example for Td or Ih groups.
-!!  Only one axis is currently output as the principal.
+!!  The principal axis is found as axis of the proper rotation operation (C symbol),
+!!  with the largest n value. In case of multiple equivalent principal axes,
+!!  they are found as all unique axes with those properties.
 !!
 !! @note
 !!  In cases when the list of operations is incomplete for a certain PG,
@@ -1020,19 +1028,21 @@ end subroutine add_sofi
 !! @param[in] nbas :: number of symmetry operations
 !! @param[in] op_list(3,3,nbas) :: the list of symmetry operations (3x3 matrices)
 !! @param[out] pg(10) :: the point group tag
-!! @param[out] prin_ax(3) :: principal axis of PG (one of them in case when ambiguous)
+!! @param[out] n_prin_ax :: number of equivalent principal axes
+!! @param[out] prin_ax(3,n_prin_ax) :: list of equivalent principal axes of PG
 !! @param[in] verb :: flag for verbosity
 !! @param[out] ierr :: error value, zero on normal execution, negative otherise
 !! @returns pg, prin_ax
 !!
-subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb, ierr )
+subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !!
   use sofi_tools
   implicit none
   integer,                   intent(in) :: nbas
   real, dimension(3,3,nbas), intent(in) :: op_list
   character(len=10),         intent(out) :: pg
-  real, dimension(3),        intent(out) :: prin_ax
+  integer,                   intent(out) :: n_prin_ax
+  real, dimension(3,nbas),   intent(out) :: prin_ax
   logical,                   intent(in) :: verb
   integer,                   intent(out) :: ierr
 
@@ -1055,6 +1065,8 @@ subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb, ierr )
   real :: dotj, dotk
 
   real, dimension(nbas) :: angle_list
+  integer :: cn_multip, cn_val
+  logical :: isnew
 
   if( verb ) then
      write(*,*) repeat('=',20)
@@ -1193,8 +1205,31 @@ subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb, ierr )
   cn_ax = ax_list(:,max_n_loc)
 
   !! set principal ax for output
-  prin_ax = cn_ax
+  ! prin_ax = cn_ax
 
+  !!====
+  !! find all equivalent principal axes:
+  !! proper rotation, same n value, same multiplicity
+  cn_val = max_n_val
+  cn_multip = multip_ax(max_n_loc)
+  n_prin_ax = 0
+  do i = 1, nbas
+     !! find which ax on list have same characteristics as cn
+     !! NOTE: this will find duplicates also
+     if( n_int(i) .eq. cn_val .and. &
+          op(i) .eq. OP_PROP_ROT .and. &
+          multip_ax(i) .eq. cn_multip ) then
+        ! write(*,"(a,1x, 3f9.4)") "ax is prin:", ax_list(:,i)
+        !! store only unique
+        isnew = .true.
+        do j = 1, n_prin_ax
+           if( dot_product(ax_list(:,i), prin_ax(:,j)) .gt. 0.999 ) isnew = .false.
+        end do
+        if( .not. isnew ) cycle
+        n_prin_ax = n_prin_ax + 1
+        prin_ax(:,n_prin_ax) = ax_list(:,i)
+     end if
+  end do
 
   !!
   !! flowchart, top part
@@ -1450,7 +1485,10 @@ subroutine sofi_get_pg( nbas, op_list, pg, prin_ax, verb, ierr )
      write(*,*) 'has sigma:', has_sigma
      write(*,*) 'has cn:', has_cn
      write(*,*) 'max_n_val:',max_n_val
-     write(*,'(a14,3f9.4)') 'principal ax:',ax_list(:,max_n_loc)
+     write(*,'(a,1x,i0)') 'principal ax:', n_prin_ax
+     do i = 1, n_prin_ax
+        write(*,"(3f9.4)") prin_ax(:,i)
+     end do
      write(*,*) 'c2 perp:',c2_perp
      write(*,*) 'has sigma h:',has_sigma_h
      write(*,*) 'has sigma v:', has_sigma_v
@@ -1925,7 +1963,7 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
      op_out(i) = op_list(i)
      ax_out(:,i) = ax
      angle_out(i) = angle
-     write(*,'(i4,x,a2,x,i0,"^",i0,x,3f9.4,4x,f9.4)') i, op_out(i),n,p, ax_out(:,i), angle_out(i)
+     ! write(*,'(i4,x,a2,x,i0,"^",i0,x,3f9.4,4x,f9.4)') i, op_out(i),n,p, ax_out(:,i), angle_out(i)
   end do
 
   !! find operations that are ambiguous:

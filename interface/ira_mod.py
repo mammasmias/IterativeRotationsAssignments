@@ -574,7 +574,9 @@ class sym_data():
             print( self.perm[i] )
             print()
         print("The corresponding PG is: %s" % (self.pg) )
-        print("Principal axis: %8.4f %8.4f %8.4f" % (self.prin_ax[0], self.prin_ax[1], self.prin_ax[2] ) )
+        print("List of principal axes, N = %i :" %(self.n_prin_ax) )
+        for i in range( self.n_prin_ax ):
+           print("%8.4f %8.4f %8.4f" % (self.prin_ax[i][0], self.prin_ax[i][1], self.prin_ax[i][2] ) )
 
 
 class SOFI(algo):
@@ -674,7 +676,8 @@ class SOFI(algo):
         angle_data = (c_double*nmax)()
         dmax_data = (c_double*nmax)()
         pg = (c_char*11)()
-        pax_data = (c_double*3)()
+        n_pax = c_int()
+        pax_data = (c_double*3*nmax)()
         cerr = c_int()
 
 
@@ -684,7 +687,7 @@ class SOFI(algo):
               POINTER(c_int), POINTER(POINTER(c_double*9*nmax)), POINTER(POINTER(c_int*nat*nmax)), \
               POINTER(POINTER(c_char*1*nmax)), POINTER(POINTER(c_int*nmax)), POINTER(POINTER(c_int*nmax)), \
               POINTER(POINTER(c_double*3*nmax)), POINTER(POINTER(c_double*nmax)), POINTER(POINTER(c_double*nmax)), \
-              POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), POINTER(c_int) ]
+              POINTER(POINTER(c_char*11)), POINTER(c_int), POINTER(POINTER(c_double*3*nmax)), POINTER(c_int) ]
         self.lib.libira_compute_all.restype=None
 
         # call routine from library.f90
@@ -692,7 +695,7 @@ class SOFI(algo):
                                   nmat, pointer(mat_data), pointer(perm_data), \
                                   pointer(op_data), pointer(n_data), pointer(p_data), \
                                   pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg), \
-                                  pointer(pax_data), cerr )
+                                  pointer(n_pax), pointer(pax_data), cerr )
         if cerr.value != 0:
             raise ValueError("nonzero error value obtained from libira_compute_all()")
 
@@ -736,9 +739,10 @@ class SOFI(algo):
             sym.dmax[n]=dmax_data[n]
         # sym.dmax = dmax_data[:n_op]
 
-        sym.prin_ax=np.zeros(3, dtype=float)
-        for n in range(3):
-            sym.prin_ax[n]=pax_data[n]
+        sym.n_prin_ax = n_pax.value
+        sym.prin_ax=np.zeros((sym.n_prin_ax, 3), dtype=float)
+        for n in range(sym.n_prin_ax):
+            sym.prin_ax[n]=pax_data[n][:]
 
         # return the instance of sym_data
         return sym
@@ -818,7 +822,8 @@ class SOFI(algo):
 
         """
         wrapper to libira_get_pg() from library_sofi.f90
-        Description: find the PG of input list of operations
+        Description: find the PG of input list of operations. Returns also the
+        list of all equivalent principal axes.
 
         **== input: ==**
 
@@ -839,8 +844,11 @@ class SOFI(algo):
         :param pg: associated Point Group (PG)
         :type pg: string
 
-        :param prin_ax: principal axis of the PG
-        :type prin_ax: np.array( 3, dtype = float )
+        :param n_prin_ax: number of equivalent principal axes
+        :type n_prin_ax: integer
+
+        :param prin_ax: list of principal axes of the PG
+        :type prin_ax: np.array( (n_prin_ax, 3), dtype = float )
 
         """
         # input data
@@ -852,22 +860,27 @@ class SOFI(algo):
 
         # output data
         pg = (c_char*11)()
-        pprin_ax = (c_double*3)()
+        cnprin_ax = c_int()
+        pprin_ax = (c_double*3*nm_in)()
 
         # have to set argtypes in here, since nat is not know in init
         self.lib.libira_get_pg.argtypes = \
-            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), POINTER(POINTER(c_double*3)), \
+            [ c_int, POINTER(c_double), POINTER(POINTER(c_char*11)), \
+              POINTER(c_int), POINTER(POINTER(c_double*3*nm_in)), \
               c_bool, POINTER(c_int) ]
         self.lib.libira_get_pg.restype=None
-        self.lib.libira_get_pg( n, mats, pointer(pg), pointer(pprin_ax), cverb, cerr)
+        self.lib.libira_get_pg( n, mats, pointer(pg), pointer(cnprin_ax), pointer(pprin_ax), cverb, cerr)
         if cerr.value != 0 :
             raise ValueError("nonzero error value ontained from libira_get_pg()")
 
         pg=pg.value.decode()
-        prin_ax = np.zeros(3, dtype=float)
-        for n in range(3):
-            prin_ax[n] = pprin_ax[n]
-        return pg, prin_ax
+
+        n_prin_ax = cnprin_ax.value
+        prin_ax=np.zeros((n_prin_ax, 3), dtype=float)
+        for n in range(n_prin_ax):
+            prin_ax[n]=pprin_ax[n][:]
+
+        return pg, n_prin_ax, prin_ax
 
     def get_unique_ax_angle( self, nm_in, mat_list ):
         """

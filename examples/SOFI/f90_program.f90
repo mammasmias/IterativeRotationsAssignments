@@ -18,7 +18,8 @@ program sofi
   integer :: nbas
   integer :: nmax
   character(len=10) :: pg
-  real, dimension(3) :: prin_ax
+  integer :: n_prin_ax
+  real, allocatable :: prin_ax(:,:)
 
   real, allocatable :: angle_out(:), ax_out(:,:)
   character(len=1), allocatable :: op_out(:)
@@ -65,9 +66,10 @@ program sofi
   allocate( ax_out(1:3,1:nmax))
   allocate( angle_out(1:nmax))
   allocate( dmax_out(1:nmax))
+  allocate( prin_ax(1:3,1:nmax))
   call sofi_compute_all( nat, typ, coords, sym_thr, &
-       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg, prin_ax, &
-       ierr )
+       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg,&
+       n_prin_ax, prin_ax, ierr )
   if( ierr /= 0 ) then
      write(*,*) "f90 prog got ierr"
      call sofi_get_err_msg( ierr, msg )
@@ -93,8 +95,11 @@ program sofi
   end do
 
   write(*,*) "PG:",trim(pg)
-  write(*,'(a,1x,3f9.4)') "Principal axis:", prin_ax
-  deallocate( bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out )
+  write(*,"(a,1x,i0)") "List of principal axes, N_prin_ax =",n_prin_ax
+  do i = 1, n_prin_ax
+     write(*,"(3f9.4)") prin_ax(:,i)
+  end do
+  deallocate( bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, prin_ax )
 
   ! allocate( bas_list(1:3,1:3,1:nmax))
   ! allocate( perm_list(1:nat, 1:nmax))

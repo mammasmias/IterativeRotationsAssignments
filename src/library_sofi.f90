@@ -36,7 +36,8 @@
 !!  the ``nmax`` refers to the value in sofi_tools.f90, which ``nmax=200`` by default.
 !!
 !! The size of variables on input needs to be at least this much.
-!! The actual output is written to the first ``n_mat`` elements of each corresponding array.
+!! The actual output is written to the first ``n_mat`` elements of each corresponding array, and
+!! the first ``n_prin_ax`` for list of principal axes.
 !!
 !! @param[in] nat                 :: number of atoms
 !! @param[in] typ(nat)            :: atomic types
@@ -55,7 +56,8 @@
 !!                                   i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
 !! @param[in] dmax_list(nmax)     :: max difference of atomic positions of before/after symm transformation
 !! @param[in] pg                  :: name of Point group, e.g. D6h
-!! @param[in] prin_ax(3)          :: principal axis of the PG
+!! @param[in] n_prin_ax           :: output size of list of principal axes
+!! @param[in] prin_ax(3,nmax)     :: list of principal axes of the PG, output size is (3,n_prin_ax)
 !! @param[out] cerr               :: error value, negative on error, zero otherwise
 !!
 !! @returns n_mat, mat_list, per_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax
@@ -66,13 +68,13 @@
 !!                       int *n_mat, double **mat_data, int **perm_data, \
 !!                       char **op_data, int **n_data, int **p_data,       \
 !!                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
-!!                       double **prin_ax, int *cerr );
+!!                       int* n_prin_ax, double **prin_ax, int *cerr );
 !! ~~~~~~~~~~~~~~~
 !!
 subroutine libira_compute_all( nat, typ, coords, sym_thr, &
                             n_mat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
-                            ax_list, angle_list, dmax_list, pg, prin_ax, &
+                            ax_list, angle_list, dmax_list, pg, n_prin_ax, prin_ax, &
                             cerr ) bind(C, name="libira_compute_all")
   use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
@@ -93,6 +95,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   type( c_ptr ), intent(in) :: angle_list
   type( c_ptr ), intent(in) :: dmax_list
   type( c_ptr ), intent(in) :: pg
+  integer( c_int ), intent(out) :: n_prin_ax
   type( c_ptr ), intent(in) :: prin_ax
   integer( c_int ), intent(out) :: cerr
 
@@ -106,12 +109,12 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   real( c_double ), dimension(:,:), pointer :: pax_list
   real( c_double ), dimension(:), pointer :: pangle_list
   real( c_double ), dimension(:), pointer :: pdmax_list
-  real( c_double ), dimension(:), pointer :: pprin_ax
+  real( c_double ), dimension(:,:), pointer :: pprin_ax
   character(len=1, kind=c_char), dimension(:), pointer :: pg_char
   character(len=1, kind=c_char), dimension(:), pointer :: op_char
 
   !! some f-defined memory
-  integer( c_int ) :: nb
+  integer( c_int ) :: nb, np
   character(len=10) :: f_pg
   character(len=1), dimension(nmax) :: fop_list
   character(len=1) :: this_op
@@ -138,7 +141,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   call c_f_pointer( angle_list, pangle_list, [nmax] )
   call c_f_pointer( dmax_list, pdmax_list, [nmax] )
   call c_f_pointer( pg, pg_char, [10+1] )
-  call c_f_pointer( prin_ax, pprin_ax, [3] )
+  call c_f_pointer( prin_ax, pprin_ax, [3,nmax] )
 
   !!
   !! compute SOFI
@@ -146,7 +149,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
   call sofi_compute_all( nat, ptyp, pcoords, sym_thr, &
        nb, pmat_list, pperm_list, &
        fop_list, pn_list, pp_list, &
-       pax_list, pangle_list, pdmax_list, f_pg, pprin_ax, ierr )
+       pax_list, pangle_list, pdmax_list, f_pg, np, pprin_ax, ierr )
 
   cerr = int( ierr, c_int )
   if( ierr /= 0 ) then
@@ -154,6 +157,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, &
      write(*,*) get_err_msg( ierr )
      return
   end if
+  n_prin_ax = int( np, c_int )
 
 
   !! set pg string
@@ -272,22 +276,24 @@ end subroutine libira_get_symm_ops
 !! @param[in] n_mat :: number of matrices
 !! @param[in] cptr_op_list(3,3,n_mat) :: list of matrices in C order
 !! @param[in] ppg :: point group
-!! @param[in] px :: principal axis
+!! @param[in] npx :: size of psrincipal axes list
+!! @param[in] px :: list of principal axes
 !! @param[in] verbose :: flag of verbosity
 !! @returns ppg, px
 !!
 !! C-header:
 !!~~~~~~~~~~~~~~{.c}
-!! void libira_get_pg( int n_mat, double *mat_data, char **pg, double **prin_ax, int verb, int *cerr);
+!! void libira_get_pg( int n_mat, double *mat_data, char **pg, int* n_prin_ax, double **prin_ax, int verb, int *cerr);
 !!~~~~~~~~~~~~~~
 !!
-subroutine libira_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, name="libira_get_pg")
+subroutine libira_get_pg( n_mat, cptr_op_list, ppg, npx, px, verbose, cerr )bind(C, name="libira_get_pg")
   use, intrinsic :: iso_c_binding
   implicit none
   integer( c_int ), value, intent(in) :: n_mat
   type( c_ptr ), value, intent(in) :: cptr_op_list
   !! c ptr to write output
   type( c_ptr ), intent(in) :: ppg
+  integer( c_int ), intent(out) :: npx
   type( c_ptr ), intent(in) :: px
   logical( c_bool ), value, intent(in) :: verbose
   integer( c_int ), intent(out) :: cerr
@@ -297,9 +303,9 @@ subroutine libira_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, n
   real(c_double), dimension(:,:,:), pointer :: op_list
   ! character(len=10, kind=c_char), pointer :: str
   character(len=1, kind=c_char), dimension(:), pointer :: pg_char
-  real( c_double ), dimension(:), pointer :: prin_ax
+  real( c_double ), dimension(:,:), pointer :: prin_ax
   !! local
-  integer :: i, n, ierr
+  integer :: i, n, ierr, n_prin
   character(len=10) :: pg
   logical :: verb
 
@@ -316,15 +322,16 @@ subroutine libira_get_pg( n_mat, cptr_op_list, ppg, px, verbose, cerr )bind(C, n
   end do
 
   call c_f_pointer( ppg, pg_char, [11] )
-  call c_f_pointer( px, prin_ax, [3] )
+  call c_f_pointer( px, prin_ax, [3,n_mat] )
 
   verb = verbose
-  call sofi_get_pg( n_mat, op_list, pg, prin_ax, verb, ierr )
+  call sofi_get_pg( n_mat, op_list, pg, n_prin, prin_ax, verb, ierr )
   cerr = int( ierr, c_int )
   if( ierr /= 0 ) then
      write(*,*) "at",__FILE__,"line:",__LINE__
      return
   end if
+  npx = int( n_prin, c_int )
 
 
   n = len_trim(pg)
