@@ -276,7 +276,7 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
                   nat2, p_typ2, p_coords2, p_c2, &
                   kmax_factor, p_matrix, p_tr, p_perm, hd, ierr )
   cerr = int( ierr, c_int )
-  write(*,*) "HD after unify",hd
+  ! write(*,*) "HD after unify",hd
   if( ierr /= 0 ) then
      write(*,*) "ERROR in libira_match"
      write(*,*) get_err_msg( ierr )
