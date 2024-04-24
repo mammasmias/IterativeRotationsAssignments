@@ -340,16 +340,16 @@ end subroutine libira_match
 subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version")
   use, intrinsic :: iso_c_binding, only: c_int, c_null_char, c_char
   implicit none
-  character(len=1, kind=c_char), dimension(10) :: cstring
+  character(len=1, kind=c_char), dimension(6) :: cstring
   integer( c_int ) :: cdate
 
-  character(9) :: fstring
+  character(5) :: fstring
   integer :: fdate, i, n
 
   call get_version( fstring, fdate )
   cdate = int( fdate, c_int )
   n = len_trim(fstring)
-  if( n .gt. 9 ) write(*,*) "WARNING: IRA version string seems long, check!"
+  if( n .gt. 5 ) write(*,*) "WARNING: IRA version string seems long, check!"
   do i = 1, n
      cstring(i) = fstring(i:i)
   end do

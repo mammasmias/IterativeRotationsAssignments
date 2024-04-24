@@ -53,6 +53,7 @@ class algo():
             path=shlib
 
         self.lib = CDLL(path)
+        self.__version__, self.__date__ = self.get_version()
 
     def tf_int(self, arr_in):
         """
@@ -112,7 +113,6 @@ class algo():
         date = cdate.value
 
         return string, date
-
 
 class IRA(algo):
     """
