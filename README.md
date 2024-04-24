@@ -3,7 +3,8 @@
 This is the repository of shape matching algorithm
 Iterative Rotations and Assignments (IRA), and the Symmetry Operations FInder (SOFI) algorithm.
 
-Online documentation: [LINK](https://mammasmias.github.io/IterativeRotationsAssignments/).
+Online documentation and tutorials: [LINK](https://mammasmias.github.io/IterativeRotationsAssignments/).
+GitHub repository: [LINK](https://github.com/mammasmias/IterativeRotationsAssignments).
 
 IRA is described in the publication [[1]](#1).
 It is also the main subject of the dissertation [[2]](#2), where a workflow
@@ -28,7 +29,7 @@ SOFI is described in the publication [[3]](#3).
 
 
 # Compile and run
-To run IRA/SOFI on any platform, you first need to compile it. See `src/README`.
+To run IRA/SOFI on any platform, you first need to compile it. See `src/README` or the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/#installation).
 
 
 # Terms and conditions

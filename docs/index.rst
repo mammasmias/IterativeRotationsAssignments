@@ -4,6 +4,7 @@ IRA library documentation
 =========================
 
 GitHub `repository <https://github.com/mammasmias/IterativeRotationsAssignments>`_
+Online `documentation and tutorials <https://mammasmias.github.io/IterativeRotationsAssignments/>`_
 
 .. contents:: Contents
    :local:
