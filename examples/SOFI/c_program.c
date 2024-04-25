@@ -32,7 +32,7 @@ int main( void ){
   int *typ;
   double *coords_data;
   double **coords;
-  double sym_thr;
+  double sym_thr;     // the sym_thr is read from second line of the input file
 
 
   /* ---------------------------------------------- */

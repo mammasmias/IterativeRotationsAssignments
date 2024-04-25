@@ -37,3 +37,5 @@ The `example_inputs` directory contains some structures written in .xyz format. 
 a structure with atomic types given as integers, while the python program can take also strings.
 
 The structure `S6_D3d.xyz` has some inexact symmetries, if you set the `sym_thr=0.02` you should obtain the S6 point group, and if you set `sym_thr=0.03` it should be D3d.
+
+The file `D6.xyz` contains characters as atomic types, and is currently only readable from `python_program.py`. In order to launch it from fortran or C, you need to modify the reading of the input to convert the characters into integers as expected by SOFI.

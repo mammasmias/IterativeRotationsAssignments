@@ -34,7 +34,7 @@ program sofi
   nmax = 200
 
   !! threshold for sym
-  sym_thr = 0.05
+  sym_thr = 0.02
 
   read(*,*) nat
   read(*,*)

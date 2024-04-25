@@ -35,7 +35,7 @@ coords = coords - gc
 sofi = ira_mod.SOFI()
 
 ## threshold for symmetries
-sym_thr = 0.53
+sym_thr = 0.2
 
 ## compute all sofi data and store into "sym" object
 sym = sofi.compute( nat, typ, coords, sym_thr )

@@ -14,7 +14,7 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -Wall -fdefault-real-8 -fbounds-check
+FFLAGS = -Wall -fdefault-real-8 -fcheck=all
 CFLAGS =
 
 SRC := $(PWD)
