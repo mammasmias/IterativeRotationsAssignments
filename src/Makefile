@@ -17,7 +17,7 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -Wall -fdefault-real-8 -fbounds-check -fPIC -O1 -g -cpp
+FFLAGS = -fdefault-real-8 -fPIC -O1 -g -cpp -fcheck=all
 
 SRC = $(PWD)
 OBJ = $(SRC)/Obj
@@ -37,13 +37,13 @@ SHLIB = libira.so
 #
 # utils
 futils := \
+	$(SRC)/sofi_tools.f90 \
 	$(SRC)/err_module.f90 \
 	$(SRC)/version.f90 \
 	$(SRC)/sorting_module.f90 \
 	$(SRC)/set_candidate.f90 \
 	$(SRC)/cshda.f90 \
 	$(SRC)/ira_routines.f90 \
-	$(SRC)/sofi_tools.f90 \
 	$(SRC)/sofi_routines.f90
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
