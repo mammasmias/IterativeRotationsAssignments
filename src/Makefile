@@ -17,7 +17,7 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -fdefault-real-8 -fPIC -O1 -g -cpp -fcheck=all
+FFLAGS = -fdefault-real-8 -fcheck=bounds -fPIC -O1 -g -cpp
 
 SRC = $(PWD)
 OBJ = $(SRC)/Obj
