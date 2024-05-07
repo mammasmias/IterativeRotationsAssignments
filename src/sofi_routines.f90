@@ -1113,9 +1113,21 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      write(*,*) "number of SymmOps entering get_pg:",nbas
   endif
 
+  ierr = 0
+
   !! start from below
   pg = 'C1'
-  if( nbas .eq. 1 ) return
+  if( nbas .eq. 1 ) then
+     !! Structure is C1 (no symmetry except identity).
+     !! No need to do anything in this routine.
+     !!
+     !! output single principal axis. Maybe rather set to zero?
+     n_prin_ax = 1
+     prin_ax(:,1) = (/1.0, 0.0, 0.0/)
+     !!
+     return
+  end if
+
 
   has_inversion = .false.
   has_sigma = .false.
