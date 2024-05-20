@@ -193,12 +193,14 @@
     real, dimension(3) :: rij
     real, dimension(3) :: ci, cj
     real :: dx, dy, dz, th, m_th, th2
-    real, dimension(nat1,nat2) :: chkmat
+    real, dimension(nat2,nat1) :: chkmat
     logical, dimension(nat1) :: lsearch
+    integer, dimension(nat2) :: assigned
     integer :: i, j, k, ti, tj
     integer :: idx_old
     integer :: n_count, nmax
     real :: dist, dist_old, dmin
+    integer, dimension(nat1) :: tmpmin
 
     !! init output
     dists = 999.9
@@ -234,12 +236,16 @@
              !! dist squared
              dist = dx*dx + dy*dy + dz*dz
              !!
-             chkmat(i,j) = dist
+             chkmat(j,i) = dist
              !!
              !! keep for minimum row
-             dmin = min( dmin, dist )
+             ! dmin = min( dmin, dist )
+             if( dist .lt. dmin ) then
+                dmin = dist
+                tmpmin(i) = j
+             end if
           else
-             chkmat(i,j) = 995.0
+             chkmat(j,i) = 995.0
           end if
           !!
        end do
@@ -255,13 +261,13 @@
     end do
 
 
-
     !! set up the queue of searches
     lsearch(:) = .true.
 
+    assigned(:) = 0
+
     !! set first search index
     i = 1
-    j = minloc( chkmat(i,:), 1 )
 
     n_count = 1
     nmax = nat1*nat2
@@ -280,19 +286,19 @@
        !!
        !! find minimum distance and its index
        !!
-       j = minloc( chkmat(i,:), 1)
-       dist = chkmat(i,j)
+       j = tmpmin(i)
+       dist = chkmat(j,i)
        !!
        !!
-       !! check the found indices if we already have this j
+       !! check the if we already have this j
        !!
-       if( any(found .eq. j) ) then
+       if( assigned(j) .gt. 0 ) then
           !!
           !!
           !! find the old index where its used, and the old distance
           !!
-          idx_old = minloc( abs( found - j) , 1)
-          dist_old = minval( chkmat(idx_old,:), 1)
+          idx_old = assigned(j)
+          dist_old = dists(idx_old)
           !!
           if( dist_old .lt. dist ) then
              !!
@@ -300,7 +306,8 @@
              !! if the previous found is closer, set the current distance
              !! to smth big, so its not found ever again!
              !!
-             chkmat(i,j) = 999.0
+             chkmat(j,i) = 999.0
+             tmpmin(i) = minloc(chkmat(:,i),1)
              !!
              !!
              !! and the current index should be searched again
@@ -313,8 +320,9 @@
              !! if the previous found is larger then the new, the old idx should
              !! be searched again and the same distance should not be found!
              !!
-             chkmat(idx_old, j) = 999.0
+             chkmat(j, idx_old) = 999.0
              lsearch( idx_old ) = .true.
+             tmpmin(idx_old) = minloc( chkmat(:,idx_old), 1)
              !!
           endif
        endif
@@ -323,6 +331,7 @@
        !!
        found(i) = j
        dists(i) = dist
+       assigned(j) = i
        !!
     end do
 
@@ -332,6 +341,7 @@
        dists(i) = sqrt(dists(i))
     end do
 
+    call timer_stop(LOC_ASSIGN)
     !! for equal sizes of structures we should be done
     if( nat1 .eq. nat2 ) return
 
