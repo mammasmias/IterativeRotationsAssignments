@@ -341,7 +341,6 @@
        dists(i) = sqrt(dists(i))
     end do
 
-    call timer_stop(LOC_ASSIGN)
     !! for equal sizes of structures we should be done
     if( nat1 .eq. nat2 ) return
 

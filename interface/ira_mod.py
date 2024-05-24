@@ -612,7 +612,7 @@ class SOFI(algo):
     # if you need more than than then change in sofi_tools.f90 and here, and recompile sofi
     _nmax=200
 
-    def compute(self, nat, typ_in, coords, sym_thr, prescreen_ih=False ):
+    def compute(self, nat, typ_in, coords, sym_thr, prescreen_ih=True ):
         """
         .. _sofi.compute:
 
