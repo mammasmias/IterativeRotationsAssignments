@@ -61,6 +61,9 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      ierr )
   use sofi_tools, only: nmax
   use err_module
+#ifdef DEBUG
+  use timer
+#endif
   implicit none
   !! ===== input
   integer,                 intent(in) :: nat
@@ -90,6 +93,13 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   logical :: verb
   character(:), allocatable :: msg
 
+  real :: dt
+
+#ifdef DEBUG
+  call timer_start( LOC_T1 )
+  call timer_start( LOC_T2 )
+#endif
+
   !! get symmetries with sym_thr
   call sofi_get_symmops( nat, typ, coords, sym_thr, prescreen_ih, nmat, mat_list, ierr )
   if( ierr /= 0 ) then
@@ -97,9 +107,13 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      return
   end if
 
+#ifdef DEBUG
+  call timer_stop( LOC_T2 )
+#endif
+
 
   !! get combos, can produce symm above sym_thr
-  call sofi_get_combos( nat, typ, coords, nmat, mat_list )
+  ! call sofi_get_combos( nat, typ, coords, nmat, mat_list )
 
   !! get ops, and unique angles and axes
   call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
@@ -132,6 +146,11 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      end if
 
   end do
+
+#ifdef DEBUG
+  call timer_stop( LOC_T1 )
+  call timer_print()
+#endif
 
 end subroutine sofi_compute_all
 
@@ -192,6 +211,7 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
 
   !! get list of symm operations
   prescreen_ih = .false.
+  prescreen_ih = .true.
   call sofi_get_symmops( nat, typ, coords, sym_thr, prescreen_ih, n_op, op_list, ierr )
   ! call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list, perm_list )
   if( ierr /= 0 ) return
@@ -250,9 +270,8 @@ end subroutine sofi_struc_pg
 !! @param[out] ierr :: error value, negative on error, zero otherwise
 !! @returns n_so, op_list, ierr
 !!
-! subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, n_so, op_list, ierr )
 subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so, op_list, ierr )
-  use sofi_tools, only: nmax, m_thr
+  use sofi_tools, only: nmax, m_thr, construct_reflection
   use err_module
   implicit none
   integer,                 intent(in) :: nat
@@ -271,17 +290,20 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   real, allocatable :: d_o(:,:)
   integer :: i, j, k, l, m, mm
   real, dimension(3,3) :: theta, beta, gamma
-  logical :: fail1
+  logical :: fail1, fail_beta, is_collinear
   real :: dd, d_i, d_j, dh
   integer :: nbas, nn
   integer :: ti, tj
   real :: small_norm
   !! state
-  logical :: has_sigma, has_inversion, terminate, success
+  logical :: has_sigma, has_inversion, terminate, success, prescreen
   integer :: n_old, n_u_c3
   real :: u_c3(3,5)
+  real :: ax(3)
+  real :: rmin, rmax
 
   ierr = 0
+  prescreen = prescreen_ih
 
   if( size(op_list,3) .ne. nmax ) then
      ierr = ERR_SIZE_NMAX
@@ -290,8 +312,17 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      return
   end if
 
+  !! edge cases for nat=2 or nat=1
+  if( nat .lt. 3 ) then
+     !! add identity
+
+     !! if nat==2: check mirror
+
+     !! return
+  end if
+
   !! zero the output data
-  nbas = 0
+  n_so = 0
   op_list(:,:,:) = 0.0
 
   !! set local copy
@@ -299,11 +330,17 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   coords(:,:) = coords_in(:,:)
 
   !! sort by d
+  rmin = 999.9
+  rmax = 0.0
   allocate( d_o(1:2,1:nat))
   do i = 1, nat
      d_o(1,i) = norm2(coords(:,i))
      d_o(2,i) = real(i)
+     rmin = min(rmin, d_o(1,i))
+     rmax = max(rmax, d_o(1,i))
   end do
+  !! heuristic "detection" of fullerene ... impose prescreen
+  if( rmax - rmin < 0.5 ) prescreen = .true.
 
   !! sorting routines from IRA lib
   call sort( nat, 2, d_o, 1)
@@ -335,7 +372,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      theta(i,i) = 1.0
   end do
 
-  call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, success, ierr )
+  call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -348,19 +385,34 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      theta(i,i) = -1.0
   end do
 
-  call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, 0.5, success, ierr )
+  call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
   end if
 
 
+  !! edge case: check if structure is collinear
+  ! is_collinear = check_collinear( nat, coords, ax )
+  call sofi_check_collinear( nat, coords, is_collinear, ax )
+  if( is_collinear ) then
+     ! write(*,*) "SOFI:: structure is collinear"
+     !! construct reflection on the ax
+     call construct_reflection( ax, theta )
+     !! try... should be detected as I above, but test again anyway.
+     call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
+     write(*,*) "return here", n_so
+     return
+  end if
+
+
   !! set beta
-  small_norm = 1e-1
   small_norm = max(sym_thr, 1e-1)
-  ! small_norm = sym_thr
-  ! small_norm = 5e-1
+
+  !! fail1 happens when vectors are collinear, i.e. orthonormal basis could not be made
   fail1 = .true.
+  !! fail_beta is .true. when no beta is generated
+  fail_beta = .true.
   do i = 1, nat
      if( norm2( coords(:,i)) .lt. small_norm) cycle
      do j = 1, nat
@@ -370,15 +422,17 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
         call set_orthonorm_bas( coords(:,i), coords(:,j), beta, fail1 )
         if( fail1 ) cycle
         !!
+        fail_beta = .false.
         exit
      end do
      exit
   end do
 
+  ! write(*,*) "fail_beta", fail_beta
   ! write(*,*) i,j
   if( fail1 .or. i .gt. nat .or. j .gt. nat ) then
      write(*,*) repeat('%',40)
-     write(*,*) "ERROR: cannot set beta. Linear structure? Or not properly shifted?"
+     write(*,*) "ERROR: cannot set beta. Structure not properly shifted?"
      write(*,*) repeat('%',40)
      write(*,*) "small norm:",small_norm
      write(*,*) nat
@@ -447,7 +501,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
            ! write(*,*) theta(1,:)
            ! write(*,*) theta(2,:)
            ! write(*,*) theta(3,:)
-           call try_sofi( theta, nat, typ, coords, sym_thr, dd, nbas, op_list, dh, m_thr, success, ierr )
+           call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, m_thr, success, ierr )
            if( ierr /= 0 ) then
               write(*,*) "at: ",__FILE__," line:",__LINE__
               return
@@ -457,9 +511,9 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
            if( .not. success ) cycle
 
            if( prescreen_ih ) then
-              n_old = nbas
-              call sofi_get_combos( nat, typ, coords, nbas, op_list )
-              call state_update( n_old, nbas, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
+              n_old = n_so
+              call sofi_get_combos( nat, typ, coords, n_so, op_list )
+              call state_update( n_old, n_so, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
               ! write(*,*) "current state print:"
               ! write(*,*) "has_sigma", has_sigma
               ! write(*,*) "has_inversion",has_inversion
@@ -490,29 +544,6 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   !! NOTE: the above idea is nonsense, since combinations cannot produce smaller
   !! angle operation than original..... Therefore, the original m_thr needs to be low!
   !!
-  ! m_thr = 0.35
-  ! m_thr = 0.5
-  !! combos
-  ! do m = 1, 10
-  !   ii = nbas
-  !   do i = 1, nbas
-  !       do j = 1, nbas
-  !         ! write(*,*) 'combo',i,j
-  !         theta = matmul( op_list(:,:,i), op_list(:,:,j))
-  !         call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, op_list, perm_list, dh, m_thr, ierr )
-  !         ! write(*,*) i,j,dh
-  !         ! write(*,'(3f9.4)') theta(1,:)
-  !         ! write(*,'(3f9.4)') theta(2,:)
-  !         ! write(*,'(3f9.4)') theta(3,:)
-  !       end do
-  !   end do
-  !   write(*,*) 'loop',m,ii, nbas
-  !   if( nbas .eq. ii ) exit
-  !   nbas = ii
-  ! end do
-
-  !! set output number of operations
-  n_so = nbas
 
   ! write(*,*) 'exiting get_symmops'
   deallocate( d_o )
@@ -690,7 +721,7 @@ end subroutine sofi_get_combos
 !! @returns theta, nbas, op_list, dh
 !!
 subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, dh, m_thr, success, ierr )
-  use sofi_tools, only: nmax
+  use sofi_tools, only: nmax, epsilon
   implicit none
   real, dimension(3,3),          intent(inout) :: theta
   integer,                       intent(in) :: nat
@@ -711,8 +742,12 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   real, allocatable :: dists(:)
   integer, allocatable :: found(:), perm(:)
   logical :: not_crazy, is_new
-  logical :: is_valid
+  logical :: is_valid, do_refine
 
+  ! write(*,*) "try_sofi received theta:"
+  ! write(*,*) theta(:,1)
+  ! write(*,*) theta(:,2)
+  ! write(*,*) theta(:,3)
   ierr = 0
   success = .false.
 
@@ -727,6 +762,14 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   do i = 1, nat
      coords(:,i) = matmul( theta, coords(:,i) )
   end do
+
+  ! write(*,*) nat*2
+  ! write(*,*)
+  ! do i = 1, nat
+  !    write(*,*) 1, coords_in(:,i)
+  !    write(*,*) 2, coords(:,i)
+  ! end do
+
 
   !! check if theta is already known
   call is_new_sofi( theta, nbas, op_list, m_thr, is_new )
@@ -743,12 +786,15 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
        1.1*dd, found, dists )
   dh = maxval(dists,1)
   ! write(*,'(x,a,x,f9.4)') 'initial dh',dh
-  if( dh .gt. 5.0*sym_thr) return
+
+  ! write(*,*) dd, 5.0*sym_thr
   ! do i = 1, nat
   !    write(*,*) i, found(i), dists(i)
   ! end do
   ! write(*,*) '1st dh:',dh, sum(dists**2)
+  ! write(*,*) dh, 5.0*sym_thr+epsilon
 
+  if( dh .gt. 5.0*sym_thr+epsilon ) return
 
 
   not_crazy = .true.
@@ -773,8 +819,15 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   !    write(*,*) typ(i), coords(:,i)
   ! end do
 
+  do_refine = .true.
+  !! if first cshda already super good, no need to refine
+  if( dh .lt. min(sym_thr*1e-3, epsilon) ) then
+     do_refine = .false.
+     is_valid = .true.
+  end if
 
-  if( not_crazy) then
+
+  if( do_refine ) then
 
      !! refine
      call refine_sofi( nat, typ_in, coords_in, nat, typ, coords, theta, dh, perm )
@@ -802,7 +855,11 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
 
   deallocate( found, dists )
   deallocate( perm )
-  ! write(*,*) '::: exit try_sofi'
+  ! write(*,*) "out theta:"
+  ! write(*,*) theta(:,1)
+  ! write(*,*) theta(:,2)
+  ! write(*,*) theta(:,3)
+  ! write(*,*) '::: exit try_sofi', success, dh
 end subroutine try_sofi
 
 
@@ -1147,7 +1204,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         return
      end if
      angle_list(i) = angle
-     if(verb) write(*,'(i2,a3,x,i0,"^",i0,2x,"axis:",x,3(f9.6,x),2x,"angle:",x,g0.4)') &
+     if(verb) write(*,'(i2,a3,1x,i0,"^",i0,2x,"axis:",1x,3(f9.6,1x),2x,"angle:",1x,g0.4)') &
           i, op(i), n_int(i), power(i), ax_list(:,i), angle
   end do
 
@@ -1184,7 +1241,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         !!
         if( abs(dot_product(ax, ax_list(:,j))) .gt. 0.999 ) then
            !! is same ax
-           if(verb) write(*,'(a3,g0,a1,g0,x,f7.4)') op(j), n_int(j),'^', power(j), angle_list(j)
+           if(verb) write(*,'(a3,g0,a1,g0,1x,f7.4)') op(j), n_int(j),'^', power(j), angle_list(j)
            skip_ax(j) = 1
            !! keep maximal n value of C operations
            if( op(j) == OP_PROP_ROT) max_n_val = max( max_n_val, n_int(j))
@@ -1247,10 +1304,12 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   nr_n = count( nint(uniq_ax(4,:)) .eq. max_n_val )
   ! write(*,*) 'nr_n', nr_n
 
-  ! write(*,*) 'has inversion:',has_inversion
-  ! write(*,*) 'has sigma:', has_sigma
-  ! write(*,*) 'has cn:', has_cn
-  ! write(*,*) 'max_n_val:',max_n_val
+  write(*,*) "nbas:",nbas
+  write(*,*) 'has inversion:',has_inversion
+  write(*,*) 'has sigma:', has_sigma
+  write(*,*) 'has cn:', has_cn
+  write(*,*) 'max_n_val:',max_n_val
+  write(*,*) 'max_n_loc',max_n_loc
   ! write(*,'(a14,3f9.4)') 'principal ax:',ax_list(:,max_n_loc)
 
   !! select ax with largest n
@@ -1529,6 +1588,14 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      if( has_inversion ) pg = 'Ci'
   endif
 
+  !! Cs and Ci have no prin_ax up to now
+  if( pg == "Cs" .or. pg == "Ci" )then
+     !! set prin_ax as ax of second Op
+     n_prin_ax = 1
+     prin_ax(:,1) = ax_list(:,2)
+  end if
+
+
 100 continue
 
   if( verb) then
@@ -1640,7 +1707,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   real, dimension(3) :: eigvals
   integer :: idx, i, j, nl, pl, gcd
   real :: mindiff
-  real :: flip
+  ! real :: flip
   real, dimension(3) :: tmp, tmp2, tmp3
 
   op = OP_ERROR
@@ -1788,25 +1855,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   !! flip such that z>0
   !! if z==0, then flip such that x>0
   !! if x==0, then flip such that y>0
-  flip = 1.0
-  if( ax(3) .lt. -epsilon ) then
-     !! z is negative, flip
-     flip = -flip
-  elseif( abs(ax(3)) < epsilon ) then
-     !! z==0, check x
-     if( ax(1) < -epsilon ) then
-        !! x is negative, flip
-        flip = -flip
-     elseif( abs(ax(1)) < epsilon ) then
-        !! x==0, check y
-        if( ax(2) < -epsilon ) then
-           !! y is negative, flip
-           flip = -flip
-        end if
-     end if
-  end if
-
-  ax = ax*flip
+  call ax_convention( ax )
 
   !! check if angle is positive/negative according to axis:
   !! generate generic off-axis tmp vector
@@ -2312,3 +2361,63 @@ subroutine sofi_get_err_msg( ierr, msg )
      msg = str(1:len(msg))
   end if
 end subroutine sofi_get_err_msg
+
+
+!> @details
+!! check if the atomic positions in coords form a linear structure.
+!!
+!! @param[in] integer :: nat --> number of atoms
+!! @param[in] real(3,nat) :: coords --> atomic positions
+!! @param[out] logical :: collinear --> .true. when structure is collinear
+!! @param[out] real(3) :: ax --> axis of collinearity
+!!
+subroutine sofi_check_collinear( nat, coords, collinear, ax_o )
+  !! Method: vectors connecting pairs of coords must be collinear
+  use sofi_tools, only: collinearity_thr, ax_convention
+  implicit none
+  integer,                intent(in) :: nat
+  real, dimension(3,nat), intent(in) :: coords
+  logical,                intent(out) :: collinear
+  real, dimension(3),     intent(out) :: ax_o
+
+  !! local vars
+  real :: dotp, ax(3), vec(3)
+  integer :: i
+
+  ax_o(:) = 0.0
+
+  collinear = .true.
+  if( nat == 1 ) return
+
+  !! choose ax as normalized vector from 1 to 2
+  ax_o = coords(:,2) - coords(:,1)
+  !! flip if needed
+  call ax_convention(ax_o)
+  ax_o = ax_o/norm2(ax_o)
+  !! keep this as reference ax
+  ax = ax_o
+
+  !! nat==2 is collinear for sure
+  if( nat == 2 ) return
+
+  ! ax_o = ax_o + ax
+  ! write(*,*) 0, ax
+  check: do i = 3, nat
+     !! dot_product of nomralized vec coords(:,i)-coords(:,1) with ax should be 1
+     vec = coords(:,i) - coords(:,i-1)
+     vec = vec/norm2(vec)
+     !!
+     dotp = dot_product( ax, vec )
+     ax_o = ax_o + sign(1.0, dotp)*vec
+     ! write(*,*) i, vec, dotp
+     if( abs(dotp) < collinearity_thr ) then
+        collinear = .false.
+        exit check
+     end if
+  end do check
+
+  ax_o = ax_o / norm2(ax_o)
+
+  ! write(*,*) "collinear:",collinear
+  ! write(*,*) "ax_o", ax_o
+end subroutine sofi_check_collinear

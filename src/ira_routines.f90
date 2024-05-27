@@ -261,6 +261,7 @@
   !!
   !! basis on output contains basis vectors in rows.
   subroutine set_orthonorm_bas( vec1, vec2, basis, fail )
+    use sofi_tools, only: collinearity_thr
     implicit none
 
     real, dimension(3),   intent(in) :: vec1, vec2
@@ -268,12 +269,12 @@
     logical,              intent(out) :: fail
 
     real :: prod
-    real :: collinearity_thr
+    ! real :: collinearity_thr
     real :: small_size_thr
     real :: norm_v
 
     !! threshold for collinearity of two vectors
-    collinearity_thr = 0.95
+    ! collinearity_thr = 0.95
 
     !! threshold for too small vectors
     !! (for numerical reasons, don't want to normalize a too small vector)

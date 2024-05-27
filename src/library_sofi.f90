@@ -918,3 +918,39 @@ subroutine libira_get_err_msg( cerr, cmsg )bind(C, name="libira_get_err_msg")
   msg_fptr(n+1) = c_null_char
 
 end subroutine libira_get_err_msg
+
+
+!> @details
+!! Check if the input structure in coords is collinear or not.
+!! This is a wrapper to sofi_check_collinear() from sofi_routines.f90
+!!
+!! @param[in] nat            :: number of atoms
+!! @param[in] coords(3,nat)  :: atomic positions
+!! @param[out] collinear     :: is .true. when structure is collinear
+!! @param[out] ax(3)         :: linear axis if collinear
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_check_collinear( int nat, double* coords, int collinear, double* ax )
+!!~~~~~~~~~~~~~~~~~~
+subroutine libira_check_collinear( nat, coords, collinear, ax )bind(C,name="libira_check_collinear" )
+  use, intrinsic :: iso_c_binding
+  implicit none
+  integer( c_int ), value, intent(in) :: nat
+  type( c_ptr ), value, intent(in) :: coords
+  logical( c_bool ), intent(out) :: collinear
+  type( c_ptr ), intent(in) :: ax
+
+  real( c_double), dimension(:,:), pointer :: pcoords
+  real( c_double ), dimension(:), pointer :: pax
+  logical :: coll
+
+  !! receive input
+  call c_f_pointer( coords, pcoords, shape=[3,nat])
+
+  !! connect output
+  call c_f_pointer( ax, pax, shape=[3] )
+
+  call sofi_check_collinear( nat, pcoords, coll, pax )
+  collinear = logical( coll, c_bool )
+end subroutine libira_check_collinear

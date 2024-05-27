@@ -1,7 +1,7 @@
 #
 # Fortran compiler
 #
-FCOMP = gfortran
+F90 = gfortran
 
 #
 # archiver
@@ -17,7 +17,9 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -fdefault-real-8 -fcheck=bounds -fPIC -O1 -g -cpp
+FFLAGS = -fdefault-real-8 -fcheck=bounds -fPIC -cpp -Ofast -march=native -ffast-math -funroll-loops
+#FFLAGS = -fdefault-real-8 -fcheck=bounds -fPIC -cpp -O1
+#FFLAGS += -g -DDEBUG -pedantic -std=f2008
 
 SRC = $(PWD)
 OBJ = $(SRC)/Obj
@@ -37,6 +39,7 @@ SHLIB = libira.so
 #
 # utils
 futils := \
+	$(SRC)/timer.f90 \
 	$(SRC)/sofi_tools.f90 \
 	$(SRC)/err_module.f90 \
 	$(SRC)/version.f90 \
@@ -60,7 +63,7 @@ default: msg
 all : lib shlib
 
 $(OBJ)%.o: $(SRC)/%.f90
-	$(FCOMP) $(FFLAGS) $(MOD) -c $< -o $@
+	$(F90) $(FFLAGS) $(MOD) -c $< -o $@
 
 
 lib: $(OBJ) $(IRALIB)
@@ -83,7 +86,7 @@ $(IRALIB): $(outils)
 # pack the shared library
 #====
 $(SHLIB): $(olib) $(outils)
-	$(FCOMP) -o $@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK)
+	$(F90) -o $@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK)
 
 msg:
 	@echo 'Use one of the following:'

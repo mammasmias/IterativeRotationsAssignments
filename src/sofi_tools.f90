@@ -51,9 +51,9 @@ module sofi_tools
 
   real, parameter :: pi = 4.0*atan(1.0)
   real, parameter :: epsilon = 1e-6
+  real, parameter :: collinearity_thr = 0.95
 
 contains
-
 
   subroutine cross_prod( a, b, c )
     !> @brief Cross product of two vectors
@@ -488,6 +488,38 @@ contains
     !call determinant(rmat,dr)
     !write(*,*) 'det r:',dr
   end subroutine construct_rotation
+
+
+  !> @details
+  !! convention for axis direction:
+  !! flip such that z>0
+  !! if z==0, then flip such that x>0
+  !! if x==0, then flip such that y>0
+  subroutine ax_convention( ax )
+    implicit none
+    real, intent(inout) :: ax(3)
+
+    real :: flip
+
+    flip = 1.0
+    if( ax(3) .lt. -epsilon ) then
+       !! z is negative, flip
+       flip = -flip
+    elseif( abs(ax(3)) < epsilon ) then
+       !! z==0, check x
+       if( ax(1) < -epsilon ) then
+          !! x is negative, flip
+          flip = -flip
+       elseif( abs(ax(1)) < epsilon ) then
+          !! x==0, check y
+          if( ax(2) < -epsilon ) then
+             !! y is negative, flip
+             flip = -flip
+          end if
+       end if
+    end if
+    ax = ax*flip
+  end subroutine ax_convention
 
 
 end module sofi_tools
