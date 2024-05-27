@@ -13,7 +13,11 @@
 !! limitations under the License.
 !!
 
-!!==============================================================================
+!> @defgroup info_libira
+!> @{
+
+!!===============================================================================
+!! @note
 !! This file defines the wrappers to IRA routines, which are part of the
 !! shared library libira.so.
 !! The routines here are defined with "bind(C)" and "use iso_c_binding", and
@@ -24,8 +28,8 @@
 !! and it's up to the caller to assure the correct shape and indices.
 !! The routines here receive C-pointers to the memory where output should be
 !! stored. Therefore, the output data appears as "intent(in)".
-!!==============================================================================
-
+!!===============================================================================
+!> @}
 
 !> @brief wrapper to the cshda routine from cshda.f90
 !!

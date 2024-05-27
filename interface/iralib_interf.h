@@ -51,3 +51,5 @@ void libira_ext_bfield( int nmat, double *mat_data, double *b_vec, \
 void libira_get_err_msg( int ierr, char** msg );
 
 void libira_matrix_distance( const double *mat1, const double *mat2, double *dist);
+
+void libira_check_collinear( int nat, double *coords, int *collinear, double **ax );

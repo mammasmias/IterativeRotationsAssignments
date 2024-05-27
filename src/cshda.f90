@@ -14,6 +14,7 @@
 !!
 
 
+!> @cond SKIP
   module ira_pbc
 
     !! routines for computing a vector in periodic boundary condtions
@@ -147,7 +148,7 @@
       end subroutine crist_to_cart
 
   end module
-
+!> @endcond
 
 
 

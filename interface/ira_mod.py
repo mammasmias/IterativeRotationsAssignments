@@ -1470,3 +1470,43 @@ class SOFI(algo):
 
         d = cd.value
         return d
+
+
+    def check_collinear( self, nat, coords ):
+        '''
+        Check if the input structure is collinear or not.
+
+        **== input ==**
+
+        :param nat: number of atoms in the structure
+        :type nat: int
+
+        :param coords: the atomic positions of the structure
+        :type coords: np.array((nat,3), dtype=float)
+
+        **== output ==**
+
+        :param collinear: true if structure is collinear
+        :type collinear: bool
+
+        :param ax: axis of collinearity, if structure is collinear
+        :type ax: np.array(3, dtype=float)
+
+        '''
+        #input
+        n = c_int( nat )
+        c = coords.ctypes.data_as( POINTER(c_double) )
+
+        # output
+        c_col = c_bool()
+        c_ax = (c_double*3)()
+
+        self.lib.libira_check_collinear.restype = None
+        self.lib.libira_check_collinear.argtypes = [ c_int, POINTER(c_double), POINTER(c_bool), \
+                                                     POINTER(POINTER(c_double*3))]
+
+        self.lib.libira_check_collinear( n, c, pointer(c_col), pointer(c_ax) )
+        ax = np.zeros([3], dtype=float)
+        for i in range(3):
+            ax[i] = c_ax[i]
+        return c_col.value, ax
