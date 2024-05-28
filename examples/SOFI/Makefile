@@ -1,8 +1,8 @@
 #
 # Fortran compiler
 #
-FCOMP = gfortran
-CCOMP=gcc
+F90 = gfortran
+CC=gcc
 
 #
 # lapack flag. 
@@ -14,7 +14,7 @@ LIBLAPACK = -llapack
 #
 # compilation flags
 #
-FFLAGS = -Wall -fdefault-real-8 -fcheck=all
+FFLAGS = -fdefault-real-8 -fcheck=bounds
 CFLAGS =
 
 SRC := $(PWD)
@@ -51,7 +51,7 @@ default: msg
 all : f90 cprog
 
 $(OBJ)%.o: $(SRC)/%.f90
-	$(FCOMP) $(FFLAGS) $(MOD) -c $< -o $@
+	$(F90) $(FFLAGS) $(MOD) -c $< -o $@
 
 
 f90: $(OBJ) $(F_PROG)
@@ -69,13 +69,13 @@ $(OBJ):
 # Compile the f90 executable
 #====
 $(F_PROG): $(o_uni)
-	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBLAPACK)
+	$(F90) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBLAPACK)
 
 #====
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CCOMP) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB)
+	$(CC) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB)
 
 
 msg:
