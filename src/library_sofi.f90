@@ -749,14 +749,14 @@ subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,nam
   implicit none
   interface
      FUNCTION c_strlen(str) BIND(C, name='strlen')
-       IMPORT :: c_ptr, c_size_t
+       IMPORT :: c_char, c_size_t
        IMPLICIT NONE
-       TYPE(c_ptr), INTENT(IN), VALUE :: str
+       character(c_char), dimension(*), intent(in) :: str
        INTEGER(c_size_t) :: c_strlen
      END FUNCTION c_strlen
   end interface
 
-  type( c_ptr ), value, intent(in) :: op
+  character(len=1, kind=c_char), intent(in) :: op(*)
   type( c_ptr ), value, intent(in) :: axis
   real( c_double ), value, intent(in) :: angle
   type( c_ptr ), intent(in) :: matrix
@@ -766,21 +766,22 @@ subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,nam
   real(c_double), dimension(:,:), pointer :: ptr_matrix
 
   real( c_double ), dimension(3,3) :: f_matrix
-  character(len=1,kind=c_char), dimension(:), pointer :: ptr_op
   character(len=1) :: f_op
-  integer( c_int ) :: i, n
+  integer( c_int ) :: i
+  integer( c_size_t ) :: n
   integer :: ierr
 
   n=c_strlen(op)
-  call c_f_pointer( op, ptr_op, [n] )
   if( n .gt. 1 ) then
-     write(*,*) "expected len-1 string as op, got:",n, ptr_op
+     write(*,*) "ERR: expected len-1 string as op, got:",n
+     write(*,*) "at:",__FILE__, " line:",__LINE__
+     cerr = -8
      return
   end if
 
   f_op=""
   do i = 1, n
-     f_op(i:i)=ptr_op(i)
+     f_op(i:i)=op(i)
   end do
 
   f_op=trim(adjustl(f_op))
@@ -791,7 +792,7 @@ subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,nam
   call sofi_construct_operation( f_op, ptr_ax, angle, f_matrix, ierr )
   cerr = int( ierr, c_int )
   if( ierr /= 0 ) then
-     write(*,*) "at",__FILE__, "line:",__LINE__
+     write(*,*) "at",__FILE__, " line:",__LINE__
      return
   end if
 
