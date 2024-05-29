@@ -27,8 +27,8 @@ MOD = -I$(OBJ) -J$(OBJ) -I$(INTERFDIR)
 #
 # path to src/libira.so
 #
-SHLIB = $(SRCDIR)/libira.so
-
+#SHLIB = $(SRCDIR)/libira.so
+SHLIB = -Wl,-rpath=$(SRCDIR) -L$(SRCDIR) -lira
 
 # Produced filenames
 #

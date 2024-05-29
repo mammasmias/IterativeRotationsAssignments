@@ -17,7 +17,7 @@ LIBLAPACK = -llapack
 FFLAGS = -fdefault-real-8 -fcheck=bounds
 CFLAGS =
 
-SRC := $(PWD)
+SRC := $(CURDIR)
 SRCDIR := $(SRC)/../../src
 INTERFDIR = $(SRC)/../../interface
 OBJ = $(SRC)/Obj
@@ -27,9 +27,9 @@ MOD = -I$(OBJ) -J$(OBJ) -I$(INTERFDIR)
 #
 # path to src/libira.so
 #
-SHLIB = $(SRCDIR)/libira.so
+SHLIB = -Wl,-rpath,$(SRCDIR) $(SRCDIR)/libira.so
 
-
+#
 # Produced filenames
 #
 F_PROG = f90_program.x
