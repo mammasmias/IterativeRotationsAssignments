@@ -32,11 +32,11 @@ module sofi_tools
   !!   Also, groups with order > 6 are super rare in atomic clusters. But can happen in
   !!   for example nanotubes, where main ax is in center of tube, around this ax
   !!   many rotations can happen, then order of group can be any.
-  ! m_thr = 1.4
-  ! real, parameter :: m_thr = 1.07
-  real, parameter :: m_thr = 0.73
-  ! real, parameter :: m_thr = 0.58
-  ! real, parameter :: m_thr = 0.35
+  ! real, parameter :: m_thr = 1.4      !! C6
+  ! real, parameter :: m_thr = 1.07     !! C8
+  real, parameter :: m_thr = 0.73     !! C12
+  ! real, parameter :: m_thr = 0.49     !! C18
+  ! real, parameter :: m_thr = 0.36     !! C24
 
 
   !! Schoenflies symbols for operations
@@ -52,6 +52,9 @@ module sofi_tools
   real, parameter :: pi = 4.0*atan(1.0)
   real, parameter :: epsilon = 1e-6
   real, parameter :: collinearity_thr = 0.95
+
+  !! limit value for n in sofi_analmat.
+  integer, parameter :: lim_n_val = 24
 
 contains
 

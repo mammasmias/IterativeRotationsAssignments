@@ -508,7 +508,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
            end if
 
            !! mat is not successful, go to next
-           if( .not. success ) cycle
+           ! if( .not. success ) cycle
 
            if( prescreen_ih ) then
               n_old = n_so
@@ -524,6 +524,11 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
               ! end do
               if( terminate ) exit kloop_
            end if
+
+           ! if( success ) then
+           !    !! TODO
+           !    !! if op = OP_ROT, and angle is on edge of m_thr, generate the half-angle and try
+           ! end if
 
 
            ! write(*,*) 'op exiting try_sofi:'
@@ -1304,12 +1309,12 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   nr_n = count( nint(uniq_ax(4,:)) .eq. max_n_val )
   ! write(*,*) 'nr_n', nr_n
 
-  write(*,*) "nbas:",nbas
-  write(*,*) 'has inversion:',has_inversion
-  write(*,*) 'has sigma:', has_sigma
-  write(*,*) 'has cn:', has_cn
-  write(*,*) 'max_n_val:',max_n_val
-  write(*,*) 'max_n_loc',max_n_loc
+  ! write(*,*) "nbas:",nbas
+  ! write(*,*) 'has inversion:',has_inversion
+  ! write(*,*) 'has sigma:', has_sigma
+  ! write(*,*) 'has cn:', has_cn
+  ! write(*,*) 'max_n_val:',max_n_val
+  ! write(*,*) 'max_n_loc',max_n_loc
   ! write(*,'(a14,3f9.4)') 'principal ax:',ax_list(:,max_n_loc)
 
   !! select ax with largest n
@@ -1797,14 +1802,12 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
 
   !! Schoenflies notation: "OP n^p"
   !! primitive way to find n and p. There should be a better way for this...!
-  !! loop over 12 => 1/12 seems to be smallest angle of rotation in a PG.
-  !! Go beyond 12 ... ? Ok, go to 24.
   n = 0
   p = 1
   nl = n
   pl = p
   mindiff=99.9
-  do j = 1, 24
+  do j = 1, lim_n_val
      diff = angle*j - nint(angle*j)
      ! write(*,*) j, diff
      if( abs(diff) .lt. mindiff ) then
