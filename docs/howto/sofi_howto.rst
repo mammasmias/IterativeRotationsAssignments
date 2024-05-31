@@ -106,7 +106,7 @@ and the axis-angle representation by calling the ``analmat()`` function:
    >>> ## save the output
    >>> op, n, p, ax, angle = sofi.analmat( matrix )
 
-The Schoeflies symbol is then ``Op n^p``. The ``angle`` is in units :math:`1/2\pi`, i.e. ``angle=0.5`` is half
+The Schoeflies symbol is then ``Op n^p``. The ``angle`` is in units of :math:`2\pi`, i.e. ``angle=0.5`` is half
 the full circle.
 
 NOTE the axis ``ax`` comes from a diagonalisation procedure, therefore any :math:`\pm` direction is a
@@ -136,6 +136,8 @@ will flip its axis and angle :
       ('C', 19, 1, array([1., 0., 0.]), 0.051282052)
       >>> ## notice that C39^2 is between C38^2=C19^1 and C40^2=C20^1
 
+   In order to modify this behaviour, edit the ``lim_n_val`` parameter, as described :ref:`here <modif_m_thr>`.
+
 
 Generate a cyclic group from combinations of matrices
 =====================================================
@@ -143,6 +145,8 @@ Generate a cyclic group from combinations of matrices
 Two or more matrices can be used to create a cyclic group. A cyclic group means any combination of the
 elements always generates an element that is inside the group. This can be done by calling the ``mat_combos()``
 function:
+
+.. code-block:: python
 
    >>> ## create an empty list of two 3x3 matrices
    >>> mat_list = np.zeros( [2, 3, 3], dtype=float)
@@ -164,12 +168,15 @@ function:
    array([[[-1.,  0.,  0.],
            [ 0.,  1.,  0.],
            [ 0.,  0.,  1.]],
+           
           [[ 1.,  0.,  0.],
            [ 0.,  1.,  0.],
            [ 0.,  0., -1.]],
+
           [[ 1.,  0.,  0.],
            [ 0.,  1.,  0.],
            [ 0.,  0.,  1.]],
+
           [[-1.,  0.,  0.],
            [ 0.,  1.,  0.],
            [ 0.,  0., -1.]]])
@@ -285,8 +292,7 @@ The threshold ``m_thr`` is set to a value such that the rotation C12^1 can be re
 .. note::
    The value of ``m_thr`` effectively determines the `resolving power` of SOFI. For groups containing
    operations with order higher than C12, the value should be adjusted, and the ``src`` recompiled.
-   In that case, take care of array sizes, as they might exceed ``nmax``, and to adjust the procedure
-   in ``analmat()``.
+   In that case, take care of array sizes, as they might exceed ``nmax``, and to adjust ``lim_n_val``. Refer :ref:`here <modif_m_thr>` for more info.
 
 
 
@@ -560,35 +566,109 @@ In SOFI, this can be achieved by simply shifting the structure such that the des
 
 
 HOW-TO: Dealing with linear structures
-=====================================
+======================================
 
 Linear structures can have either :math:`C_{\infty v}` or :math:`D_{\infty h}` point groups. The main difference between them is that :math:`D_{\infty h}` has the inversion as symmetry operation, while :math:`C_{\infty v}` does not. The axis of the structure is a rotational axis of infinite order for both groups.
 
-Due to the way the main algorithm of SOFI works, it is limited to structures containing at least 3 noncollinear atoms. Thus, linear structures cannot be explicitly treated with it. The only symmetry operations returned by SOFI when inputting a linear structure will be the identity matrix, and the inversion when applicable.
+Due to the way the main algorithm of SOFI works, it is limited to structures containing at least 3 noncollinear atoms. Thus, linear structures cannot be explicitly treated with it. The only symmetry operations returned by SOFI when inputting a linear structure will be the identity matrix, and when applicable, the inversion, and reflection over the plane of the axis.
 
-   >>> ## create a linear structure
-   >>> coords = np.array([[-1.5,  0. ,  0. ],
-   >>>                    [-0.5,  0. ,  0. ],
-   >>>                    [ 0.5,  0. ,  0. ],
-   >>>                    [ 1.5,  0. ,  0. ]])
+
+For example, if we create a linear structure without the mirror symmetry, thus group :math:`C_{\infty v}`, SOFI will only find the identity matrix, and the group will be "C1":
+
+.. code-block:: python
+
+   >>> ## create a linear structure with 3 atoms on the x-axis, centered at zero
+   >>> nat = 3
+   >>> coords = np.array([[-1.0, 0.0, 0.0],
+   ...                    [0.0, 0.0, 0.0],
+   ...                    [1.0, 0.0, 0.0]])
    >>> ##
-   >>> ## all atoms of the same type:
-   >>> typ = np.ones( 4, dtype=int )
+   >>> ## specify one of the side atoms as different atomic type
+   >>> typ = np.array([1, 1, 2], dtype=int)
    >>> ##
    >>> ## call sofi.compute
-   >>> sym = sofi.compute( 4, typ, coords, 0.1 )
+   >>> sym = sofi.compute( nat, typ, coords, 0.1 )
+   >>> ##
+   >>> ## list of matrices has only identity, and the found PG is C1
    >>> sym.matrix
+   array([[[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]]])
    >>> sym.pg
-   >>> 'Ci+'
+   'C1'
 
 
-To specify the proper point group of a linear structure, the library contains a function ``check_collinear``
+On the other hand, if we create a structure with inversion and reflection, group :math:`D_{\infty h}`, and call ``sofi.compute()``. The list of matrices has three elements, while the PG name is "Ci+".
+
+.. code-block:: python
+
+   >>> ## create a linear structure with 4 atoms on the x-axis, already centered at zero
+   >>> nat = 4
+   >>> coords = np.array([[-1.5,  0. ,  0. ],
+   ...                    [-0.5,  0. ,  0. ],
+   ...                    [ 0.5,  0. ,  0. ],
+   ...                    [ 1.5,  0. ,  0. ]])
+   >>> ##
+   >>> ## all atoms of the same type:
+   >>> typ = np.array([ 1, 1, 1, 1], dtype=int)
+   >>> ##
+   >>> ## call sofi.compute
+   >>> sym = sofi.compute( nat, typ, coords, 0.1 )
+   >>> ##
+   >>> ## list of matrices has three elements: identity, inversion, mirror over x-axis
+   >>> sym.matrix
+   array([[[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]],
+   
+          [[-1.,  0.,  0.],
+           [ 0., -1.,  0.],
+           [ 0.,  0., -1.]],
+   
+          [[-1., -0., -0.],
+           [ 0.,  1., -0.],
+           [-0.,  0.,  1.]]])
+   >>> ##
+   >>> ## the point group gives Ci+ since there are more operations than expected for pure Ci,
+   >>> ## pure Ci has 2 operations.
+   >>> sym.pg
+   'Ci+'
+
+
+In order to distinguish the linear structures from the others, the library contains a function ``check_collinear()``, which can be used as follows:
+
+.. code-block:: python
+
+   >>> is_collinear, axis = sofi.check_collinear( nat, coords )
+
+Thus if the returned variable ``is_collinear=True``, then the structure in ``coords`` is collinear, and vice versa.
+The variable ``axis`` contains the axis of the structure, when it is collinear.
+
+This function can be combined with the ``compute()`` function to properly label point groups of linear structures:
+
+.. code-block:: python
+
+   ## call compute()
+   sym = sofi.compute( nat, typ, coords, sym_thr )
+   ##
+   ## check if structure is collinear
+   is_collinear, axis = sofi.check_collinear( nat, coords )
+   if( is_collinear ):
+
+      ## if number of symmetry operations == 1: group is C1
+      if( sym.n_sym == 1 ):
+         ## overwrite the point group as desired
+         sym.pg = "Cnv"
+
+      else:
+         sym.pg = "Dnh"
 
 
 
+.. _modif_m_thr:
 
 HOW-TO: Modifying the resolving power of SOFI
-============================================
+=============================================
 
 In order to modify the resolving power of SOFI, the three parameters in the SOFI source: ``m_thr``, ``nmax``, and ``lim_n_val`` should preferrably be modified, and the source re-compiled. The parameters are located in ``sofi_tools.f90``:
 
@@ -614,4 +694,4 @@ Keep in mind that the actual sizes of arrays in the caller software need to be c
 
   integer, parameter :: lim_n_val = 24
 
-The ``lim_n_val`` is used to find values of ``n`` and ``p`` in ``sofi_analmat()``. If a symmetry operation with higher orded is input, values of ``n`` and ``p`` will be wrong. See also :ref:`here <analmat>`.
+The ``lim_n_val`` is used to find values of ``n`` and ``p`` in ``sofi_analmat()``. If a symmetry operation with higher order is input, values of ``n`` and ``p`` will be wrong. See also :ref:`here <analmat>`.
