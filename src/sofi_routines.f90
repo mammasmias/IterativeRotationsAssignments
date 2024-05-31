@@ -401,7 +401,6 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      call construct_reflection( ax, theta )
      !! try... should be detected as I above, but test again anyway.
      call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
-     write(*,*) "return here", n_so
      return
   end if
 
