@@ -246,7 +246,6 @@ contains
     n1 = size(int_arr1, 1)
     n2 = size(int_arr2, 1)
     allocate( character(len=wlen)::old(n1+n2) )
-    write(*,*) n1, n2, size(old,1)
 
     !! check on str_arr1
     old(:) = "xcba"
