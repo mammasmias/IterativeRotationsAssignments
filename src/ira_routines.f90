@@ -660,8 +660,9 @@
 
     integer :: i, j, idx1, idx2, m, k
     real :: hd, hd_old
-    real, allocatable :: dists(:), d_o(:,:)
-    integer, allocatable :: found(:)
+    real, dimension(2, nat2) :: d_o
+    real, dimension(nat2) :: dists
+    integer, dimension(nat2) :: found
     integer, dimension(nat1) :: typ1
     real, dimension(3,nat1) :: coords1
     integer, dimension(nat2) :: typ2
@@ -678,7 +679,6 @@
     !!
     !! sort coords2 by size
     !!
-    allocate( d_o(1:2, 1:nat2) )
     do i = 1, nat2
        d_o(1,i) = norm2( coords2(:,i))
        d_o(2,i) = real(i)
@@ -696,8 +696,6 @@
     !! search for gamma
     !!
     hd_old = 999.9
-    allocate( found(1:nat2) )
-    allocate( dists(1:nat2) )
     idx1 = 0
     idx2 = 0
     m_fin = 0
@@ -843,8 +841,6 @@
     endif
 
     hd_out = hd_old
-    deallocate( d_o )
-    deallocate( found, dists )
 
     ! write(*,*) 'nbas tested:', count
     ! write(*,*) 'gamma idx:',gamma_idx(:)
@@ -1335,7 +1331,7 @@
   end subroutine ira_svd
 
 
-  subroutine ira_get_errmsg( ierr, msg )
+  subroutine ira_get_err_msg( ierr, msg )
     use err_module, only: get_err_msg
     implicit none
     integer, intent(in) :: ierr
@@ -1346,4 +1342,4 @@
     allocate( me, source=get_err_msg(ierr) )
     msg = me
     deallocate(me)
-  end subroutine ira_get_errmsg
+  end subroutine ira_get_err_msg
