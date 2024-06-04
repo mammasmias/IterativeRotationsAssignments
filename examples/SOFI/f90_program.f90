@@ -209,21 +209,5 @@ contains
   end subroutine str_to_int
 
 
-  function is_numeric(string)
-    implicit none
-    character(len=*), intent(in) :: string
-    logical :: is_numeric
-    real :: x
-    integer :: e,n
-    character(len=12) :: fmt
-
-    n = len_trim(string)
-    write(fmt,'("(f",i0,".0)")') n
-    read(string,fmt,iostat=e) x
-    is_numeric = (e == 0)
-  end function is_numeric
-
-
-
 end program sofi
 
