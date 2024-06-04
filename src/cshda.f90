@@ -203,6 +203,7 @@
     real :: dist, dist_old, dmin
     integer, dimension(nat1) :: tmpmin
 
+
     !! init output
     dists = 999.9
     found = 0
@@ -261,6 +262,15 @@
        !!
     end do
 
+    ! write(*,"(3x)",advance="no")
+    ! do i = 1, nat2
+    !    write(*,"(i4,1x)", advance="no") i
+    ! end do
+    ! write(*,*)
+    ! do i = 1, nat1
+    !    write(*,"(i2,1x,*(f4.2,:,1x))")  i, chkmat(:,i)
+    ! end do
+
 
     !! set up the queue of searches
     lsearch(:) = .true.
@@ -279,6 +289,7 @@
        !!
        i = findloc( lsearch(:), .true., 1)
        if( i .eq. 0 ) exit
+       ! write(*,*) "next i",i
        !!
        !! set next search on this index to .false.
        !!
@@ -289,17 +300,23 @@
        !!
        j = tmpmin(i)
        dist = chkmat(j,i)
+       ! write(*,*) "tmpmin j", j, dist
        !!
        !!
        !! check the if we already have this j
        !!
-       if( assigned(j) .gt. 0 ) then
+       ! if( assigned(j) .gt. 0 ) then
+       if( any(found .eq. j) ) then
           !!
           !!
           !! find the old index where its used, and the old distance
           !!
-          idx_old = assigned(j)
+          ! idx_old = assigned(j)
+          ! idx_old = minloc( abs(found - j), 1)
+          idx_old = findloc( found, j, 1)
           dist_old = dists(idx_old)
+          ! write(*,*) "j already assigned at", idx_old, dist_old
+          ! write(*,"(*(f4.2,:,1x))") dists
           !!
           if( dist_old .lt. dist ) then
              !!
@@ -324,6 +341,7 @@
              chkmat(j, idx_old) = 999.0
              lsearch( idx_old ) = .true.
              tmpmin(idx_old) = minloc( chkmat(:,idx_old), 1)
+             assigned(idx_old) = 0
              !!
           endif
        endif
@@ -333,6 +351,9 @@
        found(i) = j
        dists(i) = dist
        assigned(j) = i
+       ! write(*,*) "found now"
+       ! write(*,"(10i3)") found
+
        !!
     end do
 
@@ -342,8 +363,12 @@
        dists(i) = sqrt(dists(i))
     end do
 
+
     !! for equal sizes of structures we should be done
     if( nat1 .eq. nat2 ) return
+
+    ! write(*,*) "found now"
+    ! write(*,"(10i3)") found
 
     !! find indices of conf2 not represented in found,
     !! and put them at end
@@ -352,9 +377,15 @@
        !! if this i is already found, do nothing
        if( any(i .eq. found(:) ) ) cycle
        !! add this i to last spot
+       ! write(*,*) "adding ",i,"to idx k=", k
        k = k + 1
        found(k) = i
+       ! write(*,*) "found now"
+       ! write(*,"(10i3)") found
+
     end do
+
+
 
   end subroutine cshda
 
