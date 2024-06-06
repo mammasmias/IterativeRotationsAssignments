@@ -743,8 +743,8 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   integer, dimension(nat) :: typ
   real, dimension(3,nat) :: coords
   integer :: i
-  real, allocatable :: dists(:)
-  integer, allocatable :: found(:), perm(:)
+  real, dimension(nat) :: dists
+  integer, dimension(nat) :: found, perm
   logical :: not_crazy, is_new
   logical :: is_valid, do_refine
 
@@ -782,9 +782,6 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
 
   !! call to IRA lib
   !! get first cshda
-  allocate( found(1:nat))
-  allocate( dists(1:nat))
-  allocate( perm(1:nat))
   call cshda( nat, typ_in, coords_in, &
        nat, typ, coords, &
        1.1*dd, found, dists )
@@ -857,8 +854,6 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
      end if
   end if
 
-  deallocate( found, dists )
-  deallocate( perm )
   ! write(*,*) "out theta:"
   ! write(*,*) theta(:,1)
   ! write(*,*) theta(:,2)
