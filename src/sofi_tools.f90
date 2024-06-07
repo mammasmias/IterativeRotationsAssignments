@@ -32,11 +32,11 @@ module sofi_tools
   !!   Also, groups with order > 6 are super rare in atomic clusters. But can happen in
   !!   for example nanotubes, where main ax is in center of tube, around this ax
   !!   many rotations can happen, then order of group can be any.
-  ! m_thr = 1.4
-  ! real, parameter :: m_thr = 1.07
-  real, parameter :: m_thr = 0.73
-  ! real, parameter :: m_thr = 0.58
-  ! real, parameter :: m_thr = 0.35
+  ! real, parameter :: m_thr = 1.4      !! C6
+  ! real, parameter :: m_thr = 1.07     !! C8
+  real, parameter :: m_thr = 0.73     !! C12
+  ! real, parameter :: m_thr = 0.49     !! C18
+  ! real, parameter :: m_thr = 0.36     !! C24
 
 
   !! Schoenflies symbols for operations
@@ -51,9 +51,12 @@ module sofi_tools
 
   real, parameter :: pi = 4.0*atan(1.0)
   real, parameter :: epsilon = 1e-6
+  real, parameter :: collinearity_thr = 0.95
+
+  !! limit value for n in sofi_analmat.
+  integer, parameter :: lim_n_val = 24
 
 contains
-
 
   subroutine cross_prod( a, b, c )
     !> @brief Cross product of two vectors
@@ -488,6 +491,38 @@ contains
     !call determinant(rmat,dr)
     !write(*,*) 'det r:',dr
   end subroutine construct_rotation
+
+
+  !> @details
+  !! convention for axis direction:
+  !! flip such that z>0
+  !! if z==0, then flip such that x>0
+  !! if x==0, then flip such that y>0
+  subroutine ax_convention( ax )
+    implicit none
+    real, intent(inout) :: ax(3)
+
+    real :: flip
+
+    flip = 1.0
+    if( ax(3) .lt. -epsilon ) then
+       !! z is negative, flip
+       flip = -flip
+    elseif( abs(ax(3)) < epsilon ) then
+       !! z==0, check x
+       if( ax(1) < -epsilon ) then
+          !! x is negative, flip
+          flip = -flip
+       elseif( abs(ax(1)) < epsilon ) then
+          !! x==0, check y
+          if( ax(2) < -epsilon ) then
+             !! y is negative, flip
+             flip = -flip
+          end if
+       end if
+    end if
+    ax = ax*flip
+  end subroutine ax_convention
 
 
 end module sofi_tools

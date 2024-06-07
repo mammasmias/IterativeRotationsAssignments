@@ -161,17 +161,15 @@
     integer, dimension(n), intent(in) :: order
 
     integer :: i
-    real, allocatable :: tmp(:,:)
+    real, dimension(m,n) :: tmp
 
     !! tmp copy
-    allocate( tmp(1:m, 1:n), source=array )
+    tmp(:,:) = array(:,:)
 
     !! permute
     do i = 1, n
        array(:,i) = tmp(:, order(i) )
     end do
-
-    deallocate( tmp )
 
   end subroutine permute_real_2d
 
@@ -189,17 +187,15 @@
     integer, dimension(n), intent(in) :: order
 
     integer :: i
-    real, allocatable :: tmp(:,:)
+    real, dimension(m,n) :: tmp
 
     !! tmp copy
-    allocate( tmp(1:m, 1:n), source=array )
+    tmp(:,:) = array(:,:)
 
     !! permute
     do i = 1, n
        array(:, order(i)) = tmp(:, i )
     end do
-
-    deallocate( tmp )
 
   end subroutine permute_real_2d_back
 
@@ -215,17 +211,15 @@
     integer, dimension(n), intent(in) :: order
 
     integer :: i
-    integer, allocatable :: tmp(:)
+    integer, dimension(n) :: tmp
 
     !! tmp copy
-    allocate( tmp(1:n), source=array )
+    tmp(:) = array(:)
 
     !! permute
     do i = 1, n
        array(i) = tmp( order(i) )
     end do
-
-    deallocate( tmp )
 
   end subroutine permute_int_1d
 
@@ -242,17 +236,15 @@
     integer, dimension(n), intent(in) :: order
 
     integer :: i
-    integer, allocatable :: tmp(:)
+    integer, dimension(n) :: tmp
 
     !! tmp copy
-    allocate( tmp(1:n), source=array )
+    tmp(:) = array(:)
 
     !! permute
     do i = 1, n
        array( order(i) ) = tmp( i )
     end do
-
-    deallocate( tmp )
 
   end subroutine permute_int_1d_back
 
@@ -261,6 +253,7 @@
   !!
   !! basis on output contains basis vectors in rows.
   subroutine set_orthonorm_bas( vec1, vec2, basis, fail )
+    use sofi_tools, only: collinearity_thr
     implicit none
 
     real, dimension(3),   intent(in) :: vec1, vec2
@@ -268,12 +261,8 @@
     logical,              intent(out) :: fail
 
     real :: prod
-    real :: collinearity_thr
     real :: small_size_thr
     real :: norm_v
-
-    !! threshold for collinearity of two vectors
-    collinearity_thr = 0.95
 
     !! threshold for too small vectors
     !! (for numerical reasons, don't want to normalize a too small vector)
@@ -381,15 +370,15 @@
     real, dimension(3),       intent(out) :: translate
     integer,                  intent(out) :: ierr
 
-    real, allocatable :: coords1(:,:)
-    real, allocatable :: coords2(:,:)
+    real, dimension(3,nat1) :: coords1
+    real, dimension(3,nat2) :: coords2
     real, dimension(3) :: gc1, gc2
     real, dimension(3,3) :: matrix, u, smat, vt
     integer :: i
 
     !! set initial copies
-    allocate( coords1(1:3,1:nat1), source=coords1_in )
-    allocate( coords2(1:3,1:nat2), source=coords2_in )
+    coords1(:,:) = coords1_in(:,:)
+    coords2(:,:) = coords2_in(:,:)
 
     !! set geo centers
     gc1(:) = 0.0
@@ -452,8 +441,6 @@
     !    write(*,*) coords2(:,i)
     ! end do
 
-    deallocate( coords1, coords2 )
-
   end subroutine svdrot_m
 
 
@@ -501,16 +488,16 @@
     real, dimension(3),       intent(out) :: translate
     integer,                  intent(out) :: ierr
 
-    real, allocatable :: coords1(:,:)
-    real, allocatable :: coords2(:,:)
+    real, dimension(3,nat1) :: coords1
+    real, dimension(3,nat2) :: coords2
     real, dimension(3) :: gc1, gc2
     real, dimension(3,3) :: matrix, u, smat, vt
     integer :: i
     real :: det_u, det_vt, det_s, det_m, det_r
 
     !! set initial copies
-    allocate( coords1(1:3,1:nat1), source=coords1_in )
-    allocate( coords2(1:3,1:nat2), source=coords2_in )
+    coords1(:,:) = coords1_in(:,:)
+    coords2(:,:) = coords2_in(:,:)
 
     !! set geo centers
     gc1(:) = 0.0
@@ -611,8 +598,6 @@
     !    write(*,*) coords2(:,i)
     ! end do
 
-    deallocate( coords1, coords2 )
-
   end subroutine svd_forcerot
 
   !> @detail
@@ -659,8 +644,9 @@
 
     integer :: i, j, idx1, idx2, m, k
     real :: hd, hd_old
-    real, allocatable :: dists(:), d_o(:,:)
-    integer, allocatable :: found(:)
+    real, dimension(2, nat2) :: d_o
+    real, dimension(nat2) :: dists
+    integer, dimension(nat2) :: found
     integer, dimension(nat1) :: typ1
     real, dimension(3,nat1) :: coords1
     integer, dimension(nat2) :: typ2
@@ -677,7 +663,6 @@
     !!
     !! sort coords2 by size
     !!
-    allocate( d_o(1:2, 1:nat2) )
     do i = 1, nat2
        d_o(1,i) = norm2( coords2(:,i))
        d_o(2,i) = real(i)
@@ -695,8 +680,6 @@
     !! search for gamma
     !!
     hd_old = 999.9
-    allocate( found(1:nat2) )
-    allocate( dists(1:nat2) )
     idx1 = 0
     idx2 = 0
     m_fin = 0
@@ -842,8 +825,6 @@
     endif
 
     hd_out = hd_old
-    deallocate( d_o )
-    deallocate( found, dists )
 
     ! write(*,*) 'nbas tested:', count
     ! write(*,*) 'gamma idx:',gamma_idx(:)
@@ -1236,7 +1217,8 @@
     real, dimension(3,nat1) :: coords1
     integer, dimension(nat2) :: typ2
     real, dimension(3,nat2) :: coords2
-    integer, allocatable :: candidate_1(:), candidate_2(:)
+    integer, dimension(nat1) :: candidate_1
+    integer, dimension(nat2) :: candidate_2
     integer :: i
     real :: hd_out
     real, dimension(3,3) :: svd_rot
@@ -1253,8 +1235,6 @@
     !!
     !! form candidates for central atms in 1 and 2
     !!
-    allocate( candidate_1(1:nat1) )
-    allocate( candidate_2(1:nat2) )
     call set_candidates( nat1, typ1, coords1, &
                         nat2, typ2, coords2, &
                         candidate_1, candidate_2 )
@@ -1334,7 +1314,7 @@
   end subroutine ira_svd
 
 
-  subroutine ira_get_errmsg( ierr, msg )
+  subroutine ira_get_err_msg( ierr, msg )
     use err_module, only: get_err_msg
     implicit none
     integer, intent(in) :: ierr
@@ -1345,4 +1325,4 @@
     allocate( me, source=get_err_msg(ierr) )
     msg = me
     deallocate(me)
-  end subroutine ira_get_errmsg
+  end subroutine ira_get_err_msg

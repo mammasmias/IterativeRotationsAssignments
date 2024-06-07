@@ -14,6 +14,7 @@
 !!
 
 
+!> @cond SKIP
   module ira_pbc
 
     !! routines for computing a vector in periodic boundary condtions
@@ -147,7 +148,7 @@
       end subroutine crist_to_cart
 
   end module
-
+!> @endcond
 
 
 
@@ -191,78 +192,63 @@
     !! local
     !!
     real, dimension(3) :: rij
-    real(kind=4), dimension(3) :: srij, ci, cj
-    real(kind=4) :: dx, dy, dz, th, m_th, th2
-    ! real, dimension(nat1,nat2) :: chkmat
-    real(kind=4), dimension(nat1,nat2) :: chkmat
-    integer, dimension(nat1) :: search
+    real, dimension(3) :: ci, cj
+    real :: dx, dy, dz, th, m_th, th2
+    real, dimension(nat2,nat1) :: chkmat
+    logical, dimension(nat1) :: lsearch
+    integer, dimension(nat2) :: assigned
     integer :: i, j, k, ti, tj
     integer :: idx_old
     integer :: n_count, nmax
-    real(kind=4) :: dist, dist_old, dmin
-    real(kind=4), dimension(3,nat1) :: c1_4
-    real(kind=4), dimension(3,nat2) :: c2_4
+    real :: dist, dist_old, dmin
+    integer, dimension(nat1) :: tmpmin
 
-    !! drop precision of coords
-    c1_4 = real( coords1, 4 )
-    c2_4 = real( coords2, 4 )
-    found(:) = 0
-    dists(:) = 999.9
+
+    !! init output
+    dists = 999.9
+    found = 0
+
     !!
     !! set up distance matrix, compute elements as dist^2, do sqrt at the end
-    ! chkmat(:,:) = 0.0
-    chkmat(:,:) = 995.0
     !!
     !! ATTENTION: the double loop needs to go from 1 to nat, for i and j
     !!    because there are permutations in the set, so the distance matrix is
     !!    not symmetric!!!
     !!
-    th = real( some_threshold, 4)
+    th = some_threshold
     th2 = th*th
     m_th = -th
     do i = 1, nat1
        ti = typ1(i)
-       ci = c1_4(:,i)
+       ci = coords1(:,i)
        dmin = huge( dmin )
        do j = 1, nat2
           !!
-          tj = typ2(j)
-          !!
-          !! if the atoms are not of same typ, set some large distance:
+          !! if the atoms are not of same typ, set large value for distance:
           !! like this they will not be found assigned
           !!
-          if( ti .ne. tj ) then
-             chkmat(i,j) = 990.0
-             cycle
+          if( ti .eq. typ2(j) ) then
+             !!
+             cj = coords2(:,j)
+             !!
+             dx = ci(1) - cj(1)
+             dy = ci(2) - cj(2)
+             dz = ci(3) - cj(3)
+             !!
+             !! dist squared
+             dist = dx*dx + dy*dy + dz*dz
+             !!
+             chkmat(j,i) = dist
+             !!
+             !! keep for minimum row
+             ! dmin = min( dmin, dist )
+             if( dist .lt. dmin ) then
+                dmin = dist
+                tmpmin(i) = j
+             end if
+          else
+             chkmat(j,i) = 995.0
           end if
-          !!
-          ! cj = real( coords2(:,j), 4)
-          cj = c2_4(:,j)
-          !!
-          !! no need to compute things that will not match due to
-          !! the threshold.
-          !!
-          dx = ci(1) - cj(1)
-          if( dx .lt. m_th ) cycle
-          if( dx .gt. th ) cycle
-          !!
-          dy = ci(2) - cj(2)
-          if( dy .lt. m_th ) cycle
-          if( dy .gt. th ) cycle
-          !!
-          dz = ci(3) - cj(3)
-          if( dz .lt. m_th ) cycle
-          if( dz .gt. th ) cycle
-          !!
-          !!
-          srij = (/ dx, dy, dz /)
-          ! dist = sqrt( dot_product(srij, srij) )
-          dist = dot_product(srij, srij)
-
-          chkmat(i,j) = dist
-          !!
-          !! keep for minimum row
-          dmin = min( dmin, dist )
           !!
        end do
        !!
@@ -270,60 +256,67 @@
        !! if any row chkmat(i,:) has all values above some_threshold,
        !! then there is no way that Hausdorff distance be lower than some_threshold.
        !! This criterion is used for early return of cshda.
-       ! if( minval(chkmat(i,:)) .gt. real(some_threshold,4) ) then
-       ! if( minval(chkmat(i,:)) .gt. th ) then
-       ! if( dmin .gt. th ) then
        if( dmin .gt. th2 ) then
           return
        endif
        !!
     end do
 
+    ! write(*,"(3x)",advance="no")
+    ! do i = 1, nat2
+    !    write(*,"(i4,1x)", advance="no") i
+    ! end do
+    ! write(*,*)
+    ! do i = 1, nat1
+    !    write(*,"(i2,1x,*(f4.2,:,1x))")  i, chkmat(:,i)
+    ! end do
+
+
     !! set up the queue of searches
-    search(:) = 1
+    lsearch(:) = .true.
 
-    !! set found to zero
-    found(:) = 0
+    assigned(:) = 0
 
-    !! set first search
+    !! set first search index
     i = 1
-    j = minloc( chkmat(i,:), 1 )
 
     n_count = 1
     nmax = nat1*nat2
-    do while( search(i) .gt. 0 )
+    !! in worst case do n searches on each of the n sites -> nmax = n**2
+    do n_count = 1, nmax
        !!
-       !! return on huge number of searches
-       !! ( in worst case do n searches on each of the n sites -> n**2 )
+       !! set index of next search
        !!
-       if( n_count .gt. nmax ) then
-          found(i) = 0
-          dists(i) = 999.9
-          write(*,*) " PROBLEM in cshda: huge number of searches"
-          return
-       endif
+       i = findloc( lsearch(:), .true., 1)
+       if( i .eq. 0 ) exit
+       ! write(*,*) "next i",i
        !!
+       !! set next search on this index to .false.
        !!
-       !! set next search on this index to 0
-       !!
-       search(i) = 0
+       lsearch(i) = .false.
        !!
        !!
        !! find minimum distance and its index
        !!
-       j = minloc( chkmat(i,:), 1)
-       dist = chkmat(i,j)
+       j = tmpmin(i)
+       dist = chkmat(j,i)
+       ! write(*,*) "tmpmin j", j, dist
        !!
        !!
-       !! check the found indices if we already have this j
+       !! check the if we already have this j
        !!
+       ! if( assigned(j) .gt. 0 ) then
        if( any(found .eq. j) ) then
           !!
           !!
           !! find the old index where its used, and the old distance
           !!
-          idx_old = minloc( abs( found - j) , 1)
-          dist_old = minval( chkmat(idx_old,:), 1)
+          ! idx_old = assigned(j)
+          ! idx_old = minloc( abs(found - j), 1)
+          idx_old = findloc( found, j, 1)
+          dist_old = dists(idx_old)
+          ! write(*,*) "j already assigned at", idx_old, dist_old
+          ! write(*,"(*(f4.2,:,1x))") dists
           !!
           if( dist_old .lt. dist ) then
              !!
@@ -331,12 +324,13 @@
              !! if the previous found is closer, set the current distance
              !! to smth big, so its not found ever again!
              !!
-             chkmat(i,j) = 999.0
+             chkmat(j,i) = 999.0
+             tmpmin(i) = minloc(chkmat(:,i),1)
              !!
              !!
              !! and the current index should be searched again
              !!
-             search(i) = 1
+             lsearch(i) = .true.
              !!
           else
              !!
@@ -344,29 +338,37 @@
              !! if the previous found is larger then the new, the old idx should
              !! be searched again and the same distance should not be found!
              !!
-             chkmat(idx_old, j) = 999.0
-             search( idx_old ) = 1
+             chkmat(j, idx_old) = 999.0
+             lsearch( idx_old ) = .true.
+             tmpmin(idx_old) = minloc( chkmat(:,idx_old), 1)
+             assigned(idx_old) = 0
              !!
           endif
        endif
        !!
-       !!
        !! set found data
        !!
        found(i) = j
-       dists(i) = real(dist)
-       !!
-       !! early exit idea:
-       !!  if any dist is above some_threshold, then Hausdorff cannot be below it.
-       !!
-       !!
-       !! set index of next search
-       !!
-       i = maxloc( search(:), 1 )
-       !!
-       n_count = n_count + 1
+       dists(i) = dist
+       assigned(j) = i
+       ! write(*,*) "found now"
+       ! write(*,"(10i3)") found
+
        !!
     end do
+
+
+    !! do sqrt of dists
+    do i = 1, nat1
+       dists(i) = sqrt(dists(i))
+    end do
+
+
+    !! for equal sizes of structures we should be done
+    if( nat1 .eq. nat2 ) return
+
+    ! write(*,*) "found now"
+    ! write(*,"(10i3)") found
 
     !! find indices of conf2 not represented in found,
     !! and put them at end
@@ -375,14 +377,15 @@
        !! if this i is already found, do nothing
        if( any(i .eq. found(:) ) ) cycle
        !! add this i to last spot
+       ! write(*,*) "adding ",i,"to idx k=", k
        k = k + 1
        found(k) = i
+       ! write(*,*) "found now"
+       ! write(*,"(10i3)") found
+
     end do
 
-    !! do sqrt of dists
-    do i = 1, nat2
-       dists(i) = sqrt(dists(i))
-    end do
+
 
   end subroutine cshda
 
@@ -572,6 +575,5 @@
     end do
 
   end subroutine cshda_pbc
-
 
 

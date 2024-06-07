@@ -26,6 +26,22 @@ The IRA library is imported into python by:
 
 >>> import ira_mod
 
+
+.. warning::
+   If the ``ira_mod`` module cannot be found at ``import``, then make sure there is a path to ``/IRA_library/interface``
+   in the environment variable ``PYTHONPATH``.
+
+   .. code-block:: bash
+
+      echo $PYTHONPATH
+
+   If not, add it by:
+
+   .. code-block:: bash
+
+      export PYTHONPATH=/your/path/to/IRA_library/interface:$PYTHONPATH
+
+
 The corresponding algorithm class (IRA or SOFI) has to be initialised by:
 
 >>> ira = ira_mod.IRA()
@@ -38,21 +54,6 @@ now, the functions in either class are availably by typing ``ira.<funtion_name>`
 Quick help can be accessed by ``help( ira )``, ``help( ira.<function_name> )`` or the same for ``sofi``.
 
 
-.. warning::
-   If the ``ira_mod`` module cannot be found at ``import``, then make sure there is a path to ``/IRA_library/interface``
-   in the environment variable ``PYTHONPATH``.
-   
-   .. code-block:: bash
-   
-      echo $PYTHONPATH
-   
-   If not, add it by:
-   
-   .. code-block:: bash
-   
-      export PYTHONPATH=/your/path/to/IRA_library/interface:$PYTHONPATH
-
-
 Direct comparison of structures using CShDA
 ===========================================
 
@@ -60,6 +61,8 @@ Two structures that are already in the same rotational frame, can be directly co
 computing the atom-atom distances in a way that is invariant to the
 permutations with the CShDA algorithm:
 
+   >>> import numpy as np
+   >>> ##
    >>> ## set up the first atomic structure containing 10 atoms
    >>> nat1 = 10
    >>> typ1 = np.ones( nat1, dtype=int )
@@ -97,16 +100,16 @@ permutations with the CShDA algorithm:
    >>> ## the `perm` contains permutations of the second structure, which matches the first structure.
    >>> ## Therefore, the following command should return a structure exactly equal to the first structure:
    >>> coords2[ perm ]
-   array([[-0.49580341,  0.9708181 ,  0.37341428],
-          [-1.05611656, -0.4724503 , -0.37449784],
-          [-0.63509644, -0.66670776,  0.66219897],
-          [-0.83642178,  0.59155936, -0.64507703],
-          [ 0.59636159,  0.80558701,  0.23843962],
-          [ 0.25975284,  0.71540297, -0.78971024],
-          [-0.09743308, -1.03812804, -0.31233049],
-          [ 0.09254502,  0.20016738,  1.03021068],
-          [-0.18424967, -0.24756757, -1.07217522],
-          [ 0.46705991, -0.73516435,  0.56288325]])
+   array([[-0.50010644,  0.96625779,  0.37944221],
+          [-1.05658467, -0.46953529, -0.37456054],
+          [-0.63373056, -0.66591152,  0.66168751],
+          [-0.83286912,  0.5942803 , -0.64527646],
+          [ 0.59310547,  0.80745772,  0.23711422],
+          [ 0.2636203 ,  0.7126221 , -0.79370807],
+          [-0.09940056, -1.03859144, -0.31064337],
+          [ 0.09208454,  0.19985156,  1.03003579],
+          [-0.18468815, -0.24935304, -1.07257697],
+          [ 0.4691676 , -0.73356138,  0.56184166]])
    >>> ##
    >>> ## The `dist` array contains atom-atom distances, upon permuting coords2 by `perm`, such that:
    >>> ## dist[ i ] = norm( coords1[ i ] - coords2[perm[ i ]] )
@@ -164,7 +167,6 @@ to obtain the rotation, permutation, and translation.
 
 ideas:
 
- - comparing equal strucs
  - comparing nonequal strucs (using candidates)
  - determine kmax value
  - using some thr.

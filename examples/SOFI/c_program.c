@@ -27,12 +27,11 @@ int main( void ){
 
 
 
-
-  int nat;
-  int *typ;
-  double *coords_data;
+  int nat;               //! number of atoms
+  int *typ;              //!  integer of atomic types
+  double *coords_data;   //! atomic positions
   double **coords;
-  double sym_thr;     // the sym_thr is read from second line of the input file
+  double sym_thr;        //! threshold for symmetry, sym_thr is read from second line of the input file
 
 
   /* ---------------------------------------------- */
@@ -73,7 +72,8 @@ int main( void ){
 
 
   /* shift coords to chosen origin, in this case the geometrical center */
-  double gc[3];
+  double gc[3]; //! origin point (geometric center)
+
   gc[0] = 0.0; gc[1]=0.0; gc[2]=0.0;
   for (int i=0; i < nat; i++)
     {
@@ -92,27 +92,25 @@ int main( void ){
     }
 
 
-
-  /* nmax value comes from sofi_tools.f90, is used just for initial allocation */
-  int nmax=200;
-
-  int nmat;
-  double *mat_data;
-  int *perm_data;
-  char *op_data;
-  int *n_data;
-  int *p_data;
-  double *ax_data;
-  double *angle_data;
-  double *dmax_data;
-  char *pg;
-  int n_prin_ax;
-  double *prin_ax;
+  int nmax=200;          //! max space for initial allocations, value from sofi_tools.f90
+  int nmat;              //! total number of symmetry operations
+  double *mat_data;      //! list of symmetry operations
+  int *perm_data;        //! list of permutations
+  char *op_data;         //! list of Op
+  int *n_data;           //! list of n values
+  int *p_data;           //! list of p values
+  double *ax_data;       //! list of axes
+  double *angle_data;    //! list of angles
+  double *dmax_data;     //! list of dmax values
+  char *pg;              //! point group
+  int n_prin_ax;         //! number of principal axes
+  double *prin_ax;       //! list of principal axes
   int cerr;
   int prescreen_ih;
 
-  /* allocate space up to nmax for all arrays, all arrays are 1d and contiguous */
-  /* if you want to reshape the output data into proper dim-arrays, it's up to you. */
+  /* Allocate space up to `nmax` for all arrays, all arrays are 1d and contiguous. */
+  /* On output from SOFI, only values up to `nmat` are filled. */
+  /* If you want to reshape the output data into proper dim-arrays, it's up to you. */
   mat_data = malloc( sizeof(double)*9*nmax );
   perm_data = malloc( sizeof(int)*nat*nmax);
   n_data = malloc( sizeof(int)*nmax);
