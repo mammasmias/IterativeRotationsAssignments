@@ -79,7 +79,7 @@ $(OBJ):
 #====
 # pack the library
 #====
-$(IRALIB): $(outils)
+$(IRALIB): $(outils) $(olib)
 	$(AR) -rcv $@ $^
 
 #====

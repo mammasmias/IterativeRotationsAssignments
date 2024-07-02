@@ -39,7 +39,7 @@ module timer
        LOC_T4 = 4
 
 
-  !! the timer, store value dt1 which is clock when timer started
+  !! a single timer, store value dt1 which is clock when timer started
   type tim
      real :: dt1
    contains
@@ -52,15 +52,36 @@ module timer
   end interface tim
 
 
+  !! definition of local timer for use within single routine
+  type local_timer
+     type( tim ), pointer :: &
+          t_1 => null(), &
+          t_2 => null(), &
+          t_3 => null(), &
+          t_4 => null()
+     real :: timed(4)   !! array for total sum of each slot
+     character(:), allocatable :: tag1, tag2, tag3, tag4
+   contains
+     procedure :: start => timer_start
+     procedure :: stop => timer_stop
+     procedure :: tag => timer_tag
+     procedure :: print => timer_print
+  end type local_timer
+
+
+  !! definiton of global_timer which works accross routines ... not really
   type( tim ), pointer :: &
        t_1 => null(), &
        t_2 => null(), &
        t_3 => null(), &
        t_4 => null()
   real, protected :: timed(4)   !! array for total sum of each slot
+  character(:), allocatable :: tag1, tag2, tag3, tag4
+
 
 contains
 
+  !!===== functions for single value of timer ===
   function tim_constructor( ) result( this )
     type( tim ), pointer :: this
     allocate( tim::this )
@@ -83,10 +104,69 @@ contains
     !! return difference of current clock and when i started the clock
     dt = dt2 - self% dt1
   end function tim_end
+  !! ============
 
 
 
-  subroutine timer_start( loc )
+  !! ==== functions for local timer =======
+  subroutine timer_start( self, loc )
+    !! start the timer for slot `loc`
+    implicit none
+    class( local_timer ), intent(inout) :: self
+    integer, intent(in) :: loc
+    select case( loc )
+    case( LOC_T1 ); if( .not. associated(self% t_1) ) self% t_1 => tim(); call self% t_1% start()
+    case( LOC_T2 ); if( .not. associated(self% t_2) ) self% t_2 => tim(); call self% t_2% start()
+    case( LOC_T3 ); if( .not. associated(self% t_3) ) self% t_3 => tim(); call self% t_3% start()
+    case( LOC_T4 ); if( .not. associated(self% t_4) ) self% t_4 => tim(); call self% t_4% start()
+    end select
+  end subroutine timer_start
+
+  subroutine timer_stop( self, loc )
+    !! stop timer for slot `loc` and add dt to total sum of time for slot
+    implicit none
+    class( local_timer ), intent(inout) :: self
+    integer, intent(in) :: loc
+    real :: dt
+    select case( loc )
+    case( LOC_T1 ); dt = self% t_1% end()
+    case( LOC_T2 ); dt = self% t_2% end()
+    case( LOC_T3 ); dt = self% t_3% end()
+    case( LOC_T4 ); dt = self% t_4% end()
+    end select
+    self% timed( loc ) = self% timed(loc) + dt
+  end subroutine timer_stop
+
+  subroutine timer_tag( self, loc, tag )
+    !! set a tag to loc
+    implicit none
+    class( local_timer ), intent(inout) :: self
+    integer, intent(in) :: loc
+    character(*), intent(in) :: tag
+    select case( loc )
+    case( LOC_T1 ); self% tag1 = tag
+    case( LOC_T2 ); self% tag2 = tag
+    case( LOC_T3 ); self% tag3 = tag
+    case( LOC_T4 ); self% tag4 = tag
+    end select
+  end subroutine timer_tag
+
+  subroutine timer_print( self )
+    !! print current total times for all slots
+    implicit none
+    class( local_timer ), intent(inout) :: self
+    write(*,"(1x,a)")       ":::: local timer ::::"
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t1  ::", self% tag1, self% timed(LOC_T1)
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t2  ::", self% tag2, self% timed(LOC_T2)
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t3  ::", self% tag3, self% timed(LOC_T3)
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t4  ::", self% tag4, self% timed(LOC_T4)
+    write(*,"(1x,a)")       ":::::::::::::::"
+  end subroutine timer_print
+  !!===========================
+
+
+  !! ========= functions for global timer ==============
+  subroutine global_timer_start( loc )
     !! start the timer for slot `loc`
     implicit none
     integer, intent(in) :: loc
@@ -96,9 +176,9 @@ contains
     case( LOC_T3 ); if( .not. associated(t_3) ) t_3 => tim(); call t_3% start()
     case( LOC_T4 ); if( .not. associated(t_4) ) t_4 => tim(); call t_4% start()
     end select
-  end subroutine timer_start
+  end subroutine global_timer_start
 
-  subroutine timer_stop( loc )
+  subroutine global_timer_stop( loc )
     !! stop timer for slot `loc` and add dt to total sum of time for slot
     implicit none
     integer, intent(in) :: loc
@@ -110,18 +190,34 @@ contains
     case( LOC_T4 ); dt = t_4% end()
     end select
     timed( loc ) = timed(loc) + dt
-  end subroutine timer_stop
+  end subroutine global_timer_stop
 
-  subroutine timer_print()
+  subroutine global_timer_tag( loc, tag )
+    !! set a tag to loc
+    implicit none
+    integer, intent(in) :: loc
+    character(*), intent(in) :: tag
+    select case( loc )
+    case( LOC_T1 ); tag1 = tag
+    case( LOC_T2 ); tag2 = tag
+    case( LOC_T3 ); tag3 = tag
+    case( LOC_T4 ); tag4 = tag
+    end select
+  end subroutine global_timer_tag
+
+  subroutine global_timer_print( )
     !! print current total times for all slots
     implicit none
-    write(*,"(1x,a)")       ":::: timer ::::"
-    write(*,"(3x,a,2x,g0.8)") "t1  ::", timed(LOC_T1)
-    write(*,"(3x,a,2x,g0.8)") "t2  ::", timed(LOC_T2)
-    write(*,"(3x,a,2x,g0.8)") "t3  ::", timed(LOC_T3)
-    write(*,"(3x,a,2x,g0.8)") "t4  ::", timed(LOC_T4)
+    write(*,"(1x,a)")       ":::: global timer ::::"
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t1  ::", tag1, timed(LOC_T1)
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t2  ::", tag2, timed(LOC_T2)
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t3  ::", tag3, timed(LOC_T3)
+    write(*,"(3x,a,2x, 'tag:',1x,a10, 2x, g0.8)") "t4  ::", tag4, timed(LOC_T4)
     write(*,"(1x,a)")       ":::::::::::::::"
-  end subroutine timer_print
+  end subroutine global_timer_print
+  !! =========================
+
+
 
 
   subroutine clock( time )
