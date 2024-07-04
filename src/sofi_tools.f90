@@ -21,7 +21,7 @@ module sofi_tools
 
   !! maximum size of output lists. The real number of elements is output as integer
   !! This is pre-defined for security.
-  integer, parameter :: nmax = 200
+  integer, parameter :: nmax = 400
 
 
   !! matrix-distance thr: value 1.4 captures 1/6*2pi rotations, which are
@@ -34,9 +34,10 @@ module sofi_tools
   !!   many rotations can happen, then order of group can be any.
   ! real, parameter :: m_thr = 1.4      !! C6
   ! real, parameter :: m_thr = 1.07     !! C8
-  real, parameter :: m_thr = 0.73     !! C12
+  ! real, parameter :: m_thr = 0.73     !! C12
   ! real, parameter :: m_thr = 0.49     !! C18
   ! real, parameter :: m_thr = 0.36     !! C24
+  real, parameter :: m_thr = 0.044     !! C200
 
 
   !! Schoenflies symbols for operations
@@ -54,7 +55,8 @@ module sofi_tools
   real, parameter :: collinearity_thr = 0.95
 
   !! limit value for n in sofi_analmat.
-  integer, parameter :: lim_n_val = 24
+  ! integer, parameter :: lim_n_val = 24
+  integer, parameter :: lim_n_val = 200
 
 contains
 
