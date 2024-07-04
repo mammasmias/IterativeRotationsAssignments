@@ -610,9 +610,9 @@ class SOFI(algo):
 
     # nmax is imposed by sofi_tools.f90; it gives the maximal number of symmetries
     # if you need more than than then change in sofi_tools.f90 and here, and recompile sofi
-    _nmax=200
+    _nmax=400
 
-    def compute(self, nat, typ_in, coords, sym_thr, prescreen_ih=True ):
+    def compute(self, nat, typ_in, coords, sym_thr, prescreen_ih=False ):
         """
         .. _sofi.compute:
 

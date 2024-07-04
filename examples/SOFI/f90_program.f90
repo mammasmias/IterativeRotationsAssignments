@@ -36,7 +36,7 @@ program sofi
   character(128) :: msg
 
   !! nmax is imposed from sofi_tools.f90
-  nmax = 200
+  nmax = 400
 
   !! threshold for sym
   sym_thr = 0.05
@@ -77,7 +77,7 @@ program sofi
   allocate( angle_out(1:nmax))
   allocate( dmax_out(1:nmax))
   allocate( prin_ax(1:3, 1:nmax))
-  prescreen_ih = .true.
+  prescreen_ih = .False.
 
   call sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih,  &
        nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg,&
@@ -94,14 +94,14 @@ program sofi
      write(*,'(2x,i0)') i
      write(*,'(2x,a,3x,a2,x,i0,"^",i0)') "operation:",op_out(i), n_out(i), p_out(i)
      write(*,'(2x, a,f9.4)') "angle",angle_out(i)
-     write(*,'(2x, a,3f9.4)') "axis",ax_out(:,i)
+     write(*,'(2x, a,3f9.5)') "axis",ax_out(:,i)
      write(*,'(2x,a)') "matrix:"
      do j = 1, 3
         write(*,'(3f12.6)') bas_list(j,:,i)
      end do
-     write(*,'(2x,a,f9.4)') "dmax",dmax_out(i)
+     write(*,'(2x,a,f12.7)') "dmax",dmax_out(i)
      write(*,'(2x, a)') "permutation of atoms:"
-     write(*,'(25i3)') perm_list(:,i)
+     write(*,'(20i4)') perm_list(:,i)
      write(*,*)
   end do
 

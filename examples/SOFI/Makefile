@@ -1,5 +1,5 @@
 #
-# Fortran compiler
+# Fortran and C compilers
 #
 F90 = gfortran
 CC=gcc
@@ -9,6 +9,7 @@ CC=gcc
 # You can use: -L/path/to/lapack/ instead
 #
 LIBLAPACK = -llapack
+LIBS += $(LIBLAPACK)
 
 
 #
@@ -17,17 +18,40 @@ LIBLAPACK = -llapack
 FFLAGS = -fdefault-real-8 -fcheck=bounds
 CFLAGS =
 
+#
+# directories
+#
 SRC := $(CURDIR)
 SRCDIR := $(SRC)/../../src
 INTERFDIR = $(SRC)/../../interface
-OBJ = $(SRC)/Obj
-
-MOD = -I$(OBJ) -J$(OBJ) -I$(INTERFDIR)
 
 #
-# path to src/libira.so
+# include directory of header for C program
 #
-SHLIB = -Wl,-rpath,$(SRCDIR) $(SRCDIR)/libira.so
+C_INCLUDE = -I$(INTERFDIR)
+
+
+
+##------------------
+##
+## Options for compilation with the shared library libira.so, or static libira.a
+## SRCDIR is path to IRA/src/
+## 
+
+# Using shared library:
+#
+IRALIB = -Wl,-rpath,$(SRCDIR) $(SRCDIR)/libira.so
+
+
+# Using the static library: uncomment the following:
+#
+#IRALIB = $(SRCDIR)/libira.a
+#LIBMATH = -lm
+#LIBFORTRAN = -lgfortran
+#LIBS += $(LIBMATH) $(LIBFORTRAN)
+#------------------
+
+
 
 #
 # Produced filenames
@@ -36,12 +60,12 @@ F_PROG = f90_program.x
 C_PROG = c_program.x
 
 
-#=======================
-# object files
-#
-f_uni := $(SRC)/f90_program.f90
-o_uni := $(patsubst $(SRC)%, $(OBJ)%, $(f_uni:%.f90=%.o))
 
+
+#=======================
+# object files of programs
+#
+fprog := $(SRC)/f90_program.f90
 cprog := $(SRC)/c_program.c
 #======================
 
@@ -50,32 +74,20 @@ default: msg
 
 all : f90 cprog
 
-$(OBJ)%.o: $(SRC)/%.f90
-	$(F90) $(FFLAGS) $(MOD) -c $< -o $@
-
-
-f90: $(OBJ) $(F_PROG)
-cprog: $(OBJ) $(C_PROG)
-
-#
-# object folder
-#
-$(OBJ):
-	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ) ; fi
-
-
+f90: $(F_PROG)
+cprog: $(C_PROG)
 
 #====
 # Compile the f90 executable
 #====
-$(F_PROG): $(o_uni)
-	$(F90) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBLAPACK)
+$(F_PROG): $(fprog)
+	$(F90) $(FFLAGS) -o $@ $^ $(IRALIB) $(LIBS)
 
 #====
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CC) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB)
+	$(CC) $(CFLAGS) $(C_INCLUDE) -o $@ $^ $(IRALIB) $(LIBS)
 
 
 msg:
@@ -94,7 +106,6 @@ msg:
 
 clean:
 	rm -rf $(F_PROG) $(C_PROG)
-	rm -rf $(OBJ)
 
 
 

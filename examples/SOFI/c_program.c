@@ -92,7 +92,7 @@ int main( void ){
     }
 
 
-  int nmax=200;          //! max space for initial allocations, value from sofi_tools.f90
+  int nmax=400;          //! max space for initial allocations, value from sofi_tools.f90
   int nmat;              //! total number of symmetry operations
   double *mat_data;      //! list of symmetry operations
   int *perm_data;        //! list of permutations
@@ -123,7 +123,7 @@ int main( void ){
   prin_ax = malloc(sizeof(double)*3*nmax);
 
 
-  prescreen_ih = 1;
+  prescreen_ih = 0;
 
   /* call SOFI compute_all */
   libira_compute_all( nat, typ, &coords[0][0], sym_thr, prescreen_ih, \
