@@ -61,9 +61,6 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      ierr )
   use sofi_tools, only: nmax
   use err_module
-#ifdef DEBUG
-  use timer
-#endif
   implicit none
   !! ===== input
   integer,                 intent(in) :: nat
@@ -95,10 +92,6 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
 
   real :: dt
 
-#ifdef DEBUG
-  call timer_start( LOC_T1 )
-  call timer_start( LOC_T2 )
-#endif
 
   !! get symmetries with sym_thr
   call sofi_get_symmops( nat, typ, coords, sym_thr, prescreen_ih, nmat, mat_list, ierr )
@@ -107,24 +100,22 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      return
   end if
 
-#ifdef DEBUG
-  call timer_stop( LOC_T2 )
-#endif
-
 
   !! get combos, can produce symm above sym_thr
   ! call sofi_get_combos( nat, typ, coords, nmat, mat_list )
 
   !! get ops, and unique angles and axes
   call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
+
+
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
   end if
 
-
   !! get permuations and dmax
   call sofi_get_perm( nat, typ, coords, nmat, mat_list, perm_list, dmax_list )
+
 
   !! get name of pg
   verb = .false.
@@ -146,11 +137,6 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      end if
 
   end do
-
-#ifdef DEBUG
-  call timer_stop( LOC_T1 )
-  call timer_print()
-#endif
 
 end subroutine sofi_compute_all
 
@@ -211,7 +197,7 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
 
   !! get list of symm operations
   prescreen_ih = .false.
-  prescreen_ih = .true.
+  ! prescreen_ih = .true.
   call sofi_get_symmops( nat, typ, coords, sym_thr, prescreen_ih, n_op, op_list, ierr )
   ! call sofi_get_symmops( nat, typ, coords, sym_thr, n_op, op_list, perm_list )
   if( ierr /= 0 ) return
@@ -273,6 +259,9 @@ end subroutine sofi_struc_pg
 subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so, op_list, ierr )
   use sofi_tools, only: nmax, m_thr, construct_reflection
   use err_module
+#ifdef DEBUG
+  use timer
+#endif
   implicit none
   integer,                 intent(in) :: nat
   integer, dimension(nat), intent(in) :: typ_in
@@ -301,6 +290,15 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   real :: u_c3(3,5)
   real :: ax(3)
   real :: rmin, rmax
+#ifdef DEBUG
+  type( local_timer ) :: tm
+#endif
+
+#ifdef DEBUG
+  call tm%tag(1, "symmops")
+  call tm%start(1)
+#endif
+
 
   ierr = 0
   prescreen = prescreen_ih
@@ -500,7 +498,17 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
            ! write(*,*) theta(1,:)
            ! write(*,*) theta(2,:)
            ! write(*,*) theta(3,:)
+#ifdef DEBUG
+           call tm%tag(2, "try_sofi")
+           call tm%start(2)
+#endif
+
            call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, m_thr, success, ierr )
+
+#ifdef DEBUG
+           call tm%stop(2)
+#endif
+
            if( ierr /= 0 ) then
               write(*,*) "at: ",__FILE__," line:",__LINE__
               return
@@ -509,9 +517,21 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
            !! mat is not successful, go to next
            ! if( .not. success ) cycle
 
-           if( prescreen_ih ) then
+           if( prescreen ) then
               n_old = n_so
+
+#ifdef DEBUG
+              call tm%tag(3, "get_combos")
+              call tm%start(3)
+#endif
+
               call sofi_get_combos( nat, typ, coords, n_so, op_list )
+
+#ifdef DEBUG
+              call tm%stop(3)
+#endif
+
+
               call state_update( n_old, n_so, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
               ! write(*,*) "current state print:"
               ! write(*,*) "has_sigma", has_sigma
@@ -548,6 +568,13 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   !! NOTE: the above idea is nonsense, since combinations cannot produce smaller
   !! angle operation than original..... Therefore, the original m_thr needs to be low!
   !!
+
+#ifdef DEBUG
+  call tm%stop(1)
+  write(*,*) "symmops timer;"
+  call tm%print()
+#endif
+
 
   ! write(*,*) 'exiting get_symmops'
   deallocate( d_o )
@@ -716,7 +743,7 @@ end subroutine sofi_get_combos
 !! @param[in] typ_in(nat) :: atomic species
 !! @param[in] coords_in(3,nat) :: atomic positions
 !! @param[in] sym_thr :: symmery threshold in terms of dH
-!! @param[in] dd :: thr for first cshda, "smallest atom-atom distance"
+!! @param[in] dd :: thr for first cshda, "smallest atom-atom distance"; also used for detemining "good-enough" trial matrix theta
 !! @param[inout] nbas :: number of operations
 !! @param[inout] op_list(3,3,nbas) :: list of operations
 !! @param[out] dh :: Hausdorff distance value
@@ -777,25 +804,35 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
 
   !! check if theta is already known
   call is_new_sofi( theta, nbas, op_list, m_thr, is_new )
+
+
   ! write(*,*) 'is new',is_new
-  if( .not. is_new ) return
+  if( .not. is_new ) then
+     return
+  end if
+
 
   !! call to IRA lib
   !! get first cshda
   call cshda( nat, typ_in, coords_in, &
        nat, typ, coords, &
-       1.1*dd, found, dists )
+       0.5*dd+epsilon, found, dists )
   dh = maxval(dists,1)
   ! write(*,'(x,a,x,f9.4)') 'initial dh',dh
 
-  ! write(*,*) dd, 5.0*sym_thr
+  ! write(*,*) dh, 5.0*sym_thr, 1.1*dd
   ! do i = 1, nat
   !    write(*,*) i, found(i), dists(i)
   ! end do
   ! write(*,*) '1st dh:',dh, sum(dists**2)
   ! write(*,*) dh, 5.0*sym_thr+epsilon
 
-  if( dh .gt. 5.0*sym_thr+epsilon ) return
+  ! if( dh .gt. 5.0*sym_thr+epsilon ) then
+  if( dh .gt. 0.5*dd+epsilon ) then
+     ! write(*,*) "return:: dh is too big"
+     return
+  end if
+
 
 
   not_crazy = .true.
@@ -803,7 +840,11 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   if( any(found .eq. 0)) not_crazy = .false.
 
   ! write(*,*) 'not_crazy',not_crazy
-  if( .not. not_crazy ) return
+  if( .not. not_crazy ) then
+     ! write(*,*) "return:: crazy csdha"
+     return
+  end if
+
   perm = found
 
   !! permute
@@ -828,6 +869,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   end if
 
 
+
   if( do_refine ) then
 
      !! refine
@@ -837,6 +879,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
      if( dh .le. sym_thr ) is_valid = .true.
 
   endif
+
 
   ! write(*,*) 'is valid:',is_valid, dh, sym_thr
 
@@ -853,6 +896,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
         success = .true.
      end if
   end if
+
 
   ! write(*,*) "out theta:"
   ! write(*,*) theta(:,1)
@@ -2051,7 +2095,7 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
   ierr = 0
 
   !! threshold value for dot product between two vectors which should be equal
-  dotp_equal = 0.99
+  dotp_equal = 0.9999
 
   !! get all axes
   do i = 1, n_mat
@@ -2078,9 +2122,10 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
         !!
         !! same ax, same angle
         if( dotp .gt. dotp_equal .and. &
-             abs(angle_diff) .lt. 1e-2 ) then
+             abs(angle_diff) .lt. 1e-3 ) then
            !! ops are ambiguous
            write(*,*) i, j
+           write(*,*)"dotp",dotp, "angle_diff",abs(angle_diff)
            write(*,'(3f9.5,2x,f7.4)') ax_out(:,i), angle_out(i)
            write(*,'(3f9.5,2x,f7.4)') ax_out(:,j), angle_out(j)
            ierr = -1
@@ -2088,10 +2133,11 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
         !!
         !! opposite ax, equal or opposite angle
         if( dotp .lt. -dotp_equal  )then
-           if( abs( angle_diff ) .lt. 1e-2 .or. &
+           if( abs( angle_diff ) .lt. 1e-3 .or. &
                 abs(angle_sum) .lt. 1e-2 ) then
               !! ops are ambiguous
               write(*,*) i, j, angle_diff
+              write(*,*)"dotp",dotp, "angle_diff",abs(angle_diff), "angle_sum",abs(angle_sum)
               write(*,'(3f9.5,2x,f7.4)') ax_out(:,i), angle_out(i)
               write(*,'(3f9.5,2x,f7.4)') ax_out(:,j), angle_out(j)
               ierr = -1
@@ -2100,85 +2146,6 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
      end do
   end do
 
-
-
-  ! !! flip equivalent axes, if ax flipped, flip also angle
-  ! do i = 1, n_mat
-  !    do j = 1, n_mat
-  !       dotp = dot_product( ax_out(:,i), ax_out(:,j) )
-  !       if( abs(dotp) .gt. dotp_equal ) then
-  !          !! axes are equivalent, flip
-  !          ax_out(:,j) = -ax_out(:,j)
-  !          !! flip also angle
-  !          angle_out(j) = -angle_out(j)
-  !       endif
-  !    end do
-  !    ! write(*,'(i4,x,3f9.4,4x,f9.4)') i, ax_out(:,i), angle_out(i)
-  ! end do
-
-  ! do i = 1, n_mat
-  !    ! write(*,'(a,i0,a4,3f9.4,4x,f9.4)') '>>',i, op_list(i), ax_out(:,i), angle_out(i)
-  !    do j = i+1, n_mat
-  !       !!
-  !       dotp=dot_product( ax_out(:,i), ax_out(:,j))
-  !       angle_diff = abs( angle_out(i) - angle_out(j) )
-  !       !!
-  !       ! write(*,*) i,j, dotp, angle_diff
-  !       if( op_list(i) .eq. op_list(j) .and. &
-  !           dotp .gt. dotp_equal .and. &
-  !           angle_diff .lt. 1e-2 ) then
-  !          !!
-  !          !! found ambiguous operations (i,j)
-  !          !! could just randomly decide and flip either, but let's
-  !          !! do it proper.
-  !          !!
-  !          ! write(*,*) 'ambiguous angle with j=',j
-  !          ! write(*,*) 'imat'
-  !          ! write(*,'(3f12.6)') mat_list(1,:,i)
-  !          ! write(*,'(3f12.6)') mat_list(2,:,i)
-  !          ! write(*,'(3f12.6)') mat_list(3,:,i)
-  !          ! write(*,*) 'jmat'
-  !          ! write(*,'(3f12.6)') mat_list(1,:,j)
-  !          ! write(*,'(3f12.6)') mat_list(2,:,j)
-  !          ! write(*,'(3f12.6)') mat_list(3,:,j)
-  !          !!
-  !          !! reconstruct rmat with this ax, +/-angle
-  !          !! imat
-  !          call sofi_construct_operation( op_list(i), ax_out(:,i), angle_out(i), rmat )
-  !          call matrix_distance( mat_list(:,:,i), rmat, dist )
-  !          call sofi_construct_operation( op_list(i), ax_out(:,i), -angle_out(i), rmat )
-  !          call matrix_distance( mat_list(:,:,i), rmat, dist_neg )
-  !          ! write(*,*) 'imat',dist, dist_neg
-  !          if( dist_neg .lt. dist ) then
-  !             !! angle i should be flipped
-  !             ! write(*,*) 'flipping angle i'
-  !             angle_out(i) = -angle_out(i)
-  !          endif
-
-
-  !          !! jmat
-  !          call sofi_construct_operation( op_list(j), ax_out(:,j), angle_out(j), rmat )
-  !          call matrix_distance( mat_list(:,:,j), rmat, dist )
-  !          call sofi_construct_operation( op_list(j), ax_out(:,j), -angle_out(j), rmat )
-  !          call matrix_distance( mat_list(:,:,j), rmat, dist_neg )
-  !          ! write(*,*) 'jmat',dist, dist_neg
-  !          if( dist_neg .lt. dist ) then
-  !             !! angle j should be negative
-  !             ! write(*,*) 'flipping angle j'
-  !             angle_out(j) = -angle_out(j)
-  !          endif
-
-  !          !! the angles should now be different!
-  !          if( abs(angle_out(i) - angle_out(j)) .lt. 0.01 ) then
-  !             !! error!
-  !             write(*,*) ">>>>! ERROR, angles still ambiguous!"
-  !          endif
-
-
-  !       endif
-  !       !!
-  !    end do
-  ! end do
 
   !! put ax of E or I ops to (1, 0, 0 )
   do i = 1, n_mat
@@ -2257,10 +2224,11 @@ subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
 
 end subroutine sofi_mat_combos
 
+!> @cond SKIP
 !! @param[in]
 subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
   !! update state flags, terminate if condition for Ih is found.
-  !! condition for Ih: has sigma or inversion, and number of unique c3 axes .ge. 5
+  !! condition for Ih: has sigma or inversion, and number of unique c3 axes .ge. 3
   !!
   !! NOTE: The variables which store the state need to be allocated and initialised in the caller!
   use sofi_tools, only: OP_PROP_ROT, OP_IMPROP_ROT, OP_INVERSION
@@ -2332,6 +2300,7 @@ subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3,
 
 
 end subroutine state_update
+!> @endcond
 
 
 !> @details
