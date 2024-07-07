@@ -529,8 +529,8 @@ class sym_data():
     :param angle: angle of rotation of a symmetry element, in units of 1/2pi, e.g. angle=0.25 is 1/4 circle
     :type angle: np.array(n_sym, dtype = float )
 
-    :param dmax: maximal displacement of any atom upon transformation by that symmetry matrix
-    :type dmax: np.array(n_sym, dtype = float )
+    :param dHausdorff: maximal displacement of any atom upon transformation by that symmetry matrix
+    :type dHausdorff: np.array(n_sym, dtype = float )
 
     :param pg: point group of the structure
     :type pg: str
@@ -551,7 +551,7 @@ class sym_data():
         self.p=None
         self.axis=None
         self.angle=None
-        self.dmax=None
+        self.dHausdorff=None
         self.pg=None
         self.prin_ax=None
 
@@ -569,7 +569,7 @@ class sym_data():
             print( "%8.4f %8.4f %8.4f" % ( self.matrix[i][0][0], self.matrix[i][0][1], self.matrix[i][0][2] ) )
             print( "%8.4f %8.4f %8.4f" % ( self.matrix[i][1][0], self.matrix[i][1][1], self.matrix[i][1][2] ) )
             print( "%8.4f %8.4f %8.4f" % ( self.matrix[i][2][0], self.matrix[i][2][1], self.matrix[i][2][2] ) )
-            print( "dmax  %9.4f" % self.dmax[i] )
+            print( "dHausdorff  %9.4f" % self.dHausdorff[i] )
             print( "atomic permutation:")
             print( self.perm[i] )
             print()
@@ -642,7 +642,7 @@ class SOFI(algo):
         To access info about symmetry element *i*, get the data as: `sym_data.var[i]`, where `var`
         is one of the variables in the `sym_data` object:
 
-            `n_sym`, `matrix`, `perm`, `op`, `n`, `p`, `axis`, `angle`, `dmax`, `pg`, `prin_ax`
+            `n_sym`, `matrix`, `perm`, `op`, `n`, `p`, `axis`, `angle`, `dHausdorff`, `pg`, `prin_ax`
 
         see help( ira_mod.sym_data ) for full description of these variables.
 
@@ -675,7 +675,7 @@ class SOFI(algo):
         p_data = (c_int*nmax)()
         ax_data = (c_double*3*nmax)()
         angle_data = (c_double*nmax)()
-        dmax_data = (c_double*nmax)()
+        dHausdorff_data = (c_double*nmax)()
         pg = (c_char*11)()
         n_pax = c_int()
         pax_data = (c_double*3*nmax)()
@@ -695,7 +695,7 @@ class SOFI(algo):
         self.lib.libira_compute_all( n, t, c, thr, check_ih, \
                                   nmat, pointer(mat_data), pointer(perm_data), \
                                   pointer(op_data), pointer(n_data), pointer(p_data), \
-                                  pointer(ax_data), pointer(angle_data), pointer(dmax_data), pointer(pg), \
+                                  pointer(ax_data), pointer(angle_data), pointer(dHausdorff_data), pointer(pg), \
                                   pointer(n_pax), pointer(pax_data), cerr )
         if cerr.value != 0:
             raise ValueError("nonzero error value obtained from libira_compute_all()")
@@ -735,10 +735,10 @@ class SOFI(algo):
         for n in range(n_op):
             sym.angle[n]=angle_data[n]
 
-        sym.dmax=np.zeros(n_op, dtype=float)
+        sym.dHausdorff=np.zeros(n_op, dtype=float)
         for n in range(n_op):
-            sym.dmax[n]=dmax_data[n]
-        # sym.dmax = dmax_data[:n_op]
+            sym.dHausdorff[n]=dHausdorff_data[n]
+        # sym.dHausdorff = dHausdorff_data[:n_op]
 
         sym.n_prin_ax = n_pax.value
         sym.prin_ax=np.zeros((sym.n_prin_ax, 3), dtype=float)
@@ -1131,9 +1131,9 @@ class SOFI(algo):
         :param perm: list of permutations corresponding to each matrix operation in input
         :type perm: np.ndarray( (nm_in, nat), dtype = integer )
 
-        :param dmax: maximal distance (Hausdorff distance) corresponding to the application off
+        :param dHausdorff: maximal distance (Hausdorff distance) corresponding to the application off
                      each matrix in the `mat_list` to the structure. Can be seen as "score" of each symmetry
-        :type dmax: np.ndarray( nm_in, dtype = float )
+        :type dHausdorff: np.ndarray( nm_in, dtype = float )
 
         '''
 
@@ -1149,7 +1149,7 @@ class SOFI(algo):
 
         # output data
         perm_data = (c_int*nat*nm_in)()
-        dmax_data = (c_double*nm_in)()
+        dHausdorff_data = (c_double*nm_in)()
 
 
         # have to set argtypes in here, since nat is not know in init
@@ -1164,17 +1164,17 @@ class SOFI(algo):
         self.lib.libira_get_perm.restype=None
 
         self.lib.libira_get_perm( n, t, c, n_m, mats, \
-                               pointer(perm_data), pointer(dmax_data) )
+                               pointer(perm_data), pointer(dHausdorff_data) )
 
         # cast the result into readable things
         perm = np.ndarray((nm_in, nat),dtype=int)
         for n in range(nm_in):
             perm[n]=perm_data[n][:]
-        dmax=np.ndarray(nm_in, dtype=float)
+        dHausdorff=np.ndarray(nm_in, dtype=float)
         for n in range(nm_in):
-            dmax[n] = dmax_data[n]
+            dHausdorff[n] = dHausdorff_data[n]
 
-        return perm, dmax
+        return perm, dHausdorff
 
     def get_combos( self, nat, typ_in, coords, nm_in, mat_list ):
 

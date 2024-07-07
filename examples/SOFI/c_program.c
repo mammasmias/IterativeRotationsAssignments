@@ -101,7 +101,7 @@ int main( void ){
   int *p_data;           //! list of p values
   double *ax_data;       //! list of axes
   double *angle_data;    //! list of angles
-  double *dmax_data;     //! list of dmax values
+  double *dHausdorff_data;     //! list of dHausdorff values
   char *pg;              //! point group
   int n_prin_ax;         //! number of principal axes
   double *prin_ax;       //! list of principal axes
@@ -117,7 +117,7 @@ int main( void ){
   p_data = malloc( sizeof(int)*nmax);
   ax_data = malloc( sizeof(double)*3*nmax);
   angle_data = malloc( sizeof(double)*nmax);
-  dmax_data = malloc( sizeof(double)*nmax);
+  dHausdorff_data = malloc( sizeof(double)*nmax);
   op_data = malloc(sizeof(char)*1*nmax+1);
   pg = malloc(sizeof(char)*11);
   prin_ax = malloc(sizeof(double)*3*nmax);
@@ -129,7 +129,7 @@ int main( void ){
   libira_compute_all( nat, typ, &coords[0][0], sym_thr, prescreen_ih, \
                       &nmat, &mat_data, &perm_data,  \
                       &op_data, &n_data, &p_data,    \
-                      &ax_data, &angle_data, &dmax_data, &pg, &n_prin_ax, &prin_ax, &cerr );
+                      &ax_data, &angle_data, &dHausdorff_data, &pg, &n_prin_ax, &prin_ax, &cerr );
 
   if( cerr < 0 ){
     char* msg;
@@ -168,7 +168,7 @@ int main( void ){
       }
       printf("\n");
     }
-    printf( " dmax  %f\n",dmax_data[i] );
+    printf( " dHausdorff  %f\n",dHausdorff_data[i] );
 
     /* permutations are concatenated */
     printf( " permutation of atoms:\n");
@@ -197,7 +197,7 @@ int main( void ){
   free(p_data);
   free(ax_data);
   free(angle_data);
-  free(dmax_data);
+  free(dHausdorff_data);
   free(pg);
   free(prin_ax);
 

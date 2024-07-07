@@ -31,7 +31,7 @@ program sofi
   character(len=1), allocatable :: op_out(:) !< @brief list of Op
   integer, allocatable :: n_out(:)           !< @brief list of n values
   integer, allocatable :: p_out(:)           !< @brief list of p values
-  real, allocatable :: dmax_out(:)           !< @brief list of dmax values
+  real, allocatable :: dHausdorff_out(:)           !< @brief list of dHausdorff values
   integer :: ierr
   character(128) :: msg
 
@@ -75,12 +75,12 @@ program sofi
   allocate( p_out(1:nmax))
   allocate( ax_out(1:3, 1:nmax))
   allocate( angle_out(1:nmax))
-  allocate( dmax_out(1:nmax))
+  allocate( dHausdorff_out(1:nmax))
   allocate( prin_ax(1:3, 1:nmax))
   prescreen_ih = .False.
 
   call sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih,  &
-       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, pg,&
+       nbas, bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dHausdorff_out, pg,&
        n_prin_ax, prin_ax, ierr )
   if( ierr /= 0 ) then
      write(*,*) "f90 prog got nonzero ierr:", ierr
@@ -99,7 +99,7 @@ program sofi
      do j = 1, 3
         write(*,'(3f12.6)') bas_list(j,:,i)
      end do
-     write(*,'(2x,a,f12.7)') "dmax",dmax_out(i)
+     write(*,'(2x,a,f12.7)') "dHausdorff",dHausdorff_out(i)
      write(*,'(2x, a)') "permutation of atoms:"
      write(*,'(20i4)') perm_list(:,i)
      write(*,*)
@@ -110,7 +110,7 @@ program sofi
   do i = 1, n_prin_ax
      write(*,"(3f9.4)") prin_ax(:,i)
   end do
-  deallocate( bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dmax_out, prin_ax )
+  deallocate( bas_list, perm_list, op_out, n_out, p_out, ax_out, angle_out, dHausdorff_out, prin_ax )
 
   ! allocate( bas_list(1:3,1:3,1:nmax))
   ! allocate( perm_list(1:nat, 1:nmax))

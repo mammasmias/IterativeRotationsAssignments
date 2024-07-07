@@ -55,27 +55,27 @@
 !! @param[in] ax_list(3,nmax)     :: axis of operation of each symmetry
 !! @param[in] angle_list(nmax)    :: angle of each symmetry, in units of 1/2pi,
 !!                                   i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
-!! @param[in] dmax_list(nmax)     :: max difference of atomic positions of before/after symm transformation
+!! @param[in] dHausdorff_list(nmax)     :: max difference of atomic positions of before/after symm transformation
 !! @param[in] pg                  :: name of Point group, e.g. D6h
 !! @param[in] n_prin_ax           :: output size of list of principal axes
 !! @param[in] prin_ax(3,nmax)     :: list of principal axes of the PG, output size is (3,n_prin_ax)
 !! @param[out] cerr               :: error value, negative on error, zero otherwise
 !!
-!! @returns n_mat, mat_list, per_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax
+!! @returns n_mat, mat_list, per_list, op_list, n_list, p_list, ax_list, angle_list, dHausdorff_list, pg, prin_ax
 !!
 !! C-header:
 !! ~~~~~~~~~~~~~~~{.c}
 !! void libira_compute_all( int nat, int *typ, double *coords, double sym_thr, int prescreen_ih, \
 !!                       int *n_mat, double **mat_data, int **perm_data, \
 !!                       char **op_data, int **n_data, int **p_data,       \
-!!                       double **ax_data, double **angle_data, double **dmax_data, char **pg, \
+!!                       double **ax_data, double **angle_data, double **dHausdorff_data, char **pg, \
 !!                       int* n_prin_ax, double **prin_ax, int *cerr );
 !! ~~~~~~~~~~~~~~~
 !!
 subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
                             n_mat, mat_list, perm_list, &
                             op_list, n_list, p_list, &
-                            ax_list, angle_list, dmax_list, pg, n_prin_ax, prin_ax, &
+                            ax_list, angle_list, dHausdorff_list, pg, n_prin_ax, prin_ax, &
                             cerr ) bind(C, name="libira_compute_all")
   use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
@@ -95,7 +95,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   type( c_ptr ), intent(in) :: p_list
   type( c_ptr ), intent(in) :: ax_list
   type( c_ptr ), intent(in) :: angle_list
-  type( c_ptr ), intent(in) :: dmax_list
+  type( c_ptr ), intent(in) :: dHausdorff_list
   type( c_ptr ), intent(in) :: pg
   integer( c_int ), intent(out) :: n_prin_ax
   type( c_ptr ), intent(in) :: prin_ax
@@ -110,7 +110,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   integer( c_int ), dimension(:), pointer :: pp_list
   real( c_double ), dimension(:,:), pointer :: pax_list
   real( c_double ), dimension(:), pointer :: pangle_list
-  real( c_double ), dimension(:), pointer :: pdmax_list
+  real( c_double ), dimension(:), pointer :: pdHausdorff_list
   real( c_double ), dimension(:,:), pointer :: pprin_ax
   character(len=1, kind=c_char), dimension(:), pointer :: pg_char
   character(len=1, kind=c_char), dimension(:), pointer :: op_char
@@ -143,7 +143,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   call c_f_pointer( p_list, pp_list, [nmax] )
   call c_f_pointer( ax_list, pax_list, [3,nmax] )
   call c_f_pointer( angle_list, pangle_list, [nmax] )
-  call c_f_pointer( dmax_list, pdmax_list, [nmax] )
+  call c_f_pointer( dHausdorff_list, pdHausdorff_list, [nmax] )
   call c_f_pointer( pg, pg_char, [10+1] )
   call c_f_pointer( prin_ax, pprin_ax, [3,nmax] )
 
@@ -153,7 +153,7 @@ subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   call sofi_compute_all( nat, ptyp, pcoords, sym_thr, early_ih, &
        nb, pmat_list, pperm_list, &
        fop_list, pn_list, pp_list, &
-       pax_list, pangle_list, pdmax_list, f_pg, np, pprin_ax, ierr )
+       pax_list, pangle_list, pdHausdorff_list, f_pg, np, pprin_ax, ierr )
 
   cerr = int( ierr, c_int )
   if( ierr /= 0 ) then
@@ -529,7 +529,7 @@ subroutine libira_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
 end subroutine libira_ext_bfield
 
 
-!> @details Obtain the permutations and dmax for a list of matrices.
+!> @details Obtain the permutations and dHausdorff for a list of matrices.
 !! This is a wrapper to sofi_get_perm() from sofi_routines.f90
 !!
 !! mat_list in C order
@@ -538,7 +538,7 @@ end subroutine libira_ext_bfield
 !! C-header:
 !!~~~~~~~~~~~~~~~~~~~~~~~{.c}
 !! void libira_get_perm( int nat, int *typ, double *coords, \
-!!                       int nmat, double *mat_data, int **perm_data, double **dmax_data);
+!!                       int nmat, double *mat_data, int **perm_data, double **dHausdorff_data);
 !!~~~~~~~~~~~~~~~~~~~~~~~
 !! @param[in] nat                 :: number of atoms
 !! @param[in] typ(nat)            :: atomic types
@@ -546,8 +546,8 @@ end subroutine libira_ext_bfield
 !! @param[in] n_mat :: number of matrices on list
 !! @param[in] mat_list(3,3,n_mat) :: list of matrices in C order
 !! @param[in] perm_list(nat,n_mat) :: list of permutations for each matrix, in C order (start at 0)
-!! @param[in] dmax_list(n_mat) :: list of dmax values for each matrix
-subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_list)&
+!! @param[in] dHausdorff_list(n_mat) :: list of dHausdorff values for each matrix
+subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dHausdorff_list)&
      bind(C,name="libira_get_perm")
   use, intrinsic :: iso_c_binding
   implicit none
@@ -558,7 +558,7 @@ subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_l
   type( c_ptr ), value,  intent(in) :: mat_list
   !! "output"
   type( c_ptr ), intent(in) :: perm_list
-  type( c_ptr ), intent(in) :: dmax_list
+  type( c_ptr ), intent(in) :: dHausdorff_list
 
   !! F pointers
   integer(c_int), dimension(:), pointer :: ptr_typ
@@ -566,7 +566,7 @@ subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_l
   real( c_double ), dimension(:,:), pointer :: p_lvl2
   real( c_double), dimension(:,:,:), pointer :: ptr_op
   integer( c_int ), dimension(:,:), pointer :: pperm_list
-  real( c_double ), dimension(:), pointer :: pdmax_list
+  real( c_double ), dimension(:), pointer :: pdHausdorff_list
 
   integer :: i
 
@@ -574,7 +574,7 @@ subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_l
   call c_f_pointer( coords, ptr_coords, [3,nat] )
 
   call c_f_pointer( perm_list, pperm_list, [nat,n_mat] )
-  call c_f_pointer( dmax_list, pdmax_list, [n_mat] )
+  call c_f_pointer( dHausdorff_list, pdHausdorff_list, [n_mat] )
 
   call c_f_pointer( mat_list, p_lvl2, [9,n_mat] )
 
@@ -586,7 +586,7 @@ subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dmax_l
      ptr_op(:,:,i) = transpose( ptr_op(:,:,i) )
   end do
 
-  call sofi_get_perm( nat, ptr_typ, ptr_coords, n_mat, ptr_op, pperm_list, pdmax_list )
+  call sofi_get_perm( nat, ptr_typ, ptr_coords, n_mat, ptr_op, pperm_list, pdHausdorff_list )
 
   !! output C-style: start at 0 indices
   pperm_list = pperm_list - 1

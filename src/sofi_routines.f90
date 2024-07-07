@@ -18,14 +18,14 @@
 !! Compute all data from SOFI in single routine.
 !! This contains getting the list of symmetry operations,
 !! and the associated permutations, Op symbols, n and p integers,
-!! list of axis, angles, and dmax. Also the PG name, and list of principal axes.
+!! list of axis, angles, and dHausdorff. Also the PG name, and list of principal axes.
 !!
 !! The structure is assumed to be already shifted to desired origin on input.
 !!
 !! @warning
 !!  This routine performs the combinations of found symmetry operations until
 !!  group completeness. The ``sym_thr`` is disregarded for the combinations, therefore
-!!  operations resulting as combinations of other operations can have a ``dmax`` value higher
+!!  operations resulting as combinations of other operations can have a ``dHausdorff`` value higher
 !!  than ``sym_thr``!
 !!
 !! @note
@@ -47,17 +47,17 @@
 !! @param[out] ax_list(3,nmat)    :: axis of operation of each symmetry
 !! @param[out] angle_list(nmat) :: angle of each symmetry, in units of 1/2pi,
 !!                               i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
-!! @param[out] dmax_list(nmat)  :: max difference of atomic positions of before/after symm transformation
+!! @param[out] dHausdorff_list(nmat)  :: max difference of atomic positions of before/after symm transformation
 !! @param[out] pg         :: name of Point group, e.g. D6h
 !! @param[out] n_prin_ax  :: number of equivalent principal axes
 !! @param[out] prin_ax(3,n_prin_ax) :: list of equivalent principal axes.
 !! @param[out] ierr       :: error value, zero on normal execution, negative otherwise
-!! @returns nmat, mat_list, perm_list, op_list, n_list, p_list, ax_list, angle_list, dmax_list, pg, prin_ax, ierr
+!! @returns nmat, mat_list, perm_list, op_list, n_list, p_list, ax_list, angle_list, dHausdorff_list, pg, prin_ax, ierr
 !!
 subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      nmat, mat_list, perm_list, &
      op_list, n_list, p_list, &
-     ax_list, angle_list, dmax_list, pg, n_prin_ax, prin_ax, &
+     ax_list, angle_list, dHausdorff_list, pg, n_prin_ax, prin_ax, &
      ierr )
   use sofi_tools, only: nmax
   use err_module
@@ -77,7 +77,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   integer, dimension(nmax),      intent(out) :: p_list
   real, dimension(3, nmax),      intent(out) :: ax_list
   real, dimension(nmax),         intent(out) :: angle_list
-  real, dimension(nmax),         intent(out) :: dmax_list
+  real, dimension(nmax),         intent(out) :: dHausdorff_list
   character(len=10),             intent(out) :: pg
   integer,                       intent(out) :: n_prin_ax
   real, dimension(3,nmax),       intent(out) :: prin_ax
@@ -113,8 +113,8 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      return
   end if
 
-  !! get permuations and dmax
-  call sofi_get_perm( nat, typ, coords, nmat, mat_list, perm_list, dmax_list )
+  !! get permuations and dHausdorff
+  call sofi_get_perm( nat, typ, coords, nmat, mat_list, perm_list, dHausdorff_list )
 
 
   !! get name of pg
@@ -148,7 +148,7 @@ end subroutine sofi_compute_all
 !! @warning
 !!  This routine performs the combinations of found symmetry operations until
 !!  group completeness. The ``sym_thr`` is disregarded for the combinations, therefore
-!!  operations resulting as combinations of other operations can have a ``dmax`` value higher
+!!  operations resulting as combinations of other operations can have a ``dHausdorff`` value higher
 !!  than ``sym_thr``!
 !!
 !! @param[in] nat :: number of atoms
@@ -585,9 +585,9 @@ end subroutine sofi_get_symmops
 
 !> @details
 !! Obtain the permutations of atoms associated to each of the symmetry operations in
-!! the list. Also compute the dmax of each operation.
+!! the list. Also compute the dHausdorff of each operation.
 !!
-!! This consists of computing P by cshda, permuting, applying SVD, and finally computing dmax.
+!! This consists of computing P by cshda, permuting, applying SVD, and finally computing dHausdorff.
 !!
 !! Applying the permutation associated to N-th symmetry operation:
 !!~~~~~~~~~~~~~~{.f90}
@@ -600,10 +600,10 @@ end subroutine sofi_get_symmops
 !! @param[in] nbas :: number of operations in the list
 !! @param[in] bas_list(3,3,nbas) :: list of symmetry operations
 !! @param[out] perm_list(nat,nbas) :: list of permutations
-!! @param[out] dmax_list(nbas) :: list of dmax
-!! @returns perm_list, dmax_list
+!! @param[out] dHausdorff_list(nbas) :: list of dHausdorff
+!! @returns perm_list, dHausdorff_list
 !!
-subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list )
+subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dHausdorff_list )
   implicit none
   integer,                   intent(in) :: nat
   integer, dimension(nat),   intent(in) :: typ
@@ -611,7 +611,7 @@ subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list
   integer,                   intent(in) :: nbas
   real, dimension(3,3,nbas), intent(in) :: bas_list
   integer, dimension(nat, nbas), intent(out) :: perm_list
-  real, dimension(nbas),     intent(out) :: dmax_list
+  real, dimension(nbas),     intent(out) :: dHausdorff_list
 
   integer :: i, j, ierr
   real, dimension(3,3) :: rmat
@@ -662,7 +662,7 @@ subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dmax_list
 
 
      perm_list(:,i) = found(1:nat)
-     dmax_list(i) = maxval( dists(1:nat) )
+     dHausdorff_list(i) = maxval( dists(1:nat) )
      ! write(*,*) i, maxval(dists(1:nat))
      ! write(*,*) rmat(1,:)
      ! write(*,*) rmat(2,:)
