@@ -84,7 +84,11 @@ IRA solves the so-called `shape matching` problem, also sometimes called `struct
 where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a rotation/reflection matrix,
 :math:`\mathbf{t}` is a translation vector, and :math:`P_B` is a permutation matrix of atomic indices in :math:`B`.
 
-The problem can be rewritten as optimization problem:
+The problem of finding an optimal rotation :math:`\mathbf{R}` when :math:`A` and :math:`B` do not include permutations is known as
+the `orthogonal Procrustes problem`, and can be easily solved by Singular Value Decomposition method (SVD),
+see `the wikipedia article <https://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem>`_.
+
+The shape-matching problem of Eq. :ref:`(2) <eq-pb3>` is however more complicated, and can be rewritten as optimization problem:
 
 .. _eq-argmin:
 .. math::

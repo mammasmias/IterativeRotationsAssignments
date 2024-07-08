@@ -123,9 +123,9 @@ will flip its axis and angle :
    ('C', 8, 3, array([ 2.87347886e-01, -9.57826285e-01, -1.60749682e-16]), -0.375 )
 
 .. warning::
-   The computation of ``n`` and ``p`` is limited to a certain order, which is by default 24 at maximum.
+   The computation of ``n`` and ``p`` in SOFI is limited to a certain order, which is by default 200 at maximum.
    If the order of a matrix is larger than that, ``analmat`` will return ``n`` and ``p`` which are wrong, but
-   as close as possible to truth, within the `resolution` of 1/24. The ``angle`` will have
+   as close as possible to truth, within the `resolution` of 1/200. The ``angle`` will have
    the correct value in any case. Example:
 
       >>> ## generate a high-order (small angle) rotation C39^2
@@ -261,7 +261,7 @@ Matrix distance, or the resolving power of SOFI
 ===============================================
 
 In SOFI, two matrices are considered equal when the function ``matrix_distance()`` returns a
-value below the threshold ``m_thr``, the default value for which is ``m_thr=0.73``. Example:
+value below the threshold ``m_thr``, the default value for which is ``m_thr=0.044``. Example:
 
    >>> ## create two matrices: S4 and C2 on the same axis
    >>> m1 = sofi.construct_operation( "S", np.array([ 1., 0., 0.]), 1/4 )
@@ -273,26 +273,29 @@ value below the threshold ``m_thr``, the default value for which is ``m_thr=0.73
    >>> ##
    >>> ## create matrices which are similar:
    >>> m1 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 0.5 )
-   >>> m2 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 0.51 )
+   >>> m2 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 0.503 )
    >>> sofi.matrix_distance( m1, m2 )
-   0.08884304298544585
+   0.026656902985230164
 
 The value of ``matrix_distance`` can be seen as the order of the matrix needed to transform ``m1`` into ``m2``.
-The threshold ``m_thr`` is set to a value such that the rotation C12^1 can be resolved:
+The threshold ``m_thr`` is set to a value such that the rotation C200^1 can be resolved, i.e. the distance
+between identity and C200 matrices is just above ``m_thr=0.044``, and they are thus seen as distinct matrices
+by SOFI:
 
    >>> ## identity
    >>> m1 = sofi.construct_operation( "E", np.array([1., 0., 0.]), 0. )
-   >>> ## C12^1
-   >>> m2 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 1/12 )
+   >>> ## C200^1
+   >>> m2 = sofi.construct_operation( "C", np.array([1., 0., 0.]), 1/200 )
    >>> sofi.matrix_distance( m1, m2 )
-   0.7320508075688772
+   0.044427002341749004
 
 
 
 .. note::
-   The value of ``m_thr`` effectively determines the `resolving power` of SOFI. For groups containing
-   operations with order higher than C12, the value should be adjusted, and the ``src`` recompiled.
-   In that case, take care of array sizes, as they might exceed ``nmax``, and to adjust ``lim_n_val``. Refer :ref:`here <modif_m_thr>` for more info.
+   The value of ``m_thr`` effectively determines the `maximal resolving power` of SOFI. For groups containing
+   operations with order higher than C200, the value should be adjusted, and the ``src`` recompiled.
+   In that case, take care of array sizes, as they might exceed ``nmax``, and to adjust ``lim_n_val``.
+   Refer :ref:`here <modif_m_thr>` for more info.
 
 
 
@@ -388,22 +391,22 @@ Take the same hypothetical structure from before, it has a C3 operation on axis 
    >>> ## notice the vectors are equal (within precision) to the original coords, except permuted.
 
 To obtain the permutation of atoms which happens upon the transformation by a symmetry operation,
-SOFI has the ``try_mat()`` function, which returns the value of distance between the original structure,
+SOFI has the ``try_mat()`` function, which returns the value of Hausdorff distance between the original structure,
 and the structure transformed by a given matrix, and the corresponding permutation of indices:
 
-   >>> dmax, perm = sofi.try_mat( nat, typ, coords, c3mat )
+   >>> dHausdorff, perm = sofi.try_mat( nat, typ, coords, c3mat )
    >>> ##
    >>> ## print the permutation
    >>> perm
    array([2, 0, 1, 5, 3, 4])
-   >>> ## print the distance
-   >>> dmax
+   >>> ## print the Hausdorff distance
+   >>> dHausdorff
    0.00033364459005079844
 
 
-The low value of ``dmax`` confirms that ``c3mat`` is indeed a symmetry operation of the structure defined above.
+The low value of ``dHausdorff`` confirms that ``c3mat`` is indeed a symmetry operation of the structure defined above.
 If you now take ``coords_tf`` from above, permute them by ``perm``, and compute the maximal distance between atoms
-``coords[i]`` and ``coords_tf_perm[i]``, you should obtain the value ``dmax``.
+``coords[i]`` and ``coords_tf_perm[i]``, you should obtain the value ``dHausdorff``.
 
    >>> ## permute coords_tf by perm
    >>> coords_tf_perm = coords_tf[ perm ]
@@ -420,9 +423,9 @@ If you now take ``coords_tf`` from above, permute them by ``perm``, and compute 
 
 
 .. note::
-   The ``sym_thr`` argument when computing ``get_symm_ops()`` is a threshold in terms of the distance ``dmax`` as
-   computed in this section. If an operation returns a distance value beyond ``sym_thr``, then SOFI will not
-   consider that operation as a symmetry operation.
+   The ``sym_thr`` argument when computing ``get_symm_ops()`` is a threshold in terms of the distance
+   ``dHausdorff`` as computed in this section. If an operation returns a distance value beyond ``sym_thr``,
+   then SOFI will not consider that operation as a symmetry operation.
 
 
 
@@ -490,18 +493,18 @@ a complete group of elements that are symmetry elements of atomic structure:
    ('C3v', 1, array([ 8.61320772e-04, -9.09124124e-03,  9.99958303e-01]))
    >>> ##
    >>> ## the full group has been generated, let's compute permutations and distances
-   >>> perm, dmax = sofi.get_perm( nat, typ, coords, n_combo, mat_combo )
-   >>> dmax
+   >>> perm, dHausdorff = sofi.get_perm( nat, typ, coords, n_combo, mat_combo )
+   >>> dHausdorff
    array([1.49097439e-15, 4.38744637e-01, 4.35565047e-01, 4.35565047e-01,
           5.12566013e-01, 5.20405469e-01])
    >>> ##
    >>> ## notice the first 4 values are below 0.5 (the sym_thr value used in get_symm_ops),
-   >>> ## and the last two which were generated by combinations have `dmax > 0.5`
+   >>> ## and the last two which were generated by combinations have ``dHausdorff > 0.5``
 
 
 And thus we have generated the missing symmetry operations, by performing combinations of the known elements
 until group completeness.
-The missing operations were not found by SOFI, since their ``dmax`` values are beyond the
+The missing operations were not found by SOFI, since their ``dHausdorff`` values are beyond the
 ``sym_thr=0.5`` we have used in ``get_symm_ops()``, and thus SOFI disregarded them as symmetry elements.
 
 If we repeat the above calculation with ``sym_thr=0.6``, the whole ``C3v`` group should be found straight away.
@@ -526,8 +529,10 @@ we can simply call the ``compute()`` function:
    >>> ##
    >>> ## see what is in `sym` (use tab)
    >>> sym.
-   sym.angle      sym.dmax       sym.n          sym.n_sym      sym.p          sym.pg         sym.print()
-   sym.axis       sym.matrix     sym.n_prin_ax  sym.op         sym.perm       sym.prin_ax
+   sym.angle       sym.matrix      sym.n_sym       sym.perm        sym.print()     
+   sym.axis        sym.n           sym.op          sym.pg          
+   sym.dHausdorff  sym.n_prin_ax   sym.p           sym.prin_ax
+
 
 The ``compute()`` function returns a ``sym`` object that contains all data computed by SOFI.
 
@@ -670,28 +675,37 @@ This function can be combined with the ``compute()`` function to properly label 
 HOW-TO: Modifying the resolving power of SOFI
 =============================================
 
-In order to modify the resolving power of SOFI, the three parameters in the SOFI source: ``m_thr``, ``nmax``, and ``lim_n_val`` should preferrably be modified, and the source re-compiled. The parameters are located in ``sofi_tools.f90``:
+The `maximal resolving power` of SOFI is limited.
+In order to modify it, the three parameters in the SOFI source: ``m_thr``, ``nmax``, and ``lim_n_val`` should preferrably be modified, and the source re-compiled. The parameters are located in ``sofi_tools.f90``:
 
 .. code-block:: fortran
 
-  ! real, parameter :: m_thr = 1.4      !! C6
-  ! real, parameter :: m_thr = 1.07     !! C8
-  real, parameter :: m_thr = 0.73     !! C12
+  ! real, parameter :: m_thr = 0.73     !! C12
   ! real, parameter :: m_thr = 0.49     !! C18
   ! real, parameter :: m_thr = 0.36     !! C24
+  real, parameter :: m_thr = 0.044    !! C200
+  ! real, parameter :: m_thr = 0.022    !! C400
 
 
-The ``m_thr`` is a threshold on matrix distances, its value gives the highest order of an operation that will still be checked in the SOFI main loop. The value ``m_thr = 0.73`` corresponds to operation C12, as indicated by the comment in the source. There are some other values proposed, which can be used by simply uncommenting them. Value for ``m_thr`` corresponding to other symmetry operations can be computed with the ``matrix_distance`` function. See also :ref:`here <mat_dist>`.
+The ``m_thr`` is a threshold on matrix distances, its value gives the highest order of an operation that will
+still be considered as distinct operation in the SOFI main loop. The value ``m_thr = 0.044`` corresponds
+to operation C200, as indicated by the comment in the source.
+There are some other values proposed, which can be used by simply
+uncommenting them. Value for ``m_thr`` corresponding to other orders of symmetry operations can be computed with
+the ``matrix_distance`` function. See also :ref:`here <mat_dist>`.
 
 .. code-block:: fortran
 
-  integer, parameter :: nmax = 200
+  integer, parameter :: nmax = 400
 
-The ``nmax`` specifies the expected size of input arrays for SOFI. If the number of found symmetry operations is beyond ``nmax``, SOFI will return an error. Thus if you expect your structure will contain more than ``nmax`` symmetries, you should edit this value.
+The ``nmax`` specifies the expected size of input arrays for SOFI. If the number of found symmetry operations
+is beyond ``nmax``, SOFI will return an error. Thus if you expect your structure will contain more
+than ``nmax`` symmetries, you should edit this value.
 Keep in mind that the actual sizes of arrays in the caller software need to be consistent with ``nmax``.
 
 .. code-block:: fortran
 
-  integer, parameter :: lim_n_val = 24
+  integer, parameter :: lim_n_val = 200
 
-The ``lim_n_val`` is used to find values of ``n`` and ``p`` in ``sofi_analmat()``. If a symmetry operation with higher order is input, values of ``n`` and ``p`` will be wrong. See also :ref:`here <analmat>`.
+The ``lim_n_val`` is used to find values of ``n`` and ``p`` in ``sofi_analmat()``. If a symmetry operation
+with higher order is input, values of ``n`` and ``p`` will be wrong. See also :ref:`here <analmat>`.
