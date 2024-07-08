@@ -102,7 +102,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
 
 
   !! get combos, can produce symm above sym_thr
-  ! call sofi_get_combos( nat, typ, coords, nmat, mat_list )
+  call sofi_get_combos( nat, typ, coords, nmat, mat_list )
 
   !! get ops, and unique angles and axes
   call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
@@ -1325,7 +1325,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !!
   !! D2 has all axes multip 1, any of the C2 axes can be principal,
   !! but D2d has 2 C2 axes which are not prncipal, with multip=1, and principal C2 with multip=3
-  if( maxval(multip_ax) .gt. 1 ) then
+  if( maxval(multip_ax, mask=(op .eq. OP_PROP_ROT)) .gt. 1 ) then
      !! there are axes with multip > 1
      if( multip_ax( max_n_loc) == 1 ) then
         !! we have chosen the wrong axis, choose again among axes with multip > 1
