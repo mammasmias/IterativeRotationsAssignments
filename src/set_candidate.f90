@@ -21,7 +21,7 @@ subroutine set_candidates( nat1, typ1, coords1, &
   integer, dimension(nat1), intent(out) :: candidate1
   integer, dimension(nat2), intent(out) :: candidate2
 
-  integer :: i, dnat
+  integer :: i, dnat, k
 
   candidate1(:) = 0
   candidate2(:) = 0
@@ -46,8 +46,11 @@ subroutine set_candidates( nat1, typ1, coords1, &
      candidate1(1) = 1
 
      !! in struc 2 take all atoms
+     k = 1
      do i = 1, nat2
-        candidate2(i) = i
+        if( typ2(i) .ne. typ1(1) ) cycle
+        candidate2(k) = i
+        k = k + 1
      end do
 
   else
