@@ -29,7 +29,7 @@ module sofi_tools
   !! see the comment under matrix_distance in sofi_tools.f90 for some ref. values
   !! 1.07 captures 1/8*2pi
   !! NOTE: decreasing this value gives "higher resolution", but slows down the algo!
-  !!   Also, groups with order > 6 are super rare in atomic clusters. But can happen in
+  !!   Also, groups with order > 8 are super rare in atomic clusters. But can happen in
   !!   for example nanotubes, where main ax is in center of tube, around this ax
   !!   many rotations can happen, then order of group can be any.
   ! real, parameter :: m_thr = 1.4      !! C6
@@ -37,6 +37,8 @@ module sofi_tools
   ! real, parameter :: m_thr = 0.73     !! C12
   ! real, parameter :: m_thr = 0.49     !! C18
   ! real, parameter :: m_thr = 0.36     !! C24
+  ! real, parameter :: m_thr = 0.19     !! C48
+  ! real, parameter :: m_thr = 0.092     !! C96
   real, parameter :: m_thr = 0.044     !! C200
 
 
@@ -56,6 +58,8 @@ module sofi_tools
 
   !! limit value for n in sofi_analmat.
   ! integer, parameter :: lim_n_val = 24
+  ! integer, parameter :: lim_n_val = 48
+  ! integer, parameter :: lim_n_val = 96
   integer, parameter :: lim_n_val = 200
 
 contains
