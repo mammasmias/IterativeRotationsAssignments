@@ -774,11 +774,11 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   integer, dimension(nat) :: found, perm
   logical :: not_crazy, is_new
   logical :: is_valid, do_refine
+  real :: act_thr
 
   ! write(*,*) "try_sofi received theta:"
-  ! write(*,*) theta(:,1)
-  ! write(*,*) theta(:,2)
-  ! write(*,*) theta(:,3)
+  ! write(*,'(3f9.4)') theta
+
   ierr = 0
   success = .false.
 
@@ -793,6 +793,12 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   do i = 1, nat
      coords(:,i) = matmul( theta, coords(:,i) )
   end do
+
+  !! actual thr used to decide if theta is "close enough" to refine.
+  !! In principle anything beyond 0.5*dd allows for permuttaions of atoms,
+  !! but due to distortions in positions, need to allow a bit more, since
+  !! permutations could be "partially correct", and refine can correct that.
+  act_thr = 0.6*dd + epsilon
 
   ! write(*,*) nat*2
   ! write(*,*)
@@ -816,7 +822,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   !! get first cshda
   call cshda( nat, typ_in, coords_in, &
        nat, typ, coords, &
-       0.5*dd+epsilon, found, dists )
+       act_thr, found, dists )
   dh = maxval(dists,1)
   ! write(*,'(x,a,x,f9.4)') 'initial dh',dh
 
@@ -825,10 +831,10 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   !    write(*,*) i, found(i), dists(i)
   ! end do
   ! write(*,*) '1st dh:',dh, sum(dists**2)
-  ! write(*,*) dh, 5.0*sym_thr+epsilon
+  ! write(*,*) "initial", dh, act_thr
 
-  ! if( dh .gt. 5.0*sym_thr+epsilon ) then
-  if( dh .gt. 0.5*dd+epsilon ) then
+  !! add another epsilon to act_thr, for numerics...
+  if( dh .gt. act_thr+epsilon ) then
      ! write(*,*) "return:: dh is too big"
      return
   end if
@@ -897,12 +903,10 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
      end if
   end if
 
-
   ! write(*,*) "out theta:"
-  ! write(*,*) theta(:,1)
-  ! write(*,*) theta(:,2)
-  ! write(*,*) theta(:,3)
+  ! write(*,'(3f9.4)') theta
   ! write(*,*) '::: exit try_sofi', success, dh
+
 end subroutine try_sofi
 
 
@@ -1036,6 +1040,7 @@ subroutine refine_sofi( nat_ref, typ_ref, coords_ref, nat, typ_in, coords_in, th
   ! write(*,*) 'theta on refine output:'
   ! write(*,'(3f9.4)') theta
 
+  ! write(*,*) "refined in",i
 
 end subroutine refine_sofi
 
@@ -1117,7 +1122,7 @@ subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
      if( .not. is_new ) return
   end do
 
-  ! write(*,*) "is new:", is_new
+  ! write(*,*) "is new:", is_new, dd, matrix_thr
 end subroutine is_new_sofi
 
 
