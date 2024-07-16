@@ -549,10 +549,6 @@ we can simply call the ``compute()`` function:
 
 The ``compute()`` function returns a ``sym`` object that contains all data computed by SOFI.
 
-.. note::
-   The ``compute()`` function has an optional logical argument: ``prescreen_ih = False``, which can be set to ``True``
-   for a slight speed-up in finding Ih point groups. It has no effect for other groups.
-
 
 Choosing the origin point
 =========================
@@ -560,27 +556,31 @@ Choosing the origin point
 SOFI is agnostic to the choice of the origin point. That means the choice is left to the
 user, or application, which calls SOFI.
 
-The most general choice should be the geometric center (arithmetic mean) of the structure, which can be
-achieved by computing the mean, and then shifting the structure:
+The most general choice should be the geometric center (arithmetic mean) of the structure, since it is
+guaranteed to remain a fixed point for all symmetry elements of the PG of the structure.
+The function ``sofi.compute()`` takes an optional argument ``origin``.
+If ``origin`` is not specified, SOFI will shift the structure to its geometric center by default.
 
-   >>> ## compute the mean
-   >>> geo_center = np.mean( coords, axis=0 )
-   >>> ##
-   >>> ## subtract
-   >>> coords = coords - geo_center
-
-The geomtric center is guaranteed to remain a fixed point for all symmetry elements of the PG of the structure.
+   >>> ## origin not specified, geo. center will be computed and the structure shifted
+   >>> sym = sofi.compute( nat, typ, coords, sym_thr )
 
 In some cases, there can be points other than geometric center, which remain fixed for a subset of the symmetry
-elements. These points are then the rigin points for subgroups associated to the structure.
+elements. These points are then the origin points for subgroups associated to the structure.
+
+If ``origin`` is specified as 3-vector, then that point will be taken as the origin.
 
 Imagine an application where symmetry operations about a given atom are sought, instead of all possible symmetries.
-In SOFI, this can be achieved by simply shifting the structure such that the desired atom is at the origin:
+This can be achieved by specifying that point as the ``origin`` in the call to ``sofi.compute()``:
 
    >>> idx_atm = 7
-   >>> origin_point = coords[ idx_atm ]
-   >>> coords = coords - origin_point
-   >>> sym = sofi.compute( nat, typ, coords, 0.3 )
+   >>> my_origin = coords[ idx_atm ]
+   >>> ## specify the origin point
+   >>> sym = sofi.compute( nat, typ, coords, sym_thr, origin = my_origin )
+
+.. warning::
+
+   This behaviour of ``sofi.compute()`` is available **only in the python interface**,
+   the calls to ``sofi_compute_all()`` from other languages need to shift the structure manually before the call!
 
 
 HOW-TO: Dealing with linear structures
@@ -607,13 +607,11 @@ For example, if we create a linear structure without the mirror symmetry, thus g
    >>> ## call sofi.compute
    >>> sym = sofi.compute( nat, typ, coords, 0.1 )
    >>> ##
-   >>> ## list of matrices has only identity, and the found PG is C1
+   >>> ## list of matrices has only identity
    >>> sym.matrix
    array([[[1., 0., 0.],
            [0., 1., 0.],
            [0., 0., 1.]]])
-   >>> sym.pg
-   'C1'
 
 
 On the other hand, if we create a structure with inversion and reflection, group :math:`D_{\infty h}`, and call ``sofi.compute()``. The list of matrices has three elements, while the PG name is "Ci+".
@@ -633,7 +631,7 @@ On the other hand, if we create a structure with inversion and reflection, group
    >>> ## call sofi.compute
    >>> sym = sofi.compute( nat, typ, coords, 0.1 )
    >>> ##
-   >>> ## list of matrices has three elements: identity, inversion, mirror over x-axis
+   >>> ## list of matrices has more than one element; notably the mirror over x-axis
    >>> sym.matrix
    array([[[ 1.,  0.,  0.],
            [ 0.,  1.,  0.],
@@ -645,12 +643,11 @@ On the other hand, if we create a structure with inversion and reflection, group
    
           [[-1., -0., -0.],
            [ 0.,  1., -0.],
-           [-0.,  0.,  1.]]])
-   >>> ##
-   >>> ## the point group gives Ci+ since there are more operations than expected for pure Ci,
-   >>> ## pure Ci has 2 operations.
-   >>> sym.pg
-   'Ci+'
+           [-0.,  0.,  1.]],
+   
+          [[ 1.,  0.,  0.],
+           [-0., -1.,  0.],
+           [ 0.,  0., -1.]]])
 
 
 In order to distinguish the linear structures from the others, the library contains a function ``check_collinear()``, which can be used as follows:
@@ -673,11 +670,12 @@ This function can be combined with the ``compute()`` function to properly label 
    is_collinear, axis = sofi.check_collinear( nat, coords )
    if( is_collinear ):
 
-      ## if number of symmetry operations == 1: group is C1
+      ## if number of found symmetry operations == 1: group should be C_inf_v
       if( sym.n_sym == 1 ):
          ## overwrite the point group as desired
          sym.pg = "Cnv"
 
+      ## more than one foun symmetry operation; group should be D_inf_h
       else:
          sym.pg = "Dnh"
 
