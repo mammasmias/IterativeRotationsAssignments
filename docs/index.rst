@@ -87,6 +87,7 @@ where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a
 The problem of finding an optimal rotation :math:`\mathbf{R}` when :math:`A` and :math:`B` do not include permutations is known as
 the `orthogonal Procrustes problem`, and can be easily solved by Singular Value Decomposition method (SVD),
 see `the wikipedia article <https://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem>`_.
+The routines to solve it are also included in this library.
 
 The shape-matching problem of Eq. :ref:`(2) <eq-pb3>` is however more complicated, and can be rewritten as optimization problem:
 
@@ -101,7 +102,7 @@ in which :math:`D` is a general distance function between two sets, that is (i) 
 
 The function :math:`D` in Eq. :ref:`(3) <eq-argmin>` is computed by CShDA.
 
-IRA specifies a way to parse the space of rigid transformations associated to the atomic structure,
+The IRA algorithm specifies a way to parse the space of rigid transformations associated to the atomic structure,
 computes CShDA on the way, and returns the single transformation that minimizes it.
 In presence of distortions, it calls the SVD-based algorithm to further minimize the rotations, given permutation
 computed by CShDA.
@@ -210,9 +211,6 @@ Tutorials and How-to
 
    howto/ira_howto
    howto/sofi_howto
-
-aaa
-===
 
 
 (under construction)
