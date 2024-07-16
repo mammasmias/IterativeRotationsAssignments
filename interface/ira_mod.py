@@ -509,34 +509,34 @@ class sym_data():
     :type n_sym: int
 
     :param matrix: the list of matrices of symmetry operations
-    :type matrix: np.array((n_sym, 3, 3), dtype = float)
+    :type matrix: np.ndarray((n_sym, 3, 3), dtype = float)
 
     :param perm: the atomic permutation corresponding to application of that symmetry, start by index 0
-    :type perm: np.array((n_sym, nat), dtype = int)
+    :type perm: np.ndarray((n_sym, nat), dtype = int)
 
     :param op: Schoenflies notation: Op n^p; E=identity, I=inversion, C=rotation, S=(roto-)inversion
-    :type op: np.array((n_sym), type="U1"); size-1 strings
+    :type op: np.ndarray((n_sym), type="U1"); size-1 strings
 
     :param n: Schoenflies notation n
-    :type n: np.array(n_sym, dtype = int )
+    :type n: np.ndarray(n_sym, dtype = int )
 
     :param p: Schoenflies notation p
-    :type p: np.array(n_sym, dtype = int )
+    :type p: np.ndarray(n_sym, dtype = int )
 
     :param axis: the axis over which a symmetry element operates (for S: normal vector to plane)
-    :type axis: np.array((n_sym, 3), dtype = float )
+    :type axis: np.ndarray((n_sym, 3), dtype = float )
 
     :param angle: angle of rotation of a symmetry element, in units of 1/2pi, e.g. angle=0.25 is 1/4 circle
-    :type angle: np.array(n_sym, dtype = float )
+    :type angle: np.ndarray(n_sym, dtype = float )
 
     :param dHausdorff: maximal displacement of any atom upon transformation by that symmetry matrix
-    :type dHausdorff: np.array(n_sym, dtype = float )
+    :type dHausdorff: np.ndarray(n_sym, dtype = float )
 
     :param pg: point group of the structure
     :type pg: str
 
     :param prin_ax: principal axis of the PG
-    :type prin_ax: np.array( 3, dtype = float )
+    :type prin_ax: np.ndarray( 3, dtype = float )
 
     :function print: prints the full data of the `sym_data` object
 
@@ -612,12 +612,14 @@ class SOFI(algo):
     # if you need more than than then change in sofi_tools.f90 and here, and recompile sofi
     _nmax=400
 
-    def compute(self, nat, typ_in, coords, sym_thr, prescreen_ih=False ):
+    def compute(self, nat, typ_in, coords, sym_thr, origin=None, prescreen_ih=False ):
         """
         .. _sofi.compute:
 
         this is a wrapper to libira_compute_all() from library_sofi.f90
         Description: This routine computes all the relevant PG symmetry data of the input structure.
+        Unless an `origin` point is specified, the input structure is shifted to the geometric center by
+        this python interface.
 
         **== input: ==**
 
@@ -628,10 +630,18 @@ class SOFI(algo):
         :type typ_in: string or int
 
         :param coords: the atomic positions of the structure
-        :type coords: np.array((nat,3), dtype=float)
+        :type coords: np.ndarray((nat,3), dtype=float)
 
         :param sym_thr: symmetry threshold value
         :type sym_thr: float
+
+        **== optional: ==**
+
+        :param origin: if specified, it will be taken as origin point, otherwise the geometric center is the origin
+        :type origin: np.ndarray(3, dtype=float)
+
+        :param prescreen_ih: if True, force sofi to check for Ih group already during computation.
+        :type prescreen ih: bool
 
         **== output: ==**
 
@@ -657,6 +667,28 @@ class SOFI(algo):
 
         # check if input types are already c_int or not
         typ = self.tf_int( typ_in )
+
+        # if origin is not provided, use geometric center
+        gc = np.mean( coords, axis=0 )
+        # if origin is provided, use that
+        if( origin is not None ):
+            # check size, type
+            o_size = np.size(origin)
+            if( o_size != 3 ):
+                msg = "the `origin` must be a 3-vector! Received size:", o_size
+                raise ValueError( msg )
+            if( not isinstance(origin[0], (float, np.float32, np.float64, int, np.int32, np.int64)) ):
+                msg = "unexpected datatype of `origin`! Expected: float or int"
+                raise ValueError( msg )
+            ## set the input origin as gc
+            gc = origin
+
+        # print( "gc used:", gc )
+        # shift coords to origin
+        coords = coords - gc
+
+        # for i in range(nat):
+        #     print( typ[i], *coords[i] )
 
         # input data
         n = c_int( nat )
@@ -764,10 +796,15 @@ class SOFI(algo):
         :type typ_in: string or int
 
         :param coords: the atomic positions of the structure
-        :type coords: np.array((nat,3), dtype=float)
+        :type coords: np.ndarray((nat,3), dtype=float)
 
         :param sym_thr: symmetry threshold value
         :type sym_thr: float
+
+        **== optional ==**
+
+        :param prescreen_ih: if True, force sofi to check for Ih group already during computation.
+        :type prescreen ih: bool
 
 
         **== output: ==**
@@ -776,7 +813,7 @@ class SOFI(algo):
         :type n_sym: int
 
         :param matrix: the list of matrices of symmetry operations
-        :type matrix: np.array((n_sym, 3, 3), dtype = float)
+        :type matrix: np.ndarray((n_sym, 3, 3), dtype = float)
 
         """
 
@@ -850,7 +887,7 @@ class SOFI(algo):
         :type n_prin_ax: integer
 
         :param prin_ax: list of principal axes of the PG
-        :type prin_ax: np.array( (n_prin_ax, 3), dtype = float )
+        :type prin_ax: np.ndarray( (n_prin_ax, 3), dtype = float )
 
         """
         # input data
@@ -1444,10 +1481,10 @@ class SOFI(algo):
         **== input ==**
 
         :param m1: matrix 1
-        :type m1: np.array( [3, 3], dtype = float)
+        :type m1: np.ndarray( [3, 3], dtype = float)
 
         :param m2: matrix 2
-        :type m2: np.array( [3, 3], dtype = float)
+        :type m2: np.ndarray( [3, 3], dtype = float)
 
         **== output ==**
 
@@ -1482,7 +1519,7 @@ class SOFI(algo):
         :type nat: int
 
         :param coords: the atomic positions of the structure
-        :type coords: np.array((nat,3), dtype=float)
+        :type coords: np.ndarray((nat,3), dtype=float)
 
         **== output ==**
 
@@ -1490,7 +1527,7 @@ class SOFI(algo):
         :type collinear: bool
 
         :param ax: axis of collinearity, if structure is collinear
-        :type ax: np.array(3, dtype=float)
+        :type ax: np.ndarray(3, dtype=float)
 
         '''
         #input
