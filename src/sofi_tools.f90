@@ -212,153 +212,99 @@ contains
     integer :: err
     character(len=10), intent(in) :: pg
     integer, intent(in) :: Nop
+    integer :: exp_Nop
 
     err = 0
-    !! if Nop is less than should be, return err=-1
-    if( &
-         pg == 'C1'   .and. Nop .lt. 1   .or. &
-         pg == 'Cs'   .and. Nop .lt. 2   .or. &
-         pg == 'C2'   .and. Nop .lt. 2   .or. &
-         pg == 'C2h'  .and. Nop .lt. 4   .or. &
-         pg == 'C2v'  .and. Nop .lt. 4   .or. &
-         pg == 'C3'   .and. Nop .lt. 3   .or. &
-         pg == 'C3h'  .and. Nop .lt. 6   .or. &
-         pg == 'C3v'  .and. Nop .lt. 6   .or. &
-         pg == 'C4'   .and. Nop .lt. 4   .or. &
-         pg == 'C4h'  .and. Nop .lt. 8   .or. &
-         pg == 'C4v'  .and. Nop .lt. 8   .or. &
-         pg == 'C5'   .and. Nop .lt. 5   .or. &
-         pg == 'C5h'  .and. Nop .lt. 10  .or. &
-         pg == 'C5v'  .and. Nop .lt. 10  .or. &
-         pg == 'C6'   .and. Nop .lt. 6   .or. &
-         pg == 'C6h'  .and. Nop .lt. 12  .or. &
-         pg == 'C6v'  .and. Nop .lt. 12  .or. &
-         pg == 'C7'   .and. Nop .lt. 7   .or. &
-         pg == 'C7h'  .and. Nop .lt. 14  .or. &
-         pg == 'C7v'  .and. Nop .lt. 14  .or. &
-         pg == 'C8'   .and. Nop .lt. 8   .or. &
-         pg == 'C8h'  .and. Nop .lt. 16  .or. &
-         pg == 'C8v'  .and. Nop .lt. 16  .or. &
-         pg == 'C9'   .and. Nop .lt. 9   .or. &
-         pg == 'C9h'  .and. Nop .lt. 18  .or. &
-         pg == 'C9v'  .and. Nop .lt. 18  .or. &
-         pg == 'C10'  .and. Nop .lt. 10  .or. &
-         pg == 'C10h' .and. Nop .lt. 20  .or. &
-         pg == 'C10v' .and. Nop .lt. 20  .or. &
-         pg == 'D2'   .and. Nop .lt. 4   .or. &
-         pg == 'D2h'  .and. Nop .lt. 8   .or. &
-         pg == 'D2d'  .and. Nop .lt. 8   .or. &
-         pg == 'D3'   .and. Nop .lt. 6   .or. &
-         pg == 'D3h'  .and. Nop .lt. 12  .or. &
-         pg == 'D3d'  .and. Nop .lt. 12  .or. &
-         pg == 'D4'   .and. Nop .lt. 8   .or. &
-         pg == 'D4h'  .and. Nop .lt. 16  .or. &
-         pg == 'D4d'  .and. Nop .lt. 16  .or. &
-         pg == 'D5'   .and. Nop .lt. 10  .or. &
-         pg == 'D5h'  .and. Nop .lt. 20  .or. &
-         pg == 'D5d'  .and. Nop .lt. 20  .or. &
-         pg == 'D6'   .and. Nop .lt. 12  .or. &
-         pg == 'D6h'  .and. Nop .lt. 24  .or. &
-         pg == 'D6d'  .and. Nop .lt. 24  .or. &
-         pg == 'D7'   .and. Nop .lt. 14  .or. &
-         pg == 'D7h'  .and. Nop .lt. 28  .or. &
-         pg == 'D7d'  .and. Nop .lt. 28  .or. &
-         pg == 'D8'   .and. Nop .lt. 16  .or. &
-         pg == 'D8h'  .and. Nop .lt. 32  .or. &
-         pg == 'D8d'  .and. Nop .lt. 32  .or. &
-         pg == 'D9'   .and. Nop .lt. 18  .or. &
-         pg == 'D9h'  .and. Nop .lt. 36  .or. &
-         pg == 'D9d'  .and. Nop .lt. 36  .or. &
-         pg == 'D10'  .and. Nop .lt. 20  .or. &
-         pg == 'D10h' .and. Nop .lt. 40  .or. &
-         pg == 'D10d' .and. Nop .lt. 40  .or. &
-         pg == 'T'    .and. Nop .lt. 12  .or. &
-         pg == 'Th'   .and. Nop .lt. 24  .or. &
-         pg == 'Td'   .and. Nop .lt. 24  .or. &
-         pg == 'O'    .and. Nop .lt. 24  .or. &
-         pg == 'Oh'   .and. Nop .lt. 48  .or. &
-         pg == 'I'    .and. Nop .lt. 60  .or. &
-         pg == 'Ih'   .and. Nop .lt. 120 .or. &
-         pg == 'Ci'   .and. Nop .lt. 2   .or. &
-         pg == 'S4'   .and. Nop .lt. 4   .or. &
-         pg == 'S6'   .and. Nop .lt. 6   .or. &
-         pg == 'S8'   .and. Nop .lt. 8   .or. &
-         pg == 'S10'  .and. Nop .lt. 10   ) err = -1
 
-    !! if Nop is more than should be, return err=1
-    if( &
-         pg == 'C1'   .and. Nop .gt. 1   .or. &
-         pg == 'Cs'   .and. Nop .gt. 2   .or. &
-         pg == 'C2'   .and. Nop .gt. 2   .or. &
-         pg == 'C2h'  .and. Nop .gt. 4   .or. &
-         pg == 'C2v'  .and. Nop .gt. 4   .or. &
-         pg == 'C3'   .and. Nop .gt. 3   .or. &
-         pg == 'C3h'  .and. Nop .gt. 6   .or. &
-         pg == 'C3v'  .and. Nop .gt. 6   .or. &
-         pg == 'C4'   .and. Nop .gt. 4   .or. &
-         pg == 'C4h'  .and. Nop .gt. 8   .or. &
-         pg == 'C4v'  .and. Nop .gt. 8   .or. &
-         pg == 'C5'   .and. Nop .gt. 5   .or. &
-         pg == 'C5h'  .and. Nop .gt. 10  .or. &
-         pg == 'C5v'  .and. Nop .gt. 10  .or. &
-         pg == 'C6'   .and. Nop .gt. 6   .or. &
-         pg == 'C6h'  .and. Nop .gt. 12  .or. &
-         pg == 'C6v'  .and. Nop .gt. 12  .or. &
-         pg == 'C7'   .and. Nop .gt. 7   .or. &
-         pg == 'C7h'  .and. Nop .gt. 14  .or. &
-         pg == 'C7v'  .and. Nop .gt. 14  .or. &
-         pg == 'C8'   .and. Nop .gt. 8   .or. &
-         pg == 'C8h'  .and. Nop .gt. 16  .or. &
-         pg == 'C8v'  .and. Nop .gt. 16  .or. &
-         pg == 'C9'   .and. Nop .gt. 9   .or. &
-         pg == 'C9h'  .and. Nop .gt. 18  .or. &
-         pg == 'C9v'  .and. Nop .gt. 18  .or. &
-         pg == 'C10'  .and. Nop .gt. 10  .or. &
-         pg == 'C10h' .and. Nop .gt. 20  .or. &
-         pg == 'C10v' .and. Nop .gt. 20  .or. &
-         pg == 'D2'   .and. Nop .gt. 4   .or. &
-         pg == 'D2h'  .and. Nop .gt. 8   .or. &
-         pg == 'D2d'  .and. Nop .gt. 8   .or. &
-         pg == 'D3'   .and. Nop .gt. 6   .or. &
-         pg == 'D3h'  .and. Nop .gt. 12  .or. &
-         pg == 'D3d'  .and. Nop .gt. 12  .or. &
-         pg == 'D4'   .and. Nop .gt. 8   .or. &
-         pg == 'D4h'  .and. Nop .gt. 16  .or. &
-         pg == 'D4d'  .and. Nop .gt. 16  .or. &
-         pg == 'D5'   .and. Nop .gt. 10  .or. &
-         pg == 'D5h'  .and. Nop .gt. 20  .or. &
-         pg == 'D5d'  .and. Nop .gt. 20  .or. &
-         pg == 'D6'   .and. Nop .gt. 12  .or. &
-         pg == 'D6h'  .and. Nop .gt. 24  .or. &
-         pg == 'D6d'  .and. Nop .gt. 24  .or. &
-         pg == 'D7'   .and. Nop .gt. 14  .or. &
-         pg == 'D7h'  .and. Nop .gt. 28  .or. &
-         pg == 'D7d'  .and. Nop .gt. 28  .or. &
-         pg == 'D8'   .and. Nop .gt. 16  .or. &
-         pg == 'D8h'  .and. Nop .gt. 32  .or. &
-         pg == 'D8d'  .and. Nop .gt. 32  .or. &
-         pg == 'D9'   .and. Nop .gt. 18  .or. &
-         pg == 'D9h'  .and. Nop .gt. 36  .or. &
-         pg == 'D9d'  .and. Nop .gt. 36  .or. &
-         pg == 'D10'  .and. Nop .gt. 20  .or. &
-         pg == 'D10h' .and. Nop .gt. 40  .or. &
-         pg == 'D10d' .and. Nop .gt. 40  .or. &
-         pg == 'T'    .and. Nop .gt. 12  .or. &
-         pg == 'Th'   .and. Nop .gt. 24  .or. &
-         pg == 'Td'   .and. Nop .gt. 24  .or. &
-         pg == 'O'    .and. Nop .gt. 24  .or. &
-         pg == 'Oh'   .and. Nop .gt. 48  .or. &
-         pg == 'I'    .and. Nop .gt. 60  .or. &
-         pg == 'Ih'   .and. Nop .gt. 120 .or. &
-         pg == 'Ci'   .and. Nop .gt. 2   .or. &
-         pg == 'S4'   .and. Nop .gt. 4   .or. &
-         pg == 'S6'   .and. Nop .gt. 6   .or. &
-         pg == 'S8'   .and. Nop .gt. 8   .or. &
-         pg == 'S10'  .and. Nop .gt. 10   ) err = 1
+    !! compute expected Nop based on pg string
+    exp_Nop = get_expected_Nop( pg )
+    if( exp_Nop < 1 ) then
+       write(*,*) "at:",__FILE__, " line:",__LINE__
+       return
+    end if
 
-    return
+    if( Nop < exp_Nop ) then
+       !! if Nop is less than should be, return err=-1
+       err=-1
+    elseif( Nop > exp_Nop ) then
+       !! if Nop is more than should be, return err=1
+       err = 1
+    end if
 
   end function check_pg_Nop
+
+
+  function get_expected_Nop( pg ) result( Nop )
+    !! compute expected number of symmetry operations, given a pg name.
+    !! formula: Nop = order * multiplier * mod
+    !! where:
+    !! `order` is the order of the C,D,S groups, or: `order(T)=12`, `order(O)=24`, `order(I)=60`
+    !! `multiplier=2` for D groups, `multiplier=1` otherwise
+    !! `mod=2` if group name has any of: v, h, d, s, i as the last letter, and `mod=1` otherwise
+    !!
+    !! On error, return Nop = -1
+    implicit none
+    character(len=*), intent(in) :: pg
+    integer :: Nop
+    !!local
+    character(len=1) :: letter, mod
+    character(len=10) :: pg_cpy
+    integer :: order, ntot
+    integer :: multiply_mod, multiply_letter
+
+    Nop = -1
+
+    order = 1
+    mod = "x"
+
+    pg_cpy = pg
+    ntot = len_trim(pg_cpy)
+    !! empty or overflow string?
+    if( ntot < 1 .or. ntot > 10 ) then
+       write(*,*) "at:",__FILE__," line:",__LINE__
+       write(*,*) "ERROR:: string `pg` has invalid length:",ntot
+       write(*,*) "`pg` string is:", pg
+       return
+    end if
+
+    !! read first letter
+    read( pg_cpy, "(a1)") letter
+    ntot = ntot - 1
+
+    if( ntot > 0 ) then
+       !! cut first letter from string
+       pg_cpy = trim(pg(2:))
+       !! check last letter for mod, if it is one of those, copy it
+       select case( pg_cpy(ntot:ntot) )
+       case( "v", "h", "d", "s", "i" )
+          mod = pg_cpy(ntot:ntot)
+          !! shift n back by 1 letter
+          ntot = ntot - 1
+       end select
+    end if
+
+    if( ntot > 0 ) then
+       !! read order integer
+       select case( letter )
+       case( "C", "D", "S" )
+          !! read 1:n for order
+          read( pg_cpy(1:ntot), * ) order
+       end select
+    end if
+
+    !! compute expected number of elements:
+    multiply_letter = 1
+    multiply_mod    = 1
+    if( letter == "T" ) order = 12
+    if( letter == "O" ) order = 24
+    if( letter == "I" ) order = 60
+    !! D groups have order*2 elements
+    if( letter == "D" ) multiply_letter = 2
+    !! any nonzero mod doubles the number of elements
+    if( mod /= "x" ) multiply_mod = 2
+    !! final number of operations
+    Nop = order * multiply_letter * multiply_mod
+  end function get_expected_Nop
 
 
   function find_inversion( nbas, op ) result( has_inversion )

@@ -1688,10 +1688,15 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   pg_err = check_pg_Nop( pg, nbas )
   ! write(*,*) pg
   ! if( pg_err .gt. 0 ) pg = '---'
-  if( pg_err .gt. 0 ) then
+  if( pg_err .eq. 1 ) then
      write(pg,'(a,a1)') trim(pg),'+'
-  elseif( pg_err .lt. 0 )then
+  elseif( pg_err .eq. -1 )then
      write(pg,'(a,a1)') trim(pg),'-'
+  elseif( pg_err .eq. -9 ) then
+     !! error in check_pg_Nop
+     ierr = -1
+     write(*,*) "at:",__FILE__," line:",__LINE__
+     return
   endif
 
   ! write(*,*) 'PG is: ',pg
