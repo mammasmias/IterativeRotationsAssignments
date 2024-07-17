@@ -24,7 +24,7 @@ The C program is run as:
 
     ./c_program.x < example_inputs/"filename"
 
-In the `c_program.c`, the threshold `sym_thr` is read from the second line of the input file.
+In the `c_program.c`, the threshold `sym_thr` is likewise hard-coded.
 
 The python program needs to know the location of the `ira_mod` module, to do this type (you might also put this into your `.bashrc`):
 
@@ -39,5 +39,6 @@ Then run the python program as:
 
 The `example_inputs` directory contains some structures written in .xyz format. The C program expects
 a structure with atomic types given as integers, while the f90 and python programs can take also strings.
+Note that not all example inputs are compatible to the example C program.
 
-The structure `S6_D3d.xyz` has some inexact symmetries, if you set the `sym_thr=0.02` you should obtain the S6 point group, and if you set `sym_thr=0.03` it should be D3d.
+The structure `S6_D3d.xyz` has some inexact symmetries, if you set the `sym_thr=0.02` you should obtain the S6 point group, and if you set `sym_thr=0.03` it should be D3d. Likewise for some other structures, changing `sym_thr` can change the outcome.

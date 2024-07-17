@@ -33,9 +33,12 @@ int main( void ){
   double **coords;
   double sym_thr;        //! threshold for symmetry, sym_thr is read from second line of the input file
 
+  // set symmetry threshold
+  sym_thr=0.05;
+
 
   /* ---------------------------------------------- */
-  /* read an xyz file with sym_thr in second line */
+  /* read an xyz file with empty second line */
   scanf( "%d\n", &nat);
 
   /* alolcate typ */
@@ -53,10 +56,10 @@ int main( void ){
       n+=3;
     }
 
-  /* read symmetry threshold from second line */
-  scanf( "%lf\n", &sym_thr);
+  /* read empty line */
+  fscanf( stdin, "\n");
 
-
+  /* read coords */
   for( int i=0; i<nat; i++)
     {
       scanf("%d %lf %lf %lf\n", &typ[i], &coords[i][0], &coords[i][1], &coords[i][2] );
