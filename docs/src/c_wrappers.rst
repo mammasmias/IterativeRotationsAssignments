@@ -44,8 +44,8 @@ SOFI
 .. note::
 
    The size of arguments in many of the SOFI functions are pre-defined with the ``nmax`` variable, which
-   is by default ``nmax=200``. The actual output is written to the first ``n_mat`` elements, where ``n_mat``
-   is the number of matrices/symmtry operations.
+   is defined in sofi_tools.f90, and is by default ``nmax=400``.
+   The actual output is written to the first ``n_mat`` elements, where ``n_mat`` is the number of matrices/symmtry operations.
 
 .. doxygenfile:: library_sofi.f90
    :project: lib_IRA

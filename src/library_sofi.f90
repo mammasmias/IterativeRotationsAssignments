@@ -33,9 +33,9 @@
 !! This is a wrapper to sofi_compute_all() from sofi_routines.f90
 !!
 !! @note
-!!  the ``nmax`` refers to the value in sofi_tools.f90, which ``nmax=200`` by default.
+!!  the ``nmax`` refers to the value in sofi_tools.f90, which ``nmax=400`` by default.
 !!
-!! The size of variables on input needs to be at least this much.
+!! The size of variables on input needs to be at least ``nmax``.
 !! The actual output is written to the first ``n_mat`` elements of each corresponding array, and
 !! the first ``n_prin_ax`` for list of principal axes.
 !!
