@@ -608,7 +608,7 @@ end subroutine libira_get_perm
 !! @param[in] mat_data(3,3,n_mat_in) :: list of input matrices in C order
 !! @param[out] n_mat_out :: number of output matrices
 !! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
-subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, mat_out )&
+subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, mat_out, cerr )&
      bind(C,name="libira_get_combos")
   use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
@@ -620,6 +620,7 @@ subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, m
   type( c_ptr ), value,  intent(in) :: mat_data
   integer( c_int ), intent(out) :: n_mat_out
   type( c_ptr ), intent(in) :: mat_out
+  integer( c_int ), intent(out) :: cerr
 
 
   integer(c_int), dimension(:), pointer :: ptr_typ
@@ -628,7 +629,7 @@ subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, m
   real( c_double), dimension(:,:,:), pointer :: pcombo_out
 
   real(c_double), dimension(3,3,nmax) :: mat_list
-  integer :: i, m
+  integer :: i, m, ierr
 
   call c_f_pointer( typ, ptr_typ, [nat] )
   call c_f_pointer( coords, ptr_coords, [3,nat] )
@@ -642,7 +643,13 @@ subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, m
 
   m = n_mat_in
 
-  call sofi_get_combos( nat, ptr_typ, ptr_coords, m, mat_list )
+  call sofi_get_combos( nat, ptr_typ, ptr_coords, m, mat_list, ierr )
+  cerr = int( ierr, c_int )
+  if( ierr /= 0 ) then
+     write(*,*) "at:",__FILE__, " line:", __LINE__
+     return
+  end if
+
 
   n_mat_out = m
   call c_f_pointer( mat_out, pcombo_out, [3,3,m] )

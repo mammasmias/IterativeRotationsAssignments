@@ -102,7 +102,11 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
 
 
   !! get combos, can produce symm above sym_thr
-  call sofi_get_combos( nat, typ, coords, nmat, mat_list )
+  call sofi_get_combos( nat, typ, coords, nmat, mat_list, ierr )
+  if( ierr /= 0 ) then
+     write(*,*) "at: ",__FILE__," line:",__LINE__
+     return
+  end if
 
   !! get ops, and unique angles and axes
   call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
@@ -206,7 +210,8 @@ subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
   ! call sofi_get_pg( n_op, op_list, pg, verb )
 
   !! combos with higher sym_thr: find the missing Ops in case of '+' or '-' PGs
-  call sofi_get_combos( nat, typ, coords, n_op, op_list )
+  call sofi_get_combos( nat, typ, coords, n_op, op_list, ierr )
+  if( ierr /= 0 ) return
   ! call sofi_get_combos( nat, typ, coords, n_op, op_list, perm_list )
 
   !! get new PG name
@@ -399,6 +404,10 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      call construct_reflection( ax, theta )
      !! try... should be detected as I above, but test again anyway.
      call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
+     if( ierr /= 0 ) then
+        write(*,*) "at: ",__FILE__," line:",__LINE__
+        return
+     end if
      return
   end if
 
@@ -525,7 +534,12 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
               call tm%start(3)
 #endif
 
-              call sofi_get_combos( nat, typ, coords, n_so, op_list )
+              call sofi_get_combos( nat, typ, coords, n_so, op_list, ierr )
+              if( ierr /= 0 ) then
+                 write(*,*) "at: ",__FILE__," line:",__LINE__
+                 return
+              end if
+
 
 #ifdef DEBUG
               call tm%stop(3)
@@ -679,7 +693,7 @@ end subroutine sofi_get_perm
 !! However, some strange matrices cannot be constructed from combos of
 !! matrices which are already found as symmetries with sym_thr value.
 !!
-subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
+subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list, ierr )
   use sofi_tools, only: m_thr, nmax
   implicit none
   integer, intent(in) :: nat
@@ -687,9 +701,10 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
   real, dimension(3, nat), intent(in) :: coords
   integer, intent(inout) :: nbas
   real, dimension(3, 3, nmax), intent(inout) :: bas_list
+  integer, intent(out) :: ierr
   ! integer, dimension(nat, nmax), intent(inout) :: perm_list
 
-  integer :: m, i, j, ii, ierr
+  integer :: m, i, j, ii
   real, dimension(3,3) :: theta
   real :: dh, dd, sym_thr
   logical :: success
@@ -713,6 +728,10 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list )
            ! write(*,*) 'combo',i,j
            theta = matmul( bas_list(:,:,i), bas_list(:,:,j))
            call try_sofi( theta, nat, typ, coords, sym_thr, dd, ii, bas_list, dh, m_thr, success, ierr )
+           if( ierr /= 0 ) then
+              write(*,*) "at: ",__FILE__," line:",__LINE__
+              return
+           end if
            ! if( dh .lt. sym_thr ) then
            !    write(*,*) i,j,dh
            !    write(*,'(3f9.4)') theta(1,:)
@@ -1142,9 +1161,9 @@ subroutine add_sofi( nat, rmat, nbas, mat_list, ierr )
   !! increment nbas
   nbas = nbas + 1
   if( nbas .gt. nmax ) then
+     ierr = ERR_LIST_TOO_SMALL
      write(*,*) "subroutine add_sofi::: ERROR ADDING RMAT, LIST TOO SMALL"
      write(*,*) "origin at: "__FILE__," line:",__LINE__
-     ierr = ERR_LIST_TOO_SMALL
      return
   end if
 
