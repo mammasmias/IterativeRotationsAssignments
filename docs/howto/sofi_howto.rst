@@ -579,8 +579,8 @@ This can be achieved by specifying that point as the ``origin`` in the call to `
 
 .. warning::
 
-   This behaviour of ``sofi.compute()`` is available **only in the python interface**,
-   the calls to ``sofi_compute_all()`` from other languages need to shift the structure manually before the call!
+   The optional argument ``origin`` in ``sofi.compute()`` is available **only in the python interface**,
+   the calls to ``sofi_compute_all()`` from other languages do not contain it, meaning you need to shift the structure manually before the call!
 
 
 HOW-TO: Dealing with linear structures
@@ -614,7 +614,7 @@ For example, if we create a linear structure without the mirror symmetry, thus g
            [0., 0., 1.]]])
 
 
-On the other hand, if we create a structure with inversion and reflection, group :math:`D_{\infty h}`, and call ``sofi.compute()``. The list of matrices has three elements, while the PG name is "Ci+".
+On the other hand, if we create a structure with inversion and reflection, group :math:`D_{\infty h}`, and call ``sofi.compute()``, the list of matrices has more than one element.
 
 .. code-block:: python
 
@@ -631,7 +631,7 @@ On the other hand, if we create a structure with inversion and reflection, group
    >>> ## call sofi.compute
    >>> sym = sofi.compute( nat, typ, coords, 0.1 )
    >>> ##
-   >>> ## list of matrices has more than one element; notably the mirror over x-axis
+   >>> ## list of matrices has more than one element; notably the mirror over x-axis (the axis of our structure)
    >>> sym.matrix
    array([[[ 1.,  0.,  0.],
            [ 0.,  1.,  0.],

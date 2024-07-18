@@ -109,6 +109,7 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
   end if
 
   !! get ops, and unique angles and axes
+  !! (potentially not needed due to convention on direction of axes)
   call sofi_unique_ax_angle( nmat, mat_list, op_list, ax_list, angle_list, ierr )
 
 

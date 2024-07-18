@@ -213,7 +213,8 @@ end subroutine libira_compute_all
 !! @param[in] prescreen_ih        :: logical flag to check early termniation for Ih or not
 !! @param[in] n_mat               :: number of symmetries found
 !! @param[in] mat_list(3,3,nmax)  :: symmetry matrices in C format
-!! @returns n_mat, mat_list
+!! @param[out] cerr               :: negative on error, zero otherwise
+!! @returns n_mat, mat_list, cerr
 !!
 !! C header:
 !!~~~~~~~~~~~~~~~{.c}
@@ -282,13 +283,14 @@ end subroutine libira_get_symm_ops
 !! Get the point group from a list of matrices, and its principal axis.
 !! This is a wrapper to sofi_get_pg() from sofi_routines.f90
 !!
-!! @param[in] n_mat :: number of matrices
+!! @param[in] n_mat   :: number of matrices
 !! @param[in] cptr_op_list(3,3,n_mat) :: list of matrices in C order
-!! @param[in] ppg :: point group
-!! @param[in] npx :: size of psrincipal axes list
-!! @param[in] px :: list of principal axes
+!! @param[in] ppg     :: point group
+!! @param[in] npx     :: size of principal axes list
+!! @param[in] px      :: list of principal axes
 !! @param[in] verbose :: flag of verbosity
-!! @returns ppg, px
+!! @param[out] cerr   :: nogative on error, zero otherwise
+!! @returns ppg, npx, px, cerr
 !!
 !! C-header:
 !!~~~~~~~~~~~~~~{.c}
@@ -547,6 +549,7 @@ end subroutine libira_ext_bfield
 !! @param[in] mat_list(3,3,n_mat) :: list of matrices in C order
 !! @param[in] perm_list(nat,n_mat) :: list of permutations for each matrix, in C order (start at 0)
 !! @param[in] dHausdorff_list(n_mat) :: list of dHausdorff values for each matrix
+!! @returns perm_list, dHausdorff_list
 subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dHausdorff_list)&
      bind(C,name="libira_get_perm")
   use, intrinsic :: iso_c_binding
@@ -599,7 +602,7 @@ end subroutine libira_get_perm
 !! C-header:
 !!~~~~~~~~~~~~~~~~~~~~{.c}
 !! void libira_get_combos( int nat, int *typ, double *coords, int nmat, double *mat_data, \
-!!                         int *nmat_out, double **mat_out);
+!!                         int *nmat_out, double **mat_out, int *cerr );
 !!~~~~~~~~~~~~~~~~~~~~
 !! @param[in] nat                 :: number of atoms
 !! @param[in] typ(nat)            :: atomic types
@@ -608,6 +611,8 @@ end subroutine libira_get_perm
 !! @param[in] mat_data(3,3,n_mat_in) :: list of input matrices in C order
 !! @param[out] n_mat_out :: number of output matrices
 !! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
+!! @param[out] cerr                  :: negative on error, zero otherwise
+!! @returns n_mat_out, mat_out, cerr
 subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, mat_out, cerr )&
      bind(C,name="libira_get_combos")
   use, intrinsic :: iso_c_binding
@@ -744,7 +749,8 @@ end subroutine libira_try_mat
 !! @param[in] axis(3) :: desired axis
 !! @param[in] angle :: desired angle in units 1/(2pi), e.g. angle=0.5 means half circle
 !! @param[in] matrix(3,3) :: output matrix in C order
-!! @returns matrix
+!! @param[out] cerr :: negative on error, zero otherwise
+!! @returns matrix, cerr
 !!
 !! C-header:
 !!~~~~~~~~~~~~~{.c}
@@ -823,6 +829,7 @@ end subroutine libira_construct_operation
 !! @param[in] mat_data(3,3,n_mat_in) :: list of input matrices in C order
 !! @param[out] n_mat_out :: number of output matrices
 !! @param[in] mat_out(3,3,n_mat_out) :: list of output matrices in C order
+!! @returns n_mat_out, mat_out
 subroutine libira_mat_combos( n_mat_in, mat_data, n_mat_out, mat_out )bind(C,name="libira_mat_combos")
   use, intrinsic :: iso_c_binding
   use sofi_tools, only: nmax
