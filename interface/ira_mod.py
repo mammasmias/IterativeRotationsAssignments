@@ -1123,7 +1123,7 @@ class SOFI(algo):
                                              POINTER(POINTER(c_double*9*n_mat))]
         self.lib.libira_ext_bfield.restype=None
 
-        self.lib.libira_ext_bfield( n_m, pointer(mats), bf, pointer(n_out), pointer(m_out) )
+        self.lib.libira_ext_bfield( n_m, mats, bf, pointer(n_out), pointer(m_out) )
 
         n_op=n_out.value
         matrix=np.ndarray( (n_op,3,3), dtype=float)
@@ -1263,6 +1263,7 @@ class SOFI(algo):
         # output
         nb_out= c_int()
         cmat_out=(c_double*9*nmax)()
+        cerr = c_int()
 
         self.lib.libira_get_combos.argtypes=\
             [ c_int, \
@@ -1271,10 +1272,14 @@ class SOFI(algo):
               c_int, \
               POINTER(c_double), \
               POINTER(c_int), \
-              POINTER(POINTER(c_double*9*nmax)) ]
+              POINTER(POINTER(c_double*9*nmax)), \
+              POINTER(c_int) ]
         self.lib.libira_get_combos.restype=None
 
-        self.lib.libira_get_combos( n, t, c, nm, mats, nb_out, pointer(cmat_out) )
+        self.lib.libira_get_combos( n, t, c, nm, mats, nb_out, pointer(cmat_out), cerr )
+
+        if cerr.value != 0:
+            raise ValueError("nonzero error value obtained from libira_get)combos()")
 
         nm_out=nb_out.value
         mat_out=np.ndarray( (nm_out,3,3), dtype=float)

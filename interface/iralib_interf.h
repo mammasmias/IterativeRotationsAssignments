@@ -37,7 +37,7 @@ void libira_get_perm( int nat, int *typ, double *coords, \
                       int nmat, double *mat_data, int **perm_data, double **dHausdorff_data);
 
 void libira_get_combos( int nat, int *typ, double *coords, int nmat, double *mat_data, \
-                        int *nmat_out, double **mat_out);
+                        int *nmat_out, double **mat_out, int *cerr );
 
 void libira_try_mat( int nat, int *typ, double *coords, double *rmat, double *dh, int **perm);
 
