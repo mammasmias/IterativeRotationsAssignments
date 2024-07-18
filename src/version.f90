@@ -10,11 +10,11 @@ subroutine get_version( string, date )
   integer, intent(out) :: date
 
   !! version string
-  string = "2.0.0"
+  string = "2.1.0"
 
 
   !! date string, format: YYYYmmdd
-  date = 20240425
+  date = 20240718
 
 
 end subroutine get_version
