@@ -527,7 +527,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
            !! mat is not successful, go to next
            ! if( .not. success ) cycle
 
-           if( prescreen ) then
+           if( success .and. prescreen ) then
               n_old = n_so
 
 #ifdef DEBUG
