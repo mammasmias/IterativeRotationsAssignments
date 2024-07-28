@@ -880,18 +880,19 @@ end subroutine libira_mat_combos
 !! @param[out] dist :: distance
 subroutine libira_matrix_distance( mat1, mat2, dist )bind(C,name="libira_matrix_distance" )
   use, intrinsic :: iso_c_binding
+  use ira_precision
   use sofi_tools, only: matrix_distance
   implicit none
   real( c_double ), dimension(3,3), intent(in) :: mat1
   real( c_double ), dimension(3,3), intent(in) :: mat2
   real( c_double ), intent(out) :: dist
 
-  real, dimension(3,3) :: frmat1, frmat2
-  real :: fdist
+  real(rp), dimension(3,3) :: frmat1, frmat2
+  real(rp) :: fdist
 
   !! transpose from C input
-  frmat1 = real( mat1 )
-  frmat2 = real( mat2 )
+  frmat1 = real( mat1, rp )
+  frmat2 = real( mat2, rp )
   frmat1 = transpose( frmat1 )
   frmat2 = transpose( frmat2 )
 

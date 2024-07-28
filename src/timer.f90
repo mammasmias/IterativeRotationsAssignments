@@ -27,12 +27,13 @@ module timer
   !!   call timer_print()
   !! @endcode
 
+  use ira_precision
   implicit none
   public
 
 
   !! slots for accessing the timer
-  integer, parameter :: &
+  integer(ip), parameter :: &
        LOC_T1 = 1, &
        LOC_T2 = 2, &
        LOC_T3 = 3, &
@@ -41,7 +42,7 @@ module timer
 
   !! a single timer, store value dt1 which is clock when timer started
   type tim
-     real :: dt1
+     real(rp) :: dt1
    contains
      procedure :: start => tim_start
      procedure :: end => tim_end
@@ -59,7 +60,7 @@ module timer
           t_2 => null(), &
           t_3 => null(), &
           t_4 => null()
-     real :: timed(4)   !! array for total sum of each slot
+     real(rp) :: timed(4)   !! array for total sum of each slot
      character(:), allocatable :: tag1, tag2, tag3, tag4
    contains
      procedure :: start => timer_start
@@ -75,7 +76,7 @@ module timer
        t_2 => null(), &
        t_3 => null(), &
        t_4 => null()
-  real, protected :: timed(4)   !! array for total sum of each slot
+  real(rp), protected :: timed(4)   !! array for total sum of each slot
   character(:), allocatable :: tag1, tag2, tag3, tag4
 
 
@@ -97,8 +98,8 @@ contains
   function tim_end( self )result(dt)
     implicit none
     class(tim), intent(inout) :: self
-    real :: dt
-    real :: dt2
+    real(rp) :: dt
+    real(rp) :: dt2
     !! get current clock
     call clock( dt2 )
     !! return difference of current clock and when i started the clock
@@ -113,7 +114,7 @@ contains
     !! start the timer for slot `loc`
     implicit none
     class( local_timer ), intent(inout) :: self
-    integer, intent(in) :: loc
+    integer(ip), intent(in) :: loc
     select case( loc )
     case( LOC_T1 ); if( .not. associated(self% t_1) ) self% t_1 => tim(); call self% t_1% start()
     case( LOC_T2 ); if( .not. associated(self% t_2) ) self% t_2 => tim(); call self% t_2% start()
@@ -126,8 +127,8 @@ contains
     !! stop timer for slot `loc` and add dt to total sum of time for slot
     implicit none
     class( local_timer ), intent(inout) :: self
-    integer, intent(in) :: loc
-    real :: dt
+    integer(ip), intent(in) :: loc
+    real(rp) :: dt
     select case( loc )
     case( LOC_T1 ); dt = self% t_1% end()
     case( LOC_T2 ); dt = self% t_2% end()
@@ -141,7 +142,7 @@ contains
     !! set a tag to loc
     implicit none
     class( local_timer ), intent(inout) :: self
-    integer, intent(in) :: loc
+    integer(ip), intent(in) :: loc
     character(*), intent(in) :: tag
     select case( loc )
     case( LOC_T1 ); self% tag1 = tag
@@ -169,7 +170,7 @@ contains
   subroutine global_timer_start( loc )
     !! start the timer for slot `loc`
     implicit none
-    integer, intent(in) :: loc
+    integer(ip), intent(in) :: loc
     select case( loc )
     case( LOC_T1 ); if( .not. associated(t_1) ) t_1 => tim(); call t_1% start()
     case( LOC_T2 ); if( .not. associated(t_2) ) t_2 => tim(); call t_2% start()
@@ -181,8 +182,8 @@ contains
   subroutine global_timer_stop( loc )
     !! stop timer for slot `loc` and add dt to total sum of time for slot
     implicit none
-    integer, intent(in) :: loc
-    real :: dt
+    integer(ip), intent(in) :: loc
+    real(rp) :: dt
     select case( loc )
     case( LOC_T1 ); dt = t_1% end()
     case( LOC_T2 ); dt = t_2% end()
@@ -195,7 +196,7 @@ contains
   subroutine global_timer_tag( loc, tag )
     !! set a tag to loc
     implicit none
-    integer, intent(in) :: loc
+    integer(ip), intent(in) :: loc
     character(*), intent(in) :: tag
     select case( loc )
     case( LOC_T1 ); tag1 = tag
@@ -222,7 +223,7 @@ contains
 
   subroutine clock( time )
     use, intrinsic :: iso_fortran_env, only: int64
-    real, intent(out) :: time
+    real(rp), intent(out) :: time
 
     integer( int64 ) :: tick, rate
 

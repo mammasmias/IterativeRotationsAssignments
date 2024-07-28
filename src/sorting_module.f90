@@ -7,6 +7,7 @@ module sorting_module
   !!
   !! Slightly modified to sort 2D arrays in given input axis.
   !!
+  use ira_precision
   implicit none
 
   private
@@ -17,11 +18,11 @@ contains
   subroutine merge_a(A, B, C, ax)
     implicit none
     ! The targe attribute is necessary, because A .or. B might overlap with C.
-    real, target, intent(in) :: A(:,:), B(:,:)
-    real, target, intent(inout) :: C(:,:)
-    integer,      intent(in) :: ax
+    real(rp), target, intent(in) :: A(:,:), B(:,:)
+    real(rp), target, intent(inout) :: C(:,:)
+    integer(ip),      intent(in) :: ax
 
-    integer :: i, j, k, sizea, sizeb, sizec
+    integer(ip) :: i, j, k, sizea, sizeb, sizec
 
     sizea = size(A,2)
     sizeb = size(B,2)
@@ -52,10 +53,10 @@ contains
 
   subroutine swap(ndim, x, y)
     implicit none
-    integer,               intent(in) :: ndim
-    real, dimension(ndim), intent(inout) :: x, y
+    integer(ip),               intent(in) :: ndim
+    real(rp), dimension(ndim), intent(inout) :: x, y
 
-    real, dimension(ndim) :: tmp
+    real(rp), dimension(ndim) :: tmp
 
     tmp = x
     x = y
@@ -65,11 +66,11 @@ contains
 
   recursive subroutine mergesort(A, work, ax)
     implicit none
-    real,    intent(inout) :: A(:,:)
-    real,    intent(inout) :: work(:,:)
-    integer, intent(in) :: ax
+    real(rp),    intent(inout) :: A(:,:)
+    real(rp),    intent(inout) :: work(:,:)
+    integer(ip), intent(in) :: ax
 
-    integer :: half, sizeA, ndim
+    integer(ip) :: half, sizeA, ndim
 
     ndim = size(A,1)
     sizeA =size(A,2)

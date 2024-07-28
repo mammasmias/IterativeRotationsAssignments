@@ -18,6 +18,7 @@
   module ira_pbc
 
     !! routines for computing a vector in periodic boundary condtions
+    use ira_precision
     implicit none
     private
     public :: pbc_vec
@@ -27,8 +28,8 @@
       subroutine pbc_vec( vec, lat )
         !! apply pbc of lattice 'lat' to a vector 'vec'
         implicit none
-        real, dimension(3), intent(inout) :: vec
-        real, dimension(3,3), intent(in) :: lat
+        real(rp), dimension(3), intent(inout) :: vec
+        real(rp), dimension(3,3), intent(in) :: lat
 
         call cart_to_crist( vec, lat )
         call periodic( vec )
@@ -41,8 +42,8 @@
         ! periodic boundary condition, for 3 dimensional vector input in crist coords.
         !--------------------------------
         implicit none
-        real, dimension(3),intent(inout) :: c
-        integer :: i
+        real(rp), dimension(3),intent(inout) :: c
+        integer(ip) :: i
 
         do i = 1, 3
           if( c(i) .lt. -0.5 ) c(i) = c(i) + 1.0
@@ -70,12 +71,12 @@
         !! detct   ==> determinant of ct, used locally
         !!
         implicit none
-        real, dimension(3),   intent(inout) :: xpp
-        real, dimension(3,3), intent(in)    :: ct
+        real(rp), dimension(3),   intent(inout) :: xpp
+        real(rp), dimension(3,3), intent(in)    :: ct
 
-        real,dimension(3) :: xc
-        real :: detct
-        real, dimension(3,3) :: bt
+        real(rp),dimension(3) :: xc
+        real(rp) :: detct
+        real(rp), dimension(3,3) :: bt
 
         bt(:,:)=0.0
         xc(:) = 0.0
@@ -128,10 +129,10 @@
         !!
         implicit none
 
-        real, dimension(3),   intent(inout) :: xpp
+        real(rp), dimension(3),   intent(inout) :: xpp
 
-        real, dimension(3,3), intent(in)    :: bt
-        real, dimension(3) :: xc
+        real(rp), dimension(3,3), intent(in)    :: bt
+        real(rp), dimension(3) :: xc
 
         xc(:) = 0.0
 
@@ -178,30 +179,31 @@
   subroutine cshda( nat1, typ1, coords1, &
                     nat2, typ2, coords2, &
                     some_threshold, found, dists )
+    use ira_precision
     implicit none
-    integer,                  intent(in) :: nat1
-    integer, dimension(nat1), intent(in) :: typ1
-    real, dimension(3,nat1),  intent(in) :: coords1
-    integer,                  intent(in) :: nat2
-    integer, dimension(nat2), intent(in) :: typ2
-    real, dimension(3,nat2),  intent(in) :: coords2
-    real,                     intent(in) :: some_threshold
-    integer, dimension(nat2), intent(out) :: found
-    real, dimension(nat2),    intent(out) :: dists
+    integer(ip),                  intent(in) :: nat1
+    integer(ip), dimension(nat1), intent(in) :: typ1
+    real(rp), dimension(3,nat1),  intent(in) :: coords1
+    integer(ip),                  intent(in) :: nat2
+    integer(ip), dimension(nat2), intent(in) :: typ2
+    real(rp), dimension(3,nat2),  intent(in) :: coords2
+    real(rp),                     intent(in) :: some_threshold
+    integer(ip), dimension(nat2), intent(out) :: found
+    real(rp), dimension(nat2),    intent(out) :: dists
     !!
     !! local
     !!
-    real, dimension(3) :: rij
-    real, dimension(3) :: ci, cj
-    real :: dx, dy, dz, th, m_th, th2
-    real, dimension(nat2,nat1) :: chkmat
+    real(rp), dimension(3) :: rij
+    real(rp), dimension(3) :: ci, cj
+    real(rp) :: dx, dy, dz, th, m_th, th2
+    real(rp), dimension(nat2,nat1) :: chkmat
     logical, dimension(nat1) :: lsearch
-    integer, dimension(nat2) :: assigned
-    integer :: i, j, k, ti, tj
-    integer :: idx_old
-    integer :: n_count, nmax
-    real :: dist, dist_old, dmin
-    integer, dimension(nat1) :: tmpmin
+    integer(ip), dimension(nat2) :: assigned
+    integer(ip) :: i, j, k, ti, tj
+    integer(ip) :: idx_old
+    integer(ip) :: n_count, nmax
+    real(rp) :: dist, dist_old, dmin
+    integer(ip), dimension(nat1) :: tmpmin
 
 
     !! init output
@@ -419,28 +421,29 @@
                    nat2, typ2, coords2, lat2, &
                    some_thr, found, dists )
 
+    use ira_precision
     use ira_pbc, only: pbc_vec
     implicit none
-    integer,                  intent(in) :: nat1
-    integer, dimension(nat1), intent(in) :: typ1
-    real, dimension(3,nat1),  intent(in) :: coords1
-    integer,                  intent(in) :: nat2
-    integer, dimension(nat2), intent(in) :: typ2
-    real, dimension(3,nat2),  intent(in) :: coords2
-    real, dimension(3,3), intent(in) :: lat2
-    real,                     intent(in) :: some_thr
-    integer, dimension(nat2), intent(out) :: found
-    real, dimension(nat2),    intent(out) :: dists
+    integer(ip),                  intent(in) :: nat1
+    integer(ip), dimension(nat1), intent(in) :: typ1
+    real(rp), dimension(3,nat1),  intent(in) :: coords1
+    integer(ip),                  intent(in) :: nat2
+    integer(ip), dimension(nat2), intent(in) :: typ2
+    real(rp), dimension(3,nat2),  intent(in) :: coords2
+    real(rp), dimension(3,3), intent(in) :: lat2
+    real(rp),                     intent(in) :: some_thr
+    integer(ip), dimension(nat2), intent(out) :: found
+    real(rp), dimension(nat2),    intent(out) :: dists
     !!
     !! local
     !!
-    real, dimension(3) :: rij, rj
-    real, dimension(nat1,nat2) :: chkmat
-    integer, dimension(nat1) :: search
-    integer :: i, j, k
-    integer :: idx_old
-    integer :: n_count
-    real :: dist, dist_old
+    real(rp), dimension(3) :: rij, rj
+    real(rp), dimension(nat1,nat2) :: chkmat
+    integer(ip), dimension(nat1) :: search
+    integer(ip) :: i, j, k
+    integer(ip) :: idx_old
+    integer(ip) :: n_count
+    real(rp) :: dist, dist_old
 
     dists(:) = 999.9
     !!

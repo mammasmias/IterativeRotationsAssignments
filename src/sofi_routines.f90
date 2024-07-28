@@ -33,25 +33,25 @@
 !!  values beyond that index can be random.
 !!
 !! @param[in] nat                        :: number of atoms
-!! @param[in] typ(nat)     :: integer atomic types
+!! @param[in] typ(nat)      :: integer atomic types
 !! @param[in] coords(3,nat) :: positions of atoms
-!! @param[in] sym_thr   :: threshold for finding symmetries (not taken into account when making combinations)
-!! @param[in] prescreen_ih :: flag to check early-termination for Ih groups
-!! @param[out] nmat       :: number of symmetries found
+!! @param[in] sym_thr       :: threshold for finding symmetries (not taken into account when making combinations)
+!! @param[in] prescreen_ih  :: flag to check early-termination for Ih groups
+!! @param[out] nmat         :: number of symmetries found
 !! @param[out] mat_list(3,3,nmat)   :: symmetry matrices
-!! @param[out] perm_list(nat, nmat)  :: permutation of atoms after applying each symmetry
-!! @param[out] op_list(nmat)    :: Character "Op" from the Schoenflies notation: Op n^p
+!! @param[out] perm_list(nat, nmat) :: permutation of atoms after applying each symmetry
+!! @param[out] op_list(nmat)        :: Character "Op" from the Schoenflies notation: Op n^p
 !!                                 (E = identity, I = inversion, C = rotation, S = (roto-)reflection )
-!! @param[out] n_list(nmat)     :: Schoenflies n value
-!! @param[out] p_list(nmat)     :: Schoenflies p value
+!! @param[out] n_list(nmat)       :: Schoenflies n value
+!! @param[out] p_list(nmat)       :: Schoenflies p value
 !! @param[out] ax_list(3,nmat)    :: axis of operation of each symmetry
-!! @param[out] angle_list(nmat) :: angle of each symmetry, in units of 1/2pi,
+!! @param[out] angle_list(nmat)   :: angle of each symmetry, in units of 1/2pi,
 !!                               i.e. angle=0.333 is 1/3 of full circle, or 120 degrees
 !! @param[out] dHausdorff_list(nmat)  :: max difference of atomic positions of before/after symm transformation
-!! @param[out] pg         :: name of Point group, e.g. D6h
-!! @param[out] n_prin_ax  :: number of equivalent principal axes
+!! @param[out] pg           :: name of Point group, e.g. D6h
+!! @param[out] n_prin_ax    :: number of equivalent principal axes
 !! @param[out] prin_ax(3,n_prin_ax) :: list of equivalent principal axes.
-!! @param[out] ierr       :: error value, zero on normal execution, negative otherwise
+!! @param[out] ierr         :: error value, zero on normal execution, negative otherwise
 !! @returns nmat, mat_list, perm_list, op_list, n_list, p_list, ax_list, angle_list, dHausdorff_list, pg, prin_ax, ierr
 !!
 subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
@@ -59,38 +59,39 @@ subroutine sofi_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
      op_list, n_list, p_list, &
      ax_list, angle_list, dHausdorff_list, pg, n_prin_ax, prin_ax, &
      ierr )
+  use ira_precision
   use sofi_tools, only: nmax
   use err_module
   implicit none
   !! ===== input
-  integer,                 intent(in) :: nat
-  integer, dimension(nat), intent(in) :: typ
-  real, dimension(3,nat),  intent(in) :: coords
-  real,                    intent(in) :: sym_thr
+  integer(ip),                 intent(in) :: nat
+  integer(ip), dimension(nat), intent(in) :: typ
+  real(rp), dimension(3,nat),  intent(in) :: coords
+  real(rp),                    intent(in) :: sym_thr
   logical,                 intent(in) :: prescreen_ih
   !! ===== output
-  integer,                       intent(out) :: nmat
-  real, dimension(3,3,nmax),     intent(out) :: mat_list
-  integer, dimension(nat, nmax), intent(out) :: perm_list
+  integer(ip),                       intent(out) :: nmat
+  real(rp), dimension(3,3,nmax),     intent(out) :: mat_list
+  integer(ip), dimension(nat, nmax), intent(out) :: perm_list
   character(len=1), dimension(nmax), intent(out) :: op_list
-  integer, dimension(nmax),      intent(out) :: n_list
-  integer, dimension(nmax),      intent(out) :: p_list
-  real, dimension(3, nmax),      intent(out) :: ax_list
-  real, dimension(nmax),         intent(out) :: angle_list
-  real, dimension(nmax),         intent(out) :: dHausdorff_list
+  integer(ip), dimension(nmax),      intent(out) :: n_list
+  integer(ip), dimension(nmax),      intent(out) :: p_list
+  real(rp), dimension(3, nmax),      intent(out) :: ax_list
+  real(rp), dimension(nmax),         intent(out) :: angle_list
+  real(rp), dimension(nmax),         intent(out) :: dHausdorff_list
   character(len=10),             intent(out) :: pg
-  integer,                       intent(out) :: n_prin_ax
-  real, dimension(3,nmax),       intent(out) :: prin_ax
-  integer,                       intent(out) :: ierr
+  integer(ip),                       intent(out) :: n_prin_ax
+  real(rp), dimension(3,nmax),       intent(out) :: prin_ax
+  integer(ip),                       intent(out) :: ierr
 
-  real :: dum
-  integer :: i
-  real, dimension(3) :: rdum
-  real, dimension(3,3) :: rmat
+  real(rp) :: dum
+  integer(ip) :: i
+  real(rp), dimension(3) :: rdum
+  real(rp), dimension(3,3) :: rmat
   logical :: verb
   character(:), allocatable :: msg
 
-  real :: dt
+  real(rp) :: dt
 
 
   !! get symmetries with sym_thr
@@ -164,24 +165,25 @@ end subroutine sofi_compute_all
 !! @param[in] verb :: flag for verbose output
 !!
 subroutine sofi_struc_pg( nat, typ_in, coords_in, sym_thr, pg, verb )
+  use ira_precision
   use sofi_tools, only: nmax
   implicit none
-  integer,                 intent(in) :: nat
-  integer, dimension(nat), intent(in) :: typ_in
-  real, dimension(3,nat),  intent(in) :: coords_in
-  real,                    intent(in) :: sym_thr
+  integer(ip),                 intent(in) :: nat
+  integer(ip), dimension(nat), intent(in) :: typ_in
+  real(rp), dimension(3,nat),  intent(in) :: coords_in
+  real(rp),                    intent(in) :: sym_thr
   character(len=10),       intent(out) :: pg
   logical,                 intent(in) :: verb
   ! local
-  integer :: n_op
-  integer, allocatable :: perm_list(:,:)
-  real, allocatable :: op_list(:,:,:)
-  real, dimension(3) :: gc
-  real, allocatable :: prin_ax(:,:)
-  integer :: n_prin_ax
-  integer :: i, ierr
-  integer, dimension(nat) :: typ
-  real, dimension(3,nat) :: coords
+  integer(ip) :: n_op
+  integer(ip), allocatable :: perm_list(:,:)
+  real(rp), allocatable :: op_list(:,:,:)
+  real(rp), dimension(3) :: gc
+  real(rp), allocatable :: prin_ax(:,:)
+  integer(ip) :: n_prin_ax
+  integer(ip) :: i, ierr
+  integer(ip), dimension(nat) :: typ
+  real(rp), dimension(3,nat) :: coords
   logical :: prescreen_ih
 
   pg = ""
@@ -252,50 +254,51 @@ end subroutine sofi_struc_pg
 !!    end do
 !!~~~~~~~~~~~~~~
 !!
-!! @param[in] nat           :: number of atoms
+!! @param[in] nat              :: number of atoms
 !! @param[in] typ_in(nat)      :: integer atomic types
 !! @param[in] coords_in(3,nat) :: positions of atoms
-!! @param[in] sym_thr       :: threshold for finding symmetries, in terms of Hausdorff distance
-!! @param[in] prescreen_ih :: flag to check early termniation for Ih
-!! @param[out] n_so :: number of found symmetry operations
-!! @param[out] op_list :: the list of operations
-!! @param[out] ierr :: error value, negative on error, zero otherwise
+!! @param[in] sym_thr        :: threshold for finding symmetries, in terms of Hausdorff distance
+!! @param[in] prescreen_ih   :: flag to check early termniation for Ih
+!! @param[out] n_so          :: number of found symmetry operations
+!! @param[out] op_list       :: the list of operations
+!! @param[out] ierr          :: error value, negative on error, zero otherwise
 !! @returns n_so, op_list, ierr
 !!
 subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so, op_list, ierr )
+  use ira_precision
   use sofi_tools, only: nmax, m_thr, construct_reflection
   use err_module
 #ifdef DEBUG
   use timer
 #endif
   implicit none
-  integer,                 intent(in) :: nat
-  integer, dimension(nat), intent(in) :: typ_in
-  real, dimension(3,nat),  intent(in) :: coords_in
-  real,                    intent(in) :: sym_thr
+  integer(ip),                 intent(in) :: nat
+  integer(ip), dimension(nat), intent(in) :: typ_in
+  real(rp), dimension(3,nat),  intent(in) :: coords_in
+  real(rp),                    intent(in) :: sym_thr
   logical,                 intent(in) :: prescreen_ih
   !!
-  integer,                           intent(out) :: n_so
-  real, dimension(3,3,nmax),         intent(out) :: op_list
-  integer,                           intent(out) :: ierr
+  integer(ip),                           intent(out) :: n_so
+  real(rp), dimension(3,3,nmax),         intent(out) :: op_list
+  integer(ip),                           intent(out) :: ierr
 
   !! local
-  integer, dimension(nat) :: typ
-  real, dimension(3,nat) :: coords
-  real, allocatable :: d_o(:,:)
-  integer :: i, j, k, l, m, mm
-  real, dimension(3,3) :: theta, beta, gamma
+  integer(ip), dimension(nat) :: typ
+  real(rp), dimension(3,nat) :: coords
+  real(rp), allocatable :: d_o(:,:)
+  integer(ip) :: i, j, k, l, m, mm
+  real(rp), dimension(3,3) :: theta, beta, gamma
   logical :: fail1, fail_beta, is_collinear
-  real :: dd, d_i, d_j, dh
-  integer :: nbas, nn
-  integer :: ti, tj
-  real :: small_norm
+  real(rp) :: dd, d_i, d_j, dh
+  integer(ip) :: nbas, nn
+  integer(ip) :: ti, tj
+  real(rp) :: small_norm
   !! state
   logical :: has_sigma, has_inversion, terminate, success, prescreen
-  integer :: n_old, n_u_c3
-  real :: u_c3(3,5)
-  real :: ax(3)
-  real :: rmin, rmax
+  integer(ip) :: n_old, n_u_c3
+  real(rp) :: u_c3(3,5)
+  real(rp) :: ax(3)
+  real(rp) :: rmin, rmax
 #ifdef DEBUG
   type( local_timer ) :: tm
 #endif
@@ -327,15 +330,15 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
 
   !! zero the output data
   n_so = 0
-  op_list(:,:,:) = 0.0
+  ! op_list(:,:,:) = 0.0_rp
 
   !! set local copy
   typ(:) = typ_in(:)
   coords(:,:) = coords_in(:,:)
 
   !! sort by d
-  rmin = 999.9
-  rmax = 0.0
+  rmin = 999.9_rp
+  rmax = 0.0_rp
   allocate( d_o(1:2,1:nat))
   do i = 1, nat
      d_o(1,i) = norm2(coords(:,i))
@@ -344,7 +347,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      rmax = max(rmax, d_o(1,i))
   end do
   !! heuristic "detection" of fullerene ... impose prescreen
-  if( rmax - rmin < 0.5 ) prescreen = .true.
+  if( rmax - rmin < 0.5_rp ) prescreen = .true.
 
   !! sorting routines from IRA lib
   call sort( nat, 2, d_o, 1)
@@ -357,7 +360,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   !! allow some margin of error which hopefully disappears in refine.
   !! This could be played a bit and optimized, i think max dd could
   !! be proportional to half the smallest atom-atom distance.
-  dd = 99.0
+  dd = 99.0_rp
   do i = 1, nat
      do j = i+1, nat
         dd = min( dd, norm2(coords(:,i) - coords(:,j)))
@@ -366,17 +369,17 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
 
   !! initialize the state
   n_u_c3 = 0
-  u_c3(:,:) = 0.0
+  u_c3(:,:) = 0.0_rp
   has_sigma = .false.
   has_inversion = .false.
 
   !! add id
-  theta(:,:) = 0.0
+  theta(:,:) = 0.0_rp
   do i = 1, 3
-     theta(i,i) = 1.0
+     theta(i,i) = 1.0_rp
   end do
 
-  call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
+  call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5_rp, success, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -384,12 +387,12 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
 
 
   !! try inversion
-  theta(:,:) = 0.0
+  theta(:,:) = 0.0_rp
   do i = 1, 3
-     theta(i,i) = -1.0
+     theta(i,i) = -1.0_rp
   end do
 
-  call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
+  call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5_rp, success, ierr )
   if( ierr /= 0 ) then
      write(*,*) "at: ",__FILE__," line:",__LINE__
      return
@@ -404,7 +407,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      !! construct reflection on the ax
      call construct_reflection( ax, theta )
      !! try... should be detected as I above, but test again anyway.
-     call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5, success, ierr )
+     call try_sofi( theta, nat, typ, coords, sym_thr, dd, n_so, op_list, dh, 0.5_rp, success, ierr )
      if( ierr /= 0 ) then
         write(*,*) "at: ",__FILE__," line:",__LINE__
         return
@@ -414,7 +417,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
 
 
   !! set beta
-  small_norm = max(sym_thr, 1e-1)
+  small_norm = max(sym_thr, 1e-1_rp)
 
   !! fail1 happens when vectors are collinear, i.e. orthonormal basis could not be made
   fail1 = .true.
@@ -619,23 +622,24 @@ end subroutine sofi_get_symmops
 !! @returns perm_list, dHausdorff_list
 !!
 subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dHausdorff_list )
+  use ira_precision
   implicit none
-  integer,                   intent(in) :: nat
-  integer, dimension(nat),   intent(in) :: typ
-  real, dimension(3,nat),    intent(in) :: coords
-  integer,                   intent(in) :: nbas
-  real, dimension(3,3,nbas), intent(in) :: bas_list
-  integer, dimension(nat, nbas), intent(out) :: perm_list
-  real, dimension(nbas),     intent(out) :: dHausdorff_list
+  integer(ip),                   intent(in) :: nat
+  integer(ip), dimension(nat),   intent(in) :: typ
+  real(rp), dimension(3,nat),    intent(in) :: coords
+  integer(ip),                   intent(in) :: nbas
+  real(rp), dimension(3,3,nbas), intent(in) :: bas_list
+  integer(ip), dimension(nat, nbas), intent(out) :: perm_list
+  real(rp), dimension(nbas),     intent(out) :: dHausdorff_list
 
-  integer :: i, j, ierr
-  real, dimension(3,3) :: rmat
-  integer, dimension(nat) :: t_local
-  real, dimension(3,nat) :: c_local
-  integer, dimension(nat) :: found
-  real, dimension(nat) :: dists
+  integer(ip) :: i, j, ierr
+  real(rp), dimension(3,3) :: rmat
+  integer(ip), dimension(nat) :: t_local
+  real(rp), dimension(3,nat) :: c_local
+  integer(ip), dimension(nat) :: found
+  real(rp), dimension(nat) :: dists
 
-  real :: svd_rot(3,3), svd_tr(3), rdum(3)
+  real(rp) :: svd_rot(3,3), svd_tr(3), rdum(3)
 
   do i = 1, nbas
      !! get matrix from list
@@ -646,7 +650,7 @@ subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dHausdorf
         c_local(:,j) = matmul(rmat, coords(:,j) )
      end do
      !! compute cshda with high thr (accept anything)
-     call cshda( nat, typ, coords, nat, t_local, c_local, 99.9, found, dists )
+     call cshda( nat, typ, coords, nat, t_local, c_local, 99.9_rp, found, dists )
      ! if( any(found) .eq. 0 ) then
      !    write(*,*) "!! ERROR IN: sofi_get_perm, failed cshda?"
      !    stop
@@ -695,24 +699,25 @@ end subroutine sofi_get_perm
 !! matrices which are already found as symmetries with sym_thr value.
 !!
 subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list, ierr )
+  use ira_precision
   use sofi_tools, only: m_thr, nmax
   implicit none
-  integer, intent(in) :: nat
-  integer, dimension(nat), intent(in) :: typ
-  real, dimension(3, nat), intent(in) :: coords
-  integer, intent(inout) :: nbas
-  real, dimension(3, 3, nmax), intent(inout) :: bas_list
-  integer, intent(out) :: ierr
-  ! integer, dimension(nat, nmax), intent(inout) :: perm_list
+  integer(ip), intent(in) :: nat
+  integer(ip), dimension(nat), intent(in) :: typ
+  real(rp), dimension(3, nat), intent(in) :: coords
+  integer(ip), intent(inout) :: nbas
+  real(rp), dimension(3, 3, nmax), intent(inout) :: bas_list
+  integer(ip), intent(out) :: ierr
+  ! integer(ip), dimension(nat, nmax), intent(inout) :: perm_list
 
-  integer :: m, i, j, ii
-  real, dimension(3,3) :: theta
-  real :: dh, dd, sym_thr
+  integer(ip) :: m, i, j, ii
+  real(rp), dimension(3,3) :: theta
+  real(rp) :: dh, dd, sym_thr
   logical :: success
 
   !! hard-coded thresholds (accept anything)
-  dd = 10.0
-  sym_thr = 5.0
+  dd = 10.0_rp
+  sym_thr = 5.0_rp
 
   ! write(*,*) 'in sofi_get_combos'
   ! do i = 1, nbas
@@ -772,29 +777,30 @@ end subroutine sofi_get_combos
 !! @returns theta, nbas, op_list, dh
 !!
 subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, dh, m_thr, success, ierr )
+  use ira_precision
   use sofi_tools, only: nmax, epsilon
   implicit none
-  real, dimension(3,3),          intent(inout) :: theta
-  integer,                       intent(in) :: nat
-  integer, dimension(nat),       intent(in) :: typ_in
-  real, dimension(3,nat),        intent(in) :: coords_in
-  real,                          intent(in) :: sym_thr
-  real,                          intent(in) :: dd
-  integer,                       intent(inout) :: nbas
-  real, dimension(3,3,nmax),     intent(inout) :: op_list
-  real,                          intent(out) :: dh
-  real,                          intent(in) :: m_thr
+  real(rp), dimension(3,3),          intent(inout) :: theta
+  integer(ip),                       intent(in) :: nat
+  integer(ip), dimension(nat),       intent(in) :: typ_in
+  real(rp), dimension(3,nat),        intent(in) :: coords_in
+  real(rp),                          intent(in) :: sym_thr
+  real(rp),                          intent(in) :: dd
+  integer(ip),                       intent(inout) :: nbas
+  real(rp), dimension(3,3,nmax),     intent(inout) :: op_list
+  real(rp),                          intent(out) :: dh
+  real(rp),                          intent(in) :: m_thr
   logical,                       intent(out) :: success
-  integer,                       intent(out) :: ierr
+  integer(ip),                       intent(out) :: ierr
 
-  integer, dimension(nat) :: typ
-  real, dimension(3,nat) :: coords
-  integer :: i
-  real, dimension(nat) :: dists
-  integer, dimension(nat) :: found, perm
+  integer(ip), dimension(nat) :: typ
+  real(rp), dimension(3,nat) :: coords
+  integer(ip) :: i
+  real(rp), dimension(nat) :: dists
+  integer(ip), dimension(nat) :: found, perm
   logical :: not_crazy, is_new
   logical :: is_valid, do_refine
-  real :: act_thr
+  real(rp) :: act_thr
 
   ! write(*,*) "try_sofi received theta:"
   ! write(*,'(3f9.4)') theta
@@ -806,7 +812,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   typ = typ_in
   coords = coords_in
 
-  dh = 99.9
+  dh = 99.9_rp
   is_valid = .false.
 
   !! apply theta
@@ -818,7 +824,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   !! In principle anything beyond 0.5*dd allows for permuttaions of atoms,
   !! but due to distortions in positions, need to allow a bit more, since
   !! permutations could be "partially correct", and refine can correct that.
-  act_thr = 0.6*dd + epsilon
+  act_thr = 0.6_rp*dd + epsilon
 
   ! write(*,*) nat*2
   ! write(*,*)
@@ -889,7 +895,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
 
   do_refine = .true.
   !! if first cshda already super good, no need to refine
-  if( dh .lt. min(sym_thr*1e-3, epsilon) ) then
+  if( dh .lt. min(sym_thr*1e-3_rp, epsilon) ) then
      do_refine = .false.
      is_valid = .true.
   end if
@@ -953,27 +959,28 @@ end subroutine try_sofi
 !! @returns theta, dh, perm
 !!
 subroutine refine_sofi( nat_ref, typ_ref, coords_ref, nat, typ_in, coords_in, theta, dh, perm )
+  use ira_precision
   implicit none
-  integer,                     intent(in) :: nat_ref
-  integer, dimension(nat_ref), intent(in) :: typ_ref
-  real, dimension(3,nat_ref),  intent(in) :: coords_ref
-  integer,                     intent(in) :: nat
-  integer, dimension(nat),     intent(in) :: typ_in
-  real, dimension(3,nat),      intent(in) :: coords_in
-  real, dimension(3,3),        intent(inout) :: theta
-  real,                        intent(inout) :: dh
-  integer, dimension(nat),     intent(out) :: perm
+  integer(ip),                     intent(in) :: nat_ref
+  integer(ip), dimension(nat_ref), intent(in) :: typ_ref
+  real(rp), dimension(3,nat_ref),  intent(in) :: coords_ref
+  integer(ip),                     intent(in) :: nat
+  integer(ip), dimension(nat),     intent(in) :: typ_in
+  real(rp), dimension(3,nat),      intent(in) :: coords_in
+  real(rp), dimension(3,3),        intent(inout) :: theta
+  real(rp),                        intent(inout) :: dh
+  integer(ip), dimension(nat),     intent(out) :: perm
 
-  integer :: i, n, k
-  integer, dimension(nat) :: found, found_new
-  real, dimension(nat) :: dists
-  integer, dimension(nat) :: typ
-  real, dimension(3,nat) :: coords
-  real, dimension(3,3) :: svd_r
-  real, dimension(3) :: svd_t  !, ax
+  integer(ip) :: i, n, k
+  integer(ip), dimension(nat) :: found, found_new
+  real(rp), dimension(nat) :: dists
+  integer(ip), dimension(nat) :: typ
+  real(rp), dimension(3,nat) :: coords
+  real(rp), dimension(3,3) :: svd_r
+  real(rp), dimension(3) :: svd_t  !, ax
 
-  integer :: ierr
-  ! real :: dd, det1
+  integer(ip) :: ierr
+  ! real(rp) :: dd, det1
 
   !! working copies
   typ = typ_in
@@ -1035,7 +1042,7 @@ subroutine refine_sofi( nat_ref, typ_ref, coords_ref, nat, typ_in, coords_in, th
      !! get permutation, with high thr (accept anything at this point)
      call cshda( nat_ref, typ_ref, coords_ref, &
           nat, typ, coords, &
-          99.0, found_new, dists )
+          99.0_rp, found_new, dists )
 
      ! write(*,*) 'found, dists'
      ! do k = 1, nat
@@ -1078,19 +1085,20 @@ end subroutine refine_sofi
 !! @returns is_new
 !!
 subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
+  use ira_precision
   use sofi_tools, only: nmax, matrix_distance
   implicit none
-  real, dimension(3,3),      intent(in) :: rmat
-  integer,                   intent(in) :: nbas
-  real, dimension(3,3,nmax), intent(in) :: op_list
-  real,                      intent(in) :: m_thr
+  real(rp), dimension(3,3),      intent(in) :: rmat
+  integer(ip),                   intent(in) :: nbas
+  real(rp), dimension(3,3,nmax), intent(in) :: op_list
+  real(rp),                      intent(in) :: m_thr
   logical,                   intent(out) :: is_new
 
-  integer :: i
+  integer(ip) :: i
   logical :: eq_rmat
-  real :: dd
-  real :: det1, det2, ddet
-  real :: matrix_thr
+  real(rp) :: dd
+  real(rp) :: det1, det2, ddet
+  real(rp) :: matrix_thr
 
   !! Currently it is decided to compare rmat matrix to all the previously found
   !! matrices to decide whether rmat is new or not.
@@ -1127,7 +1135,7 @@ subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
         ! write(*,*) 'det1:', det1, 'det2:',det2
 
         !! value of det can be +1 or -1, so no need for flexible thr here
-        if( ddet .lt. 1e-3 ) then
+        if( ddet .lt. 1e-3_rp ) then
            eq_rmat = .true.
         endif
 
@@ -1149,14 +1157,15 @@ end subroutine is_new_sofi
 !> @details
 !! Add rmat into mat_list, increase nbas by 1.
 subroutine add_sofi( nat, rmat, nbas, mat_list, ierr )
+  use ira_precision
   use sofi_tools, only: nmax
   use err_module
   implicit none
-  integer,                      intent(in) :: nat
-  real, dimension(3,3),         intent(in) :: rmat
-  integer,                      intent(inout) :: nbas
-  real, dimension(3,3,nmax),    intent(inout) :: mat_list
-  integer,                      intent(out) :: ierr
+  integer(ip),                      intent(in) :: nat
+  real(rp), dimension(3,3),         intent(in) :: rmat
+  integer(ip),                      intent(inout) :: nbas
+  real(rp), dimension(3,3,nmax),    intent(inout) :: mat_list
+  integer(ip),                      intent(out) :: ierr
 
 
   !! increment nbas
@@ -1201,36 +1210,37 @@ end subroutine add_sofi
 !!
 subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !!
+  use ira_precision
   use sofi_tools
   implicit none
-  integer,                   intent(in) :: nbas
-  real, dimension(3,3,nbas), intent(in) :: op_list
+  integer(ip),                   intent(in) :: nbas
+  real(rp), dimension(3,3,nbas), intent(in) :: op_list
   character(len=10),         intent(out) :: pg
-  integer,                   intent(out) :: n_prin_ax
-  real, dimension(3,nbas),   intent(out) :: prin_ax
+  integer(ip),                   intent(out) :: n_prin_ax
+  real(rp), dimension(3,nbas),   intent(out) :: prin_ax
   logical,                   intent(in) :: verb
-  integer,                   intent(out) :: ierr
+  integer(ip),                   intent(out) :: ierr
 
-  real, dimension(3) :: ax, cn_ax
-  real, dimension(3,3) :: rmat
-  real :: angle, dd, dot, cross
-  integer :: i, j
+  real(rp), dimension(3) :: ax, cn_ax
+  real(rp), dimension(3,3) :: rmat
+  real(rp) :: angle, dd, dot, cross
+  integer(ip) :: i, j
   character(len=1), dimension(nbas) :: op
-  integer, dimension(nbas) :: n_int, power
-  real, dimension(3,nbas) :: ax_list
-  integer, dimension(nbas) :: skip_ax
-  integer, dimension(nbas) :: multip_ax !! total number of operations on the axis of this op
-  integer :: max_n_val, max_n_loc
-  integer :: nax, nr_n
-  real, dimension(5,nbas) :: uniq_ax  !! 4th dim is largest Cn on this ax, 5th is counter on op
+  integer(ip), dimension(nbas) :: n_int, power
+  real(rp), dimension(3,nbas) :: ax_list
+  integer(ip), dimension(nbas) :: skip_ax
+  integer(ip), dimension(nbas) :: multip_ax !! total number of operations on the axis of this op
+  integer(ip) :: max_n_val, max_n_loc
+  integer(ip) :: nax, nr_n
+  real(rp), dimension(5,nbas) :: uniq_ax  !! 4th dim is largest Cn on this ax, 5th is counter on op
   logical :: has_inversion, has_sigma, has_cn, has_sigma_h, has_sigma_v, has_s2n, c2_perp, has_sigma_d
-  integer :: n_c2, n_in_plane, ndum
-  real, dimension(3) :: cc
-  integer :: k, pg_err
-  real :: dotj, dotk
+  integer(ip) :: n_c2, n_in_plane, ndum
+  real(rp), dimension(3) :: cc
+  integer(ip) :: k, pg_err
+  real(rp) :: dotj, dotk
 
-  real, dimension(nbas) :: angle_list
-  integer :: cn_multip, cn_val
+  real(rp), dimension(nbas) :: angle_list
+  integer(ip) :: cn_multip, cn_val
   logical :: isnew
 
   if( verb ) then
@@ -1248,7 +1258,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      !!
      !! output single principal axis. Maybe rather set to zero?
      n_prin_ax = 1
-     prin_ax(:,1) = (/1.0, 0.0, 0.0/)
+     prin_ax(:,1) = (/1.0_rp, 0.0_rp, 0.0_rp/)
      !!
      return
   end if
@@ -1276,7 +1286,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
           i, op(i), n_int(i), power(i), ax_list(:,i), angle
   end do
 
-  uniq_ax(:,:) = 0.0
+  uniq_ax(:,:) = 0.0_rp
   nax = 0
   multip_ax(:) = 0
   skip_ax(:) = 0
@@ -1307,7 +1317,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         if( op(j) == OP_IDENTITY )cycle
         if( op(j) == OP_INVERSION )cycle
         !!
-        if( abs(dot_product(ax, ax_list(:,j))) .gt. 0.999 ) then
+        if( abs(dot_product(ax, ax_list(:,j))) .gt. 0.999_rp ) then
            !! is same ax
            if(verb) write(*,'(a3,g0,a1,g0,1x,f7.4)') op(j), n_int(j),'^', power(j), angle_list(j)
            skip_ax(j) = 1
@@ -1325,7 +1335,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   do i = 1, nbas
      !! find which ax from uniq list
      do j = 1, nbas
-        if( abs(dot_product(ax_list(:,i), uniq_ax(1:3,j))) .gt. 0.99 ) then
+        if( abs(dot_product(ax_list(:,i), uniq_ax(1:3,j))) .gt. 0.99_rp ) then
            multip_ax(i) = nint(uniq_ax(5,j))
            exit
         endif
@@ -1402,7 +1412,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         !! store only unique
         isnew = .true.
         do j = 1, n_prin_ax
-           if( dot_product(ax_list(:,i), prin_ax(:,j)) .gt. 0.999 ) isnew = .false.
+           if( dot_product(ax_list(:,i), prin_ax(:,j)) .gt. 0.999_rp ) isnew = .false.
         end do
         if( .not. isnew ) cycle
         n_prin_ax = n_prin_ax + 1
@@ -1444,7 +1454,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !! bottom part of flowchart
   !!
   !! see if n C2 ax are perp to cn_ax
-  dd = 0.0
+  dd = 0.0_rp
   n_c2 = 0
   ! write(*,*) '>> checking c2 perp'
   do i = 1, nbas
@@ -1455,7 +1465,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      !! keep dot prod of all
      dot = abs( dot_product( cn_ax, ax))
      !! can be same ax as cn_ax
-     if( dot .gt. 0.99) cycle
+     if( dot .gt. 0.99_rp) cycle
      ! write(*,*) op(i), n_int(i)
      ! write(*,'(5x,i2,f5.2,3f9.4)') i, dot, ax
      dd = dd + dot
@@ -1466,7 +1476,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   if( n_c2 .gt. 0) dd = dd/n_c2
   ! write(*,*) 'n_c2',n_c2
   ! write(*,*) 'dd is:',dd
-  if( dd .lt. 0.01 .and. n_c2 .gt. 0 ) c2_perp = .true.
+  if( dd .lt. 0.01_rp .and. n_c2 .gt. 0 ) c2_perp = .true.
   ! write(*,*) '>> c2 are perp',c2_perp
 
   !! check if has sigma_h
@@ -1476,7 +1486,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      if( op(i) .ne. OP_IMPROP_ROT) cycle
      if( n_int(i) .ne. 0) cycle
      dot = abs( dot_product(cn_ax, ax_list(:,i)))
-     if( dot .gt. 0.99 ) has_sigma_h = .true.
+     if( dot .gt. 0.99_rp ) has_sigma_h = .true.
      ! write(*,*) i, dot
   end do
   ! write(*,*) '>> sigma_h found:',has_sigma_h
@@ -1494,7 +1504,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      call cross_prod( ax_list(:,i), cn_ax, cc)
      cross=norm2(cc)
      ! write(*,'(5x,i2,f5.2,3f9.4)') i, cross, ax_list(:,i)
-     if( abs( cross ) .gt. 0.99 ) n_in_plane = n_in_plane + 1
+     if( abs( cross ) .gt. 0.99_rp ) n_in_plane = n_in_plane + 1
   end do
   ! write(*,*) 'n_in_plane',n_in_plane, n_c2
   ! if( n_in_plane .eq. n_c2) has_sigma_v = .true.
@@ -1522,7 +1532,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
 
         dot = abs( dot_product( ax_list(:,i), cn_ax))
         !! i is perp to cn
-        if( dot .lt. 0.01) then
+        if( dot .lt. 0.01_rp) then
            !! select another
            do j = 1, nbas
               if( j .eq. i ) cycle
@@ -1530,7 +1540,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
               if( n_int(j) .ne. 2) cycle
 
               dotj = abs( dot_product( ax_list(:,j), cn_ax))
-              if( dotj .lt. 0.01) then
+              if( dotj .lt. 0.01_rp) then
                  ! write(*,*) i, j, dot,dotj
                  ! write(*,*) ax_list(:,i)
                  ! write(*,*) ax_list(:,j)
@@ -1552,7 +1562,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     !! check if this s0 plane contains principal
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
-                    if( dotk .lt. 0.01 .and. abs(cross) .gt. 0.99 ) then
+                    if( dotk .lt. 0.01_rp .and. abs(cross) .gt. 0.99_rp ) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1569,7 +1579,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
                     ! write(*,*) i,j,k, dotk
-                    if( dotk .lt. 0.01 .and. cross.gt.0.99 ) then
+                    if( dotk .lt. 0.01_rp .and. cross.gt.0.99_rp ) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1586,7 +1596,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
                     ! write(*,*) i,j,k, dotk
-                    if( dotk .lt. 0.01 .and. cross.gt.0.99) then
+                    if( dotk .lt. 0.01_rp .and. cross.gt.0.99_rp) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1603,7 +1613,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
                     ! write(*,*) i,j,k, dotk
-                    if( dotk .lt. 0.01 .and. cross.gt.0.99) then
+                    if( dotk .lt. 0.01_rp .and. cross.gt.0.99_rp) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1764,24 +1774,25 @@ end subroutine sofi_get_pg
 !! @returns op, n, p, ax, angle, ierr
 !!
 subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
+  use ira_precision
   use sofi_tools
   use err_module
   implicit none
-  real, dimension(3,3), intent(in) :: rmat
+  real(rp), dimension(3,3), intent(in) :: rmat
   character(len=1),     intent(out) :: op
-  integer,              intent(out) :: n
-  integer,              intent(out) :: p
-  real, dimension(3),   intent(out) :: ax
-  real,                 intent(out) :: angle
-  integer,              intent(out) :: ierr
+  integer(ip),              intent(out) :: n
+  integer(ip),              intent(out) :: p
+  real(rp), dimension(3),   intent(out) :: ax
+  real(rp),                 intent(out) :: angle
+  integer(ip),              intent(out) :: ierr
 
-  real, dimension(3,3) :: rdum
-  real :: det, search_eval, diff, diff_old, cosangl
-  real, dimension(3) :: eigvals
-  integer :: idx, i, j, nl, pl, gcd
-  real :: mindiff
-  ! real :: flip
-  real, dimension(3) :: tmp, tmp2, tmp3
+  real(rp), dimension(3,3) :: rdum
+  real(rp) :: det, search_eval, diff, diff_old, cosangl
+  real(rp), dimension(3) :: eigvals
+  integer(ip) :: idx, i, j, nl, pl, gcd
+  real(rp) :: mindiff
+  ! real(rp) :: flip
+  real(rp), dimension(3) :: tmp, tmp2, tmp3
 
   op = OP_ERROR
   n = 0; p =0
@@ -1793,7 +1804,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   !! determinant
   !! IRA routine
   call determinant3x3( rdum, det )
-  if( abs(det) .gt. 1.0 + epsilon ) then
+  if( abs(det) .gt. 1.0_rp + epsilon ) then
      write(*,*) "input matrix:"
      write(*,'(3f9.4)') rdum(1,:)
      write(*,'(3f9.4)') rdum(2,:)
@@ -1814,23 +1825,23 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   ! end do
 
   !! based on value of det, decide what to check
-  if( det .gt. 0.5 ) then
+  if( det .gt. 0.5_rp ) then
      !! positive 1.0 determinant, matrix is rotation
      !! there is one eignevalue which is 1.0
-     search_eval = 1.0
+     search_eval = 1.0_rp
      ! write(*,*) "matrix is rotation"
      op(1:1)=OP_PROP_ROT
      !!
-  elseif( det .lt. -0.5) then
+  elseif( det .lt. -0.5_rp) then
      !! negative 1.0 determinant, matrix is (roto-)inversion.
      !! There is one eignevalue -1.0
-     search_eval = -1.0
+     search_eval = -1.0_rp
      ! write(*,*) "matrix is (roto-)inversion"
      op(1:1)=OP_IMPROP_ROT
   endif
 
   !! find requested eigenvalue (they are not ordered)
-  diff_old = 99.9
+  diff_old = 99.9_rp
   idx = 0
   do i = 1, 3
      diff = eigvals(i) - search_eval
@@ -1849,7 +1860,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   cosangl = eigvals(i)
   !! massage the eigenvalue a bit, since acos is defined strictly on [-1:1]
   ! if( cosangl .gt. 1.0 .or. cosangl .lt. -1.0) cosangl = real(nint(cosangl))
-  if( abs(cosangl) .gt. (1.0 + epsilon) ) then
+  if( abs(cosangl) .gt. (1.0_rp + epsilon) ) then
      !! value cosangl beyond 1.0, or below -1.0, error
      write(*,'(a,1x,3f9.6)') "eigvals:", eigvals
      write(*,'(a,1x,f6.2)') "search_eval:", search_eval
@@ -1857,12 +1868,12 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
      write(*,*) "origin at:",__FILE__,"line:",__LINE__
      ierr = ERR_ACOS_ARG
      return
-  elseif( abs(cosangl) .gt. 1.0 ) then
+  elseif( abs(cosangl) .gt. 1.0_rp ) then
      !! value 1.0 within precision, take sign with value 1.0
-     cosangl = sign(1.0, cosangl )
+     cosangl = sign(1.0_rp, cosangl )
   end if
 
-  angle = acos( cosangl ) / (2.0*pi)
+  angle = acos( cosangl ) / (2.0_rp*pi)
   !! the resulting angle here is always positive
 
   ! write(*,*) cosangl, angle
@@ -1874,7 +1885,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   p = 1
   nl = n
   pl = p
-  mindiff=99.9
+  mindiff=99.9_rp
   do j = 1, lim_n_val
      diff = angle*j - nint(angle*j)
      ! write(*,*) j, diff
@@ -1909,7 +1920,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   if( op(1:1)==OP_PROP_ROT .and. angle .lt. epsilon ) op=OP_IDENTITY
   !!
   !! S2 = I :: rotation 0.5 and reflection about any axis is inversion
-  if( op(1:1)==OP_IMPROP_ROT .and. abs(angle-0.5) .lt. epsilon ) op=OP_INVERSION
+  if( op(1:1)==OP_IMPROP_ROT .and. abs(angle-0.5_rp) .lt. epsilon ) op=OP_INVERSION
 
   ! write(*,'(a,x,i3,a3,2f9.4)') 'angle:',n, op, angle, (n-1.0/angle)
 
@@ -1930,7 +1941,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
 
   !! check if angle is positive/negative according to axis:
   !! generate generic off-axis tmp vector
-  tmp = ax + (/ax(3)*0.5, ax(1)*0.2, ax(2)/)
+  tmp = ax + (/ax(3)*0.5_rp, ax(1)*0.2_rp, ax(2)/)
   tmp = tmp/norm2(tmp)
   !! transform tmp by rmat
   tmp2 = matmul(rmat, tmp)
@@ -1942,8 +1953,8 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
 
 
   !! put ax of E or I ops to (1, 0, 0 )
-  if( op(1:1) == OP_IDENTITY ) ax = (/ 1.0, 0.0, 0.0 /)
-  if( op(1:1) == OP_INVERSION ) ax = (/ 1.0, 0.0, 0.0 /)
+  if( op(1:1) == OP_IDENTITY )  ax = (/ 1.0_rp, 0.0_rp, 0.0_rp /)
+  if( op(1:1) == OP_INVERSION ) ax = (/ 1.0_rp, 0.0_rp, 0.0_rp /)
 
   ierr = 0
 
@@ -1972,16 +1983,17 @@ end subroutine sofi_analmat
 !! @returns n_op, op_list
 !!
 subroutine sofi_ext_Bfield( n_op, op_list, b_field )
+  use ira_precision
   use sofi_tools, only: op_valid_ext_b
   implicit none
-  integer,                           intent(inout) :: n_op
-  real, dimension(1:3, 1:3, 1:n_op), intent(inout) :: op_list
-  real, dimension(3),                intent(in) :: b_field
+  integer(ip),                           intent(inout) :: n_op
+  real(rp), dimension(1:3, 1:3, 1:n_op), intent(inout) :: op_list
+  real(rp), dimension(3),                intent(in) :: b_field
 
-  integer :: i, n_op_new
-  integer, dimension(n_op) :: which
-  real, dimension(3,3) :: rmat
-  real, dimension(3,3,n_op) :: op_new
+  integer(ip) :: i, n_op_new
+  integer(ip), dimension(n_op) :: which
+  real(rp), dimension(3,3) :: rmat
+  real(rp), dimension(3,3,n_op) :: op_new
 
   logical :: valid
 
@@ -1989,7 +2001,7 @@ subroutine sofi_ext_Bfield( n_op, op_list, b_field )
   which(:) = 0
 
   n_op_new = 0
-  op_new(:,:,:) = 0.0
+  op_new(:,:,:) = 0.0_rp
 
   do i = 1, n_op
      rmat = op_list(:,:,i)
@@ -2008,7 +2020,7 @@ subroutine sofi_ext_Bfield( n_op, op_list, b_field )
 
   !! set output
   n_op = n_op_new
-  op_list(:,:,:) = 0.0
+  op_list(:,:,:) = 0.0_rp
   op_list(:,:,1:n_op) = op_new(:,:,1:n_op)
 
   if( n_op .lt. 1) then
@@ -2043,19 +2055,20 @@ end subroutine sofi_ext_Bfield
 !! @param[out] ierr :: error value, negative on error, zero otherwise
 !!
 subroutine sofi_construct_operation( op, axis, angle, matrix, ierr )
+  use ira_precision
   use sofi_tools, only: construct_rotation, construct_reflection
   use err_module
   implicit none
   character(len=1),     intent(in) :: op
-  real, dimension(3),   intent(in) :: axis
-  real,                 intent(in) :: angle
-  real, dimension(3,3), intent(out) :: matrix
-  integer,              intent(out) :: ierr
+  real(rp), dimension(3),   intent(in) :: axis
+  real(rp),                 intent(in) :: angle
+  real(rp), dimension(3,3), intent(out) :: matrix
+  integer(ip),              intent(out) :: ierr
 
-  real, dimension(3,3) :: tmp
-  real, dimension(3) :: ax
-  real :: an
-  real, parameter :: twopi=8.0*atan(1.0)
+  real(rp), dimension(3,3) :: tmp
+  real(rp), dimension(3) :: ax
+  real(rp) :: an
+  real(rp), parameter :: twopi=8.0*atan(1.0)
 
   ierr = 0
   !! put angle into 2pi units
@@ -2063,19 +2076,19 @@ subroutine sofi_construct_operation( op, axis, angle, matrix, ierr )
   !! normalize axis
   ax = axis/norm2(axis)
   !! initialize
-  matrix(:,:) = 0.0
+  matrix(:,:) = 0.0_rp
   !!
   select case( trim(adjustl(op)) )
   case( 'E', 'e' )
      !! identity
-     matrix(1,1) = 1.0
-     matrix(2,2) = 1.0
-     matrix(3,3) = 1.0
+     matrix(1,1) = 1.0_rp
+     matrix(2,2) = 1.0_rp
+     matrix(3,3) = 1.0_rp
   case( 'I', 'i' )
      !! inversion
-     matrix(1,1) = -1.0
-     matrix(2,2) = -1.0
-     matrix(3,3) = -1.0
+     matrix(1,1) = -1.0_rp
+     matrix(2,2) = -1.0_rp
+     matrix(3,3) = -1.0_rp
   case( 'C', 'c' )
      !! rotation
      call construct_rotation( ax, an, matrix )
@@ -2105,27 +2118,28 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
   !!         and this also changes the sign of angle. But it is not always that M and M^T have opposite
   !!         direction of axes, the +/- direction after diagonalization is random.
 
+  use ira_precision
   use sofi_tools
   use err_module
   implicit none
-  integer,                    intent(in) :: n_mat
-  real, dimension(3,3,n_mat), intent(in) :: mat_list
+  integer(ip),                    intent(in) :: n_mat
+  real(rp), dimension(3,3,n_mat), intent(in) :: mat_list
   character(len=1), dimension(n_mat), intent(out) :: op_out
-  real, dimension(3,n_mat),           intent(out) :: ax_out
-  real, dimension(n_mat),             intent(out) :: angle_out
-  integer,                            intent(out) :: ierr
+  real(rp), dimension(3,n_mat),           intent(out) :: ax_out
+  real(rp), dimension(n_mat),             intent(out) :: angle_out
+  integer(ip),                            intent(out) :: ierr
 
-  integer :: n, i, p, j
-  real :: angle, dotp, angle_diff, angle_sum, dist, dist_neg
+  integer(ip) :: n, i, p, j
+  real(rp) :: angle, dotp, angle_diff, angle_sum, dist, dist_neg
   character(len=1), dimension(n_mat) :: op_list
-  real, dimension(3) :: ax
-  real, dimension(3,3) :: rmat
-  real :: dotp_equal
+  real(rp), dimension(3) :: ax
+  real(rp), dimension(3,3) :: rmat
+  real(rp) :: dotp_equal
 
   ierr = 0
 
   !! threshold value for dot product between two vectors which should be equal
-  dotp_equal = 0.9999
+  dotp_equal = 0.9999_rp
 
   !! get all axes
   do i = 1, n_mat
@@ -2152,7 +2166,7 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
         !!
         !! same ax, same angle
         if( dotp .gt. dotp_equal .and. &
-             abs(angle_diff) .lt. 1e-3 ) then
+             abs(angle_diff) .lt. 1e-3_rp ) then
            !! ops are ambiguous
            write(*,*) i, j
            write(*,*)"dotp",dotp, "angle_diff",abs(angle_diff)
@@ -2163,8 +2177,8 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
         !!
         !! opposite ax, equal or opposite angle
         if( dotp .lt. -dotp_equal  )then
-           if( abs( angle_diff ) .lt. 1e-3 .or. &
-                abs(angle_sum) .lt. 1e-2 ) then
+           if( abs( angle_diff ) .lt. 1e-3_rp .or. &
+                abs(angle_sum) .lt. 1e-2_rp ) then
               !! ops are ambiguous
               write(*,*) i, j, angle_diff
               write(*,*)"dotp",dotp, "angle_diff",abs(angle_diff), "angle_sum",abs(angle_sum)
@@ -2179,8 +2193,8 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
 
   !! put ax of E or I ops to (1, 0, 0 )
   do i = 1, n_mat
-     if( op_out(i) == OP_IDENTITY ) ax_out(:,i) = (/ 1.0, 0.0, 0.0 /)
-     if( op_out(i) == OP_INVERSION ) ax_out(:,i) = (/ 1.0, 0.0, 0.0 /)
+     if( op_out(i) == OP_IDENTITY )  ax_out(:,i) = (/ 1.0_rp, 0.0_rp, 0.0_rp /)
+     if( op_out(i) == OP_INVERSION ) ax_out(:,i) = (/ 1.0_rp, 0.0_rp, 0.0_rp /)
   end do
 
 
@@ -2203,17 +2217,18 @@ end subroutine sofi_unique_ax_angle
 
 subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
   !! generate combos of matrices without a structure
+  use ira_precision
   use sofi_tools, only: nmax, matrix_distance, m_thr
   implicit none
-  integer, intent(in) :: n_in
-  real, dimension(3,3,n_in), intent(in) :: mat_in
-  integer, intent(out) :: n_out
-  real, dimension(3,3,nmax), intent(out) :: mat_out
+  integer(ip), intent(in) :: n_in
+  real(rp), dimension(3,3,n_in), intent(in) :: mat_in
+  integer(ip), intent(out) :: n_out
+  real(rp), dimension(3,3,nmax), intent(out) :: mat_out
 
-  integer :: i, m, ii, j, nn, k
-  real, dimension(3,3) :: rmat
+  integer(ip) :: i, m, ii, j, nn, k
+  real(rp), dimension(3,3) :: rmat
   logical :: is_new
-  real :: dd
+  real(rp) :: dd
 
   !! copy input matrices
   mat_out(:,:,1:n_in) = mat_in(:,:,:)
@@ -2261,25 +2276,26 @@ subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3,
   !! condition for Ih: has sigma or inversion, and number of unique c3 axes .ge. 3
   !!
   !! NOTE: The variables which store the state need to be allocated and initialised in the caller!
+  use ira_precision
   use sofi_tools, only: OP_PROP_ROT, OP_IMPROP_ROT, OP_INVERSION
   implicit none
-  integer, intent(in)    :: n_old   !! size of previous call (increments are not always +1)
-  integer, intent(in)    :: n_op
-  real,    intent(in)    :: op_list(3,3,n_op)
+  integer(ip), intent(in)    :: n_old   !! size of previous call (increments are not always +1)
+  integer(ip), intent(in)    :: n_op
+  real(rp),    intent(in)    :: op_list(3,3,n_op)
   logical, intent(inout) :: has_sigma          !! state var: sigma is present, init to false
   logical, intent(inout) :: has_inversion      !! state var: inversion is present, init to false
-  integer, intent(inout) :: n_u_c3             !! state var: number of unique c3 axes, init to zero
-  real,    intent(inout) :: u_c3(3,5)          !! state var: unique c3 axes, init to zero
+  integer(ip), intent(inout) :: n_u_c3             !! state var: number of unique c3 axes, init to zero
+  real(rp),    intent(inout) :: u_c3(3,5)          !! state var: unique c3 axes, init to zero
   logical, intent(out)   :: terminate
 
   !!
-  integer :: i, iax, ierr
-  integer :: n_new
-  real, dimension(3,3) :: mat
-  real, dimension(3) :: ax
+  integer(ip) :: i, iax, ierr
+  integer(ip) :: n_new
+  real(rp), dimension(3,3) :: mat
+  real(rp), dimension(3) :: ax
   character(len=1) :: op
-  integer :: n, p
-  real :: angle, dotp
+  integer(ip) :: n, p
+  real(rp) :: angle, dotp
   logical :: unique
 
   terminate = .false.
@@ -2311,7 +2327,7 @@ subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3,
         unique = .true.
         do iax = 1, n_u_c3
            dotp = dot_product( ax, u_c3(:,iax))
-           if( abs(dotp) .gt. 0.99 ) unique = .false.
+           if( abs(dotp) .gt. 0.99_rp ) unique = .false.
         end do
         !!
         if( unique ) then
@@ -2340,9 +2356,10 @@ end subroutine state_update
 !! @param[out] msg(128) :: error message
 !!
 subroutine sofi_get_err_msg( ierr, msg )
+  use ira_precision
   use err_module
   implicit none
-  integer, intent(in) :: ierr
+  integer(ip), intent(in) :: ierr
   character(len=128), intent(out) :: msg
   character(:), allocatable :: str
 
@@ -2362,25 +2379,26 @@ end subroutine sofi_get_err_msg
 !> @details
 !! check if the atomic positions in coords form a linear structure.
 !!
-!! @param[in] integer :: nat --> number of atoms
+!! @param[in] integer(ip) :: nat --> number of atoms
 !! @param[in] real(3,nat) :: coords --> atomic positions
 !! @param[out] logical :: collinear --> .true. when structure is collinear
 !! @param[out] real(3) :: ax --> axis of collinearity
 !!
 subroutine sofi_check_collinear( nat, coords, collinear, ax_o )
   !! Method: vectors connecting pairs of coords must be collinear
+  use ira_precision
   use sofi_tools, only: collinearity_thr, ax_convention
   implicit none
-  integer,                intent(in) :: nat
-  real, dimension(3,nat), intent(in) :: coords
+  integer(ip),                intent(in) :: nat
+  real(rp), dimension(3,nat), intent(in) :: coords
   logical,                intent(out) :: collinear
-  real, dimension(3),     intent(out) :: ax_o
+  real(rp), dimension(3),     intent(out) :: ax_o
 
   !! local vars
-  real :: dotp, ax(3), vec(3)
-  integer :: i
+  real(rp) :: dotp, ax(3), vec(3)
+  integer(ip) :: i
 
-  ax_o(:) = 0.0
+  ax_o(:) = 0.0_rp
 
   collinear = .true.
   if( nat == 1 ) return
@@ -2404,7 +2422,7 @@ subroutine sofi_check_collinear( nat, coords, collinear, ax_o )
      vec = vec/norm2(vec)
      !!
      dotp = dot_product( ax, vec )
-     ax_o = ax_o + sign(1.0, dotp)*vec
+     ax_o = ax_o + sign(1.0_rp, dotp)*vec
      ! write(*,*) i, vec, dotp
      if( abs(dotp) < collinearity_thr ) then
         collinear = .false.

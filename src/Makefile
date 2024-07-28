@@ -9,19 +9,20 @@ F90 = gfortran
 AR = ar
 
 #
-# lapack flag. 
-# You can use: -L/path/to/lapack/ instead
+# lapack flag.
+# You can use: /path/to/lapack/liblapack.so instead
 #
 LIBLAPACK = -llapack
 
 #
 # compilation flags
 #
-FFLAGS = -fdefault-real-8 -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native -ffast-math -funroll-loops
+FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native -ffast-math -funroll-loops
 #FFLAGS = -fdefault-real-8 -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -O1
 #FFLAGS += -g -DDEBUG -pedantic -std=f2008
 
 SRC = $(PWD)
+SRC = $(realpath .)
 OBJ = $(SRC)/Obj
 
 MOD = -I$(OBJ) -J$(OBJ)
@@ -39,6 +40,7 @@ SHLIB = libira.so
 #
 # utils
 futils := \
+	$(SRC)/ira_precision.f90 \
 	$(SRC)/timer.f90 \
 	$(SRC)/sofi_tools.f90 \
 	$(SRC)/err_module.f90 \
@@ -48,6 +50,7 @@ futils := \
 	$(SRC)/cshda.f90 \
 	$(SRC)/ira_routines.f90 \
 	$(SRC)/sofi_routines.f90
+
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
 

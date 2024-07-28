@@ -15,9 +15,10 @@
 
 !> @brief determinant of a 3x3 matrix a
 subroutine determinant3x3(a, d)
+  use ira_precision
   implicit none
-  real, dimension(3, 3), intent(in) :: a
-  real, intent(out) :: d
+  real(rp), dimension(3, 3), intent(in) :: a
+  real(rp), intent(out) :: d
 
   d = a(1, 1)*a(2, 2)*a(3, 3) - a(1, 1)*a(2, 3)*a(3, 2) + &
        a(1, 2)*a(2, 3)*a(3, 1) - a(2, 2)*a(3, 1)*a(1, 3) + &
@@ -29,16 +30,17 @@ end subroutine determinant3x3
 !! @details The routine mergesort is located in sorting_module.
 subroutine sort(n, ndim, array, axis)
   use sorting_module, only: mergesort
+  use ira_precision
   implicit none
-  integer, intent(in) :: n
-  integer, intent(in) :: ndim
-  real, dimension(ndim, n), intent(inout) :: array
-  integer, intent(in) :: axis
+  integer(ip), intent(in) :: n
+  integer(ip), intent(in) :: ndim
+  real(rp), dimension(ndim, n), intent(inout) :: array
+  integer(ip), intent(in) :: axis
 
-  real, allocatable :: work(:, :)
+  real(rp), allocatable :: work(:, :)
 
   !! allocate working space for the sorting routine
-  allocate (work(1:ndim, 1:(n + 1)/2), source=0.0)
+  allocate (work(1:ndim, 1:(n + 1)/2), source=0.0_rp)
 
   call mergesort(array, work, axis)
 
@@ -57,20 +59,21 @@ end subroutine sort
 !! @param[out] v     :: orthonormal matrix v
 !! @param[out] ierr  :: error code
 subroutine svd(m, n, a, u, s, v, ierr)
+  use ira_precision
   implicit none
 
-  integer, intent(in) :: m
-  integer, intent(in) :: n
-  real, dimension(m, n), intent(in) :: a
-  real, dimension(m, n), intent(out) :: s
-  real, dimension(m, n), intent(out) :: u
-  real, dimension(m, n), intent(out) :: v
-  integer, intent(out) :: ierr
+  integer(ip), intent(in) :: m
+  integer(ip), intent(in) :: n
+  real(rp), dimension(m, n), intent(in) :: a
+  real(rp), dimension(m, n), intent(out) :: s
+  real(rp), dimension(m, n), intent(out) :: u
+  real(rp), dimension(m, n), intent(out) :: v
+  integer(ip), intent(out) :: ierr
 
-  real, dimension(m, n) :: a_copy
-  real, dimension(min(m, n)) :: sdiag
-  real, allocatable :: work(:)
-  integer :: lwork, i, info, lda, ldu, ldv
+  real(rp), dimension(m, n) :: a_copy
+  real(rp), dimension(min(m, n)) :: sdiag
+  real(rp), allocatable :: work(:)
+  integer(ip) :: lwork, i, info, lda, ldu, ldv
   character(len=3) :: jobu, jobv
 
   ierr = 0
@@ -131,9 +134,9 @@ end subroutine svd
 ! subroutine cross_prod( a, b, c )
 !   !> @brief Cross product of two vectors
 !   implicit none
-!   real, dimension(3), intent(in) :: a
-!   real, dimension(3), intent(in) :: b
-!   real, dimension(3), intent(out) :: c
+!   real(rp), dimension(3), intent(in) :: a
+!   real(rp), dimension(3), intent(in) :: b
+!   real(rp), dimension(3), intent(out) :: c
 
 !   c(1) = a(2)*b(3) - a(3)*b(2)
 !   c(2) = a(3)*b(1) - a(1)*b(3)
@@ -147,14 +150,15 @@ end subroutine svd
 !!   array(:,:) = array(:, order(:) )
 !!
 subroutine permute_real_2d(n, m, array, order)
+  use ira_precision
   implicit none
-  integer, intent(in) :: n
-  integer, intent(in) :: m
-  real, dimension(m, n), intent(inout) :: array
-  integer, dimension(n), intent(in) :: order
+  integer(ip), intent(in) :: n
+  integer(ip), intent(in) :: m
+  real(rp), dimension(m, n), intent(inout) :: array
+  integer(ip), dimension(n), intent(in) :: order
 
-  integer :: i
-  real, dimension(m, n) :: tmp
+  integer(ip) :: i
+  real(rp), dimension(m, n) :: tmp
 
   !! tmp copy
   tmp(:, :) = array(:, :)
@@ -173,14 +177,15 @@ end subroutine permute_real_2d
 !!   array(:, order(:) ) = array(:,:)
 !!
 subroutine permute_real_2d_back(n, m, array, order)
+  use ira_precision
   implicit none
-  integer, intent(in) :: n
-  integer, intent(in) :: m
-  real, dimension(m, n), intent(inout) :: array
-  integer, dimension(n), intent(in) :: order
+  integer(ip), intent(in) :: n
+  integer(ip), intent(in) :: m
+  real(rp), dimension(m, n), intent(inout) :: array
+  integer(ip), dimension(n), intent(in) :: order
 
-  integer :: i
-  real, dimension(m, n) :: tmp
+  integer(ip) :: i
+  real(rp), dimension(m, n) :: tmp
 
   !! tmp copy
   tmp(:, :) = array(:, :)
@@ -198,13 +203,14 @@ end subroutine permute_real_2d_back
 !!    array(:) = array( order(:) )
 !!
 subroutine permute_int_1d(n, array, order)
+  use ira_precision
   implicit none
-  integer, intent(in) :: n
-  integer, dimension(n), intent(inout) :: array
-  integer, dimension(n), intent(in) :: order
+  integer(ip), intent(in) :: n
+  integer(ip), dimension(n), intent(inout) :: array
+  integer(ip), dimension(n), intent(in) :: order
 
-  integer :: i
-  integer, dimension(n) :: tmp
+  integer(ip) :: i
+  integer(ip), dimension(n) :: tmp
 
   !! tmp copy
   tmp(:) = array(:)
@@ -223,13 +229,14 @@ end subroutine permute_int_1d
 !!    array( order(:) ) = array(:)
 !!
 subroutine permute_int_1d_back(n, array, order)
+  use ira_precision
   implicit none
-  integer, intent(in) :: n
-  integer, dimension(n), intent(inout) :: array
-  integer, dimension(n), intent(in) :: order
+  integer(ip), intent(in) :: n
+  integer(ip), dimension(n), intent(inout) :: array
+  integer(ip), dimension(n), intent(in) :: order
 
-  integer :: i
-  integer, dimension(n) :: tmp
+  integer(ip) :: i
+  integer(ip), dimension(n) :: tmp
 
   !! tmp copy
   tmp(:) = array(:)
@@ -246,16 +253,17 @@ end subroutine permute_int_1d_back
 !!
 !! basis on output contains basis vectors in rows.
 subroutine set_orthonorm_bas(vec1, vec2, basis, fail)
+  use ira_precision
   use sofi_tools, only: collinearity_thr
   implicit none
 
-  real, dimension(3), intent(in) :: vec1, vec2
-  real, dimension(3, 3), intent(out) :: basis
+  real(rp), dimension(3), intent(in) :: vec1, vec2
+  real(rp), dimension(3, 3), intent(out) :: basis
   logical, intent(out) :: fail
 
-  real :: prod
-  real :: small_size_thr
-  real :: norm_v
+  real(rp) :: prod
+  real(rp) :: small_size_thr
+  real(rp) :: norm_v
 
   !! threshold for too small vectors
   !! (for numerical reasons, don't want to normalize a too small vector)
@@ -352,22 +360,23 @@ end subroutine set_orthonorm_bas
 subroutine svdrot_m(nat1, typ1, coords1_in, &
      nat2, typ2, coords2_in, &
      rmat, translate, ierr)
+  use ira_precision
   implicit none
-  integer, intent(in) :: nat1
-  integer, dimension(nat1), intent(in) :: typ1
-  real, dimension(3, nat1), intent(in) :: coords1_in
-  integer, intent(in) :: nat2
-  integer, dimension(nat2), intent(in) :: typ2
-  real, dimension(3, nat2), intent(in) :: coords2_in
-  real, dimension(3, 3), intent(out) :: rmat
-  real, dimension(3), intent(out) :: translate
-  integer, intent(out) :: ierr
+  integer(ip), intent(in) :: nat1
+  integer(ip), dimension(nat1), intent(in) :: typ1
+  real(rp), dimension(3, nat1), intent(in) :: coords1_in
+  integer(ip), intent(in) :: nat2
+  integer(ip), dimension(nat2), intent(in) :: typ2
+  real(rp), dimension(3, nat2), intent(in) :: coords2_in
+  real(rp), dimension(3, 3), intent(out) :: rmat
+  real(rp), dimension(3), intent(out) :: translate
+  integer(ip), intent(out) :: ierr
 
-  real, dimension(3, nat1) :: coords1
-  real, dimension(3, nat2) :: coords2
-  real, dimension(3) :: gc1, gc2
-  real, dimension(3, 3) :: matrix, u, smat, vt
-  integer :: i
+  real(rp), dimension(3, nat1) :: coords1
+  real(rp), dimension(3, nat2) :: coords2
+  real(rp), dimension(3) :: gc1, gc2
+  real(rp), dimension(3, 3) :: matrix, u, smat, vt
+  integer(ip) :: i
 
   !! set initial copies
   coords1(:, :) = coords1_in(:, :)
@@ -478,23 +487,24 @@ end subroutine svdrot_m
 subroutine svd_forcerot(nat1, typ1, coords1_in, &
      nat2, typ2, coords2_in, &
      rmat, translate, ierr)
+  use ira_precision
   implicit none
-  integer, intent(in) :: nat1
-  integer, dimension(nat1), intent(in) :: typ1
-  real, dimension(3, nat1), intent(in) :: coords1_in
-  integer, intent(in) :: nat2
-  integer, dimension(nat2), intent(in) :: typ2
-  real, dimension(3, nat2), intent(in) :: coords2_in
-  real, dimension(3, 3), intent(out) :: rmat
-  real, dimension(3), intent(out) :: translate
-  integer, intent(out) :: ierr
+  integer(ip), intent(in) :: nat1
+  integer(ip), dimension(nat1), intent(in) :: typ1
+  real(rp), dimension(3, nat1), intent(in) :: coords1_in
+  integer(ip), intent(in) :: nat2
+  integer(ip), dimension(nat2), intent(in) :: typ2
+  real(rp), dimension(3, nat2), intent(in) :: coords2_in
+  real(rp), dimension(3, 3), intent(out) :: rmat
+  real(rp), dimension(3), intent(out) :: translate
+  integer(ip), intent(out) :: ierr
 
-  real, dimension(3, nat1) :: coords1
-  real, dimension(3, nat2) :: coords2
-  real, dimension(3) :: gc1, gc2
-  real, dimension(3, 3) :: matrix, u, smat, vt
-  integer :: i
-  real :: det_u, det_vt, det_s, det_m, det_r
+  real(rp), dimension(3, nat1) :: coords1
+  real(rp), dimension(3, nat2) :: coords2
+  real(rp), dimension(3) :: gc1, gc2
+  real(rp), dimension(3, 3) :: matrix, u, smat, vt
+  integer(ip) :: i
+  real(rp) :: det_u, det_vt, det_s, det_m, det_r
 
   !! set initial copies
   coords1(:, :) = coords1_in(:, :)
@@ -623,31 +633,32 @@ end subroutine svd_forcerot
 subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
      nat2, typ2_in, coords2_in, &
      kmax, gamma, gamma_idx, hd_out, some_thr)
+  use ira_precision
   implicit none
-  integer, intent(in) :: nat1
-  integer, dimension(nat1), intent(in) :: typ1_in
-  real, dimension(3, nat1), intent(in) :: coords1_in
-  integer, intent(in) :: nat2
-  integer, dimension(nat2), intent(in) :: typ2_in
-  real, dimension(3, nat2), intent(in) :: coords2_in
-  real, intent(in) :: kmax
-  real, dimension(3, 3), intent(out) :: gamma
-  integer, dimension(3), intent(out) :: gamma_idx
-  real, intent(out) :: hd_out
-  real, intent(inout) :: some_thr
+  integer(ip), intent(in) :: nat1
+  integer(ip), dimension(nat1), intent(in) :: typ1_in
+  real(rp), dimension(3, nat1), intent(in) :: coords1_in
+  integer(ip), intent(in) :: nat2
+  integer(ip), dimension(nat2), intent(in) :: typ2_in
+  real(rp), dimension(3, nat2), intent(in) :: coords2_in
+  real(rp), intent(in) :: kmax
+  real(rp), dimension(3, 3), intent(out) :: gamma
+  integer(ip), dimension(3), intent(out) :: gamma_idx
+  real(rp), intent(out) :: hd_out
+  real(rp), intent(inout) :: some_thr
 
-  integer :: i, j, idx1, idx2, m, k
-  real :: hd, hd_old
-  real, dimension(2, nat2) :: d_o
-  real, dimension(nat2) :: dists
-  integer, dimension(nat2) :: found
-  integer, dimension(nat1) :: typ1
-  real, dimension(3, nat1) :: coords1
-  integer, dimension(nat2) :: typ2
-  real, dimension(3, nat2) :: coords2
+  integer(ip) :: i, j, idx1, idx2, m, k
+  real(rp) :: hd, hd_old
+  real(rp), dimension(2, nat2) :: d_o
+  real(rp), dimension(nat2) :: dists
+  integer(ip), dimension(nat2) :: found
+  integer(ip), dimension(nat1) :: typ1
+  real(rp), dimension(3, nat1) :: coords1
+  integer(ip), dimension(nat2) :: typ2
+  real(rp), dimension(3, nat2) :: coords2
   logical :: fail
-  integer :: count
-  integer :: m_fin
+  integer(ip) :: count
+  integer(ip) :: m_fin
 
   !! set local copies
   typ1(:) = typ1_in(:)
@@ -673,7 +684,7 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
   !!
   !! search for gamma
   !!
-  hd_old = 999.9
+  hd_old = 999.9_rp
   idx1 = 0
   idx2 = 0
   m_fin = 0
@@ -709,8 +720,8 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
         !!
         !! calc dists
         !!
-        found(:) = 0
-        dists(:) = 0.0
+        found(:) = 0_ip
+        dists(:) = 0.0_rp
         call cshda(nat1, typ1, coords1, &
              nat2, typ2, coords2, some_thr, found, dists)
         !!
@@ -801,10 +812,10 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
      !! But can also happen when searching nonequal nat...
      !! output gamma as identity matrix, all idx to zero
      gamma_idx(:) = 0
-     gamma(:, :) = 0.0
-     gamma(1, 1) = 1.0
-     gamma(2, 2) = 1.0
-     gamma(3, 3) = 1.0
+     gamma(:, :) = 0.0_rp
+     gamma(1, 1) = 1.0_rp
+     gamma(2, 2) = 1.0_rp
+     gamma(3, 3) = 1.0_rp
   else
      !!
      !! set found result
@@ -854,39 +865,40 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
      nat2, typ2_in, coords2_in, candidate_2, &
      kmax_factor, rotation, translation, permutation, hd_out, ierr)
 
+  use ira_precision
   use err_module
   implicit none
-  integer, intent(in) :: nat1
-  integer, dimension(nat1), intent(in) :: typ1_in
-  real, dimension(3, nat1), intent(in) :: coords1_in
-  integer, dimension(nat1), intent(in) :: candidate_1
-  integer, intent(in) :: nat2
-  integer, dimension(nat2), intent(in) :: typ2_in
-  real, dimension(3, nat2), intent(in) :: coords2_in
-  integer, dimension(nat2), intent(in) :: candidate_2
-  real, intent(in) :: kmax_factor
-  real, dimension(3, 3), intent(out) :: rotation
-  real, dimension(3), intent(out) :: translation
-  integer, dimension(nat2), intent(out) :: permutation
-  real, intent(out) :: hd_out
-  integer, intent(out) :: ierr
+  integer(ip), intent(in) :: nat1
+  integer(ip), dimension(nat1), intent(in) :: typ1_in
+  real(rp), dimension(3, nat1), intent(in) :: coords1_in
+  integer(ip), dimension(nat1), intent(in) :: candidate_1
+  integer(ip), intent(in) :: nat2
+  integer(ip), dimension(nat2), intent(in) :: typ2_in
+  real(rp), dimension(3, nat2), intent(in) :: coords2_in
+  integer(ip), dimension(nat2), intent(in) :: candidate_2
+  real(rp), intent(in) :: kmax_factor
+  real(rp), dimension(3, 3), intent(out) :: rotation
+  real(rp), dimension(3), intent(out) :: translation
+  integer(ip), dimension(nat2), intent(out) :: permutation
+  real(rp), intent(out) :: hd_out
+  integer(ip), intent(out) :: ierr
 
-  integer :: i, ii, j, jj
-  integer, dimension(nat1) :: typ1
-  real, dimension(3, nat1) :: coords1
-  integer, dimension(nat2) :: typ2
-  real, dimension(3, nat2) :: coords2
-  integer :: c1, c2, c1min, c2min, idxm, idx1, idx2
-  integer, dimension(nat2) :: found
-  real, dimension(nat2) :: dists
-  real, dimension(2, nat1) :: d_o
-  real :: hd_old, some_thr, hd
-  real, dimension(3) :: rc1, rc2
-  real, dimension(3, 3) :: beta, gamma, beta_min, gamma_min, invb
+  integer(ip) :: i, ii, j, jj
+  integer(ip), dimension(nat1) :: typ1
+  real(rp), dimension(3, nat1) :: coords1
+  integer(ip), dimension(nat2) :: typ2
+  real(rp), dimension(3, nat2) :: coords2
+  integer(ip) :: c1, c2, c1min, c2min, idxm, idx1, idx2
+  integer(ip), dimension(nat2) :: found
+  real(rp), dimension(nat2) :: dists
+  real(rp), dimension(2, nat1) :: d_o
+  real(rp) :: hd_old, some_thr, hd
+  real(rp), dimension(3) :: rc1, rc2
+  real(rp), dimension(3, 3) :: beta, gamma, beta_min, gamma_min, invb
   logical :: fail
-  real :: dist_k
-  integer, dimension(3) :: gamma_idx
-  integer :: count
+  real(rp) :: dist_k
+  integer(ip), dimension(3) :: gamma_idx
+  integer(ip) :: count
 
   ierr = ERR_OTHER
 
@@ -909,26 +921,26 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
   idxm = 0
   idx1 = 0
   idx2 = 0
-  beta_min(:, :) = 0.0
-  gamma_min(:, :) = 0.0
+  beta_min(:, :) = 0.0_rp
+  gamma_min(:, :) = 0.0_rp
   do i = 1, 3
-     beta_min(i, i) = 1.0
-     gamma_min(i, i) = 1.0
+     beta_min(i, i) = 1.0_rp
+     gamma_min(i, i) = 1.0_rp
   end do
   permutation(:) = 0
   do i = 1, nat2
      permutation(i) = i
   end do
 
-  rotation(:, :) = 0.0
-  rotation(1, 1) = 1.0
-  rotation(2, 2) = 1.0
-  rotation(3, 3) = 1.0
-  translation(:) = 0.0
-  hd_out = 999.9
+  rotation(:, :) = 0.0_rp
+  rotation(1, 1) = 1.0_rp
+  rotation(2, 2) = 1.0_rp
+  rotation(3, 3) = 1.0_rp
+  translation(:) = 0.0_rp
+  hd_out = 999.9_rp
 
-  hd_old = 999.8
-  some_thr = 9999.9
+  hd_old = 999.8_rp
+  some_thr = 9999.9_rp
   count = 0
   !!
   !! for each candidate center in struc 1:
@@ -1048,10 +1060,10 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
            !!
            call cshda(nat1, typ1(1:nat1), coords1(1:3, 1:nat1), &
                 nat2, typ2(1:nat2), coords2(1:3, 1:nat2), &
-                999.9, found(1:nat2), dists(1:nat2))
+                999.9_rp, found(1:nat2), dists(1:nat2))
         else
            !! all dists big
-           dists(:) = 999.9
+           dists(:) = 999.9_rp
         end if
 
         !! Hausdorff of this c1, up to nat1
@@ -1159,14 +1171,14 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
      !! find final permutations
      call cshda(nat1, typ1, coords1, &
           nat2, typ2, coords2, &
-          999.9, found, dists)
+          999.9_rp, found, dists)
      !!
      !! set final permutation
      !!
      permutation(:) = found(:)
   else
      !! all dists large
-     dists(:) = 999.9
+     dists(:) = 999.9_rp
   end if
 
   !! set hd
@@ -1223,32 +1235,33 @@ subroutine ira_svd(nat1, typ1_in, coords1_in, &
      nat2, typ2_in, coords2_in, &
      kmax_factor, rotation, translation, permutation, &
      hd, rmsd, ierr)
+  use ira_precision
   use err_module, only: get_err_msg
   implicit none
-  integer, intent(in) :: nat1
-  integer, dimension(nat1), intent(in) :: typ1_in
-  real, dimension(3, nat1), intent(in) :: coords1_in
-  integer, intent(in) :: nat2
-  integer, dimension(nat2), intent(in) :: typ2_in
-  real, dimension(3, nat2), intent(in) :: coords2_in
-  real, intent(in) :: kmax_factor
-  real, dimension(3, 3), intent(out) :: rotation
-  real, dimension(3), intent(out) :: translation
-  integer, dimension(nat2), intent(out) :: permutation
-  real, intent(out) :: hd
-  real, intent(out) :: rmsd
-  integer, intent(out) :: ierr
+  integer(ip), intent(in) :: nat1
+  integer(ip), dimension(nat1), intent(in) :: typ1_in
+  real(rp), dimension(3, nat1), intent(in) :: coords1_in
+  integer(ip), intent(in) :: nat2
+  integer(ip), dimension(nat2), intent(in) :: typ2_in
+  real(rp), dimension(3, nat2), intent(in) :: coords2_in
+  real(rp), intent(in) :: kmax_factor
+  real(rp), dimension(3, 3), intent(out) :: rotation
+  real(rp), dimension(3), intent(out) :: translation
+  integer(ip), dimension(nat2), intent(out) :: permutation
+  real(rp), intent(out) :: hd
+  real(rp), intent(out) :: rmsd
+  integer(ip), intent(out) :: ierr
 
-  integer, dimension(nat1) :: typ1
-  real, dimension(3, nat1) :: coords1
-  integer, dimension(nat2) :: typ2
-  real, dimension(3, nat2) :: coords2
-  integer, dimension(nat1) :: candidate_1
-  integer, dimension(nat2) :: candidate_2
-  integer :: i
-  real :: hd_out
-  real, dimension(3, 3) :: svd_rot
-  real, dimension(3) :: rdum, svd_tr
+  integer(ip), dimension(nat1) :: typ1
+  real(rp), dimension(3, nat1) :: coords1
+  integer(ip), dimension(nat2) :: typ2
+  real(rp), dimension(3, nat2) :: coords2
+  integer(ip), dimension(nat1) :: candidate_1
+  integer(ip), dimension(nat2) :: candidate_2
+  integer(ip) :: i
+  real(rp) :: hd_out
+  real(rp), dimension(3, 3) :: svd_rot
+  real(rp), dimension(3) :: rdum, svd_tr
 
   !! copy input data
   typ1(:) = typ1_in(:)
@@ -1322,12 +1335,12 @@ subroutine ira_svd(nat1, typ1_in, coords1_in, &
   !!
   !! compute dH and rmsd distances for output
   !!
-  hd = 0.0
+  hd = 0.0_rp
   do i = 1, nat1
      hd = max(hd, norm2(coords1(:, i) - coords2(:, i)))
   end do
 
-  rmsd = 0.0
+  rmsd = 0.0_rp
   do i = 1, nat1
      rdum = coords1(:, i) - coords2(:, i)
      rmsd = rmsd + dot_product(rdum, rdum)
@@ -1337,9 +1350,10 @@ subroutine ira_svd(nat1, typ1_in, coords1_in, &
 end subroutine ira_svd
 
 subroutine ira_get_err_msg(ierr, msg)
+  use ira_precision
   use err_module, only: get_err_msg
   implicit none
-  integer, intent(in) :: ierr
+  integer(ip), intent(in) :: ierr
   character(512), intent(out) :: msg
 
   character(:), allocatable :: me

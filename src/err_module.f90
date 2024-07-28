@@ -1,10 +1,11 @@
 module err_module
 
+  use ira_precision
   implicit none
   private
   public :: get_err_msg
 
-  integer, parameter, public :: &
+  integer(ip), parameter, public :: &
        !!
        !! IRA errors
        ERR_TOO_SMALL_KMAX = -1, &
@@ -23,7 +24,7 @@ module err_module
 contains
 
   function get_err_msg( ierr )result(msg)
-    integer, intent(in) :: ierr
+    integer(ip), intent(in) :: ierr
     character(:), allocatable :: msg
 
     character(len=512) :: str

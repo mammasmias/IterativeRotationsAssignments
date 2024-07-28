@@ -16,12 +16,13 @@
 
 module sofi_tools
 
+  use ira_precision
   implicit none
   public
 
   !! maximum size of output lists. The real number of elements is output as integer
   !! This is pre-defined for security.
-  integer, parameter :: nmax = 400
+  integer(ip), parameter :: nmax = 400
 
 
   !! matrix-distance thr: value 1.4 captures 1/6*2pi rotations, which are
@@ -32,14 +33,14 @@ module sofi_tools
   !!   Also, groups with order > 8 are super rare in atomic clusters. But can happen in
   !!   for example nanotubes, where main ax is in center of tube, around this ax
   !!   many rotations can happen, then order of group can be any.
-  ! real, parameter :: m_thr = 1.4      !! C6
-  ! real, parameter :: m_thr = 1.07     !! C8
-  ! real, parameter :: m_thr = 0.73     !! C12
-  ! real, parameter :: m_thr = 0.49     !! C18
-  ! real, parameter :: m_thr = 0.36     !! C24
-  ! real, parameter :: m_thr = 0.19     !! C48
-  ! real, parameter :: m_thr = 0.092     !! C96
-  real, parameter :: m_thr = 0.044     !! C200
+  ! real(rp), parameter :: m_thr = 1.4      !! C6
+  ! real(rp), parameter :: m_thr = 1.07     !! C8
+  ! real(rp), parameter :: m_thr = 0.73     !! C12
+  ! real(rp), parameter :: m_thr = 0.49     !! C18
+  ! real(rp), parameter :: m_thr = 0.36     !! C24
+  ! real(rp), parameter :: m_thr = 0.19     !! C48
+  ! real(rp), parameter :: m_thr = 0.092     !! C96
+  real(rp), parameter :: m_thr = 0.044     !! C200
 
 
   !! Schoenflies symbols for operations
@@ -52,24 +53,24 @@ module sofi_tools
        OP_MIRROR     = "S" !! "M"
 
 
-  real, parameter :: pi = 4.0*atan(1.0)
-  real, parameter :: epsilon = 1e-6
-  real, parameter :: collinearity_thr = 0.95
+  real(rp), parameter :: pi = 4.0*atan(1.0)
+  real(rp), parameter :: epsilon = 1e-6
+  real(rp), parameter :: collinearity_thr = 0.95
 
   !! limit value for n in sofi_analmat.
-  ! integer, parameter :: lim_n_val = 24
-  ! integer, parameter :: lim_n_val = 48
-  ! integer, parameter :: lim_n_val = 96
-  integer, parameter :: lim_n_val = 200
+  ! integer(ip), parameter :: lim_n_val = 24
+  ! integer(ip), parameter :: lim_n_val = 48
+  ! integer(ip), parameter :: lim_n_val = 96
+  integer(ip), parameter :: lim_n_val = 200
 
 contains
 
   subroutine cross_prod( a, b, c )
     !> @brief Cross product of two vectors
     implicit none
-    real, dimension(3), intent(in) :: a
-    real, dimension(3), intent(in) :: b
-    real, dimension(3), intent(out) :: c
+    real(rp), dimension(3), intent(in) :: a
+    real(rp), dimension(3), intent(in) :: b
+    real(rp), dimension(3), intent(out) :: c
 
     c(1) = a(2)*b(3) - a(3)*b(2)
     c(2) = a(3)*b(1) - a(1)*b(3)
@@ -81,7 +82,7 @@ contains
   recursive function gcd_rec(u, v) result(gcd)
     !! greatest common denominator
     integer             :: gcd
-    integer, intent(in) :: u, v
+    integer(ip), intent(in) :: u, v
 
     if (mod(u, v) /= 0) then
        gcd = gcd_rec(v, mod(u, v))
@@ -105,10 +106,10 @@ contains
     !!              1/18 * 2pi   ||   0.4912
     !!              1/24 * 2pi   ||   0.3692
     implicit none
-    real, dimension(3,3), intent(in) :: a, b
-    real, intent(out) :: dist
+    real(rp), dimension(3,3), intent(in) :: a, b
+    real(rp), intent(out) :: dist
 
-    integer :: i, j
+    integer(ip) :: i, j
 
     dist = 0.0
     do i = 1, 3
@@ -124,11 +125,11 @@ contains
   subroutine md(a,b,dist)
     !! unused
     implicit none
-    real, dimension(3,3), intent(in) :: a, b
-    real, intent(out) :: dist
+    real(rp), dimension(3,3), intent(in) :: a, b
+    real(rp), intent(out) :: dist
 
-    real, dimension(3,3) :: rij
-    real :: tr
+    real(rp), dimension(3,3) :: rij
+    real(rp) :: tr
 
     rij = matmul( a, transpose(b) )
     rij = transpose(rij)
@@ -151,19 +152,19 @@ contains
     !! @param [in]    vec	      0 if don't want to compute eigenvectors, 1 otherwise
     !!
     IMPLICIT NONE
-    INTEGER,              intent(in) :: n
-    REAL, DIMENSION(n,n), intent(inout) :: A
-    REAL, DIMENSION(n),   intent(out) :: eigvals
-    INTEGER,              intent(in) :: vec
-    REAL, DIMENSION(n) :: eigvals_i !! imaginary part of the eigenvalues
-    REAL, DIMENSION(n,n) :: eigvec
-    INTEGER :: lda
-    INTEGER :: lwork
-    REAL :: Dummy(1000)
-    INTEGER :: info
+    INTEGER(IP),              intent(in) :: n
+    REAL(RP), DIMENSION(n,n), intent(inout) :: A
+    REAL(RP), DIMENSION(n),   intent(out) :: eigvals
+    INTEGER(IP),              intent(in) :: vec
+    REAL(RP), DIMENSION(n) :: eigvals_i !! imaginary part of the eigenvalues
+    REAL(RP), DIMENSION(n,n) :: eigvec
+    INTEGER(IP) :: lda
+    INTEGER(IP) :: lwork
+    REAL(RP) :: Dummy(1000)
+    INTEGER(IP) :: info
     CHARACTER(len=1) :: getvec
 
-    real, dimension(3,3) :: mat
+    real(rp), dimension(3,3) :: mat
     getvec = 'N'
     if( vec == 1 ) getvec='V'
     lda = n
@@ -209,10 +210,10 @@ contains
     !! check whether the name of PG is consistent with the number of operations Nop of that group
     !! NOTE: errors currently go up to order 10 PGs.
     implicit none
-    integer :: err
+    integer(ip) :: err
     character(len=10), intent(in) :: pg
-    integer, intent(in) :: Nop
-    integer :: exp_Nop
+    integer(ip), intent(in) :: Nop
+    integer(ip) :: exp_Nop
 
     err = 0
 
@@ -245,12 +246,12 @@ contains
     !! On error, return Nop = -1
     implicit none
     character(len=*), intent(in) :: pg
-    integer :: Nop
+    integer(ip) :: Nop
     !!local
     character(len=1) :: letter, mod
     character(len=10) :: pg_cpy
-    integer :: order, ntot
-    integer :: multiply_mod, multiply_letter
+    integer(ip) :: order, ntot
+    integer(ip) :: multiply_mod, multiply_letter
 
     Nop = -1
 
@@ -311,9 +312,9 @@ contains
     !! find if there is inversion in the list
     implicit none
     logical :: has_inversion
-    integer, intent(in) :: nbas
+    integer(ip), intent(in) :: nbas
     character(len=1), dimension(nbas), intent(in) :: op
-    integer :: i
+    integer(ip) :: i
 
     has_inversion = .false.
     do i = 1, nbas
@@ -329,10 +330,10 @@ contains
     !! find if there is sigma op in the list
     implicit none
     logical :: has_sigma
-    integer, intent(in) :: nbas
+    integer(ip), intent(in) :: nbas
     character(len=1), dimension(nbas), intent(in) :: op
-    integer, dimension(nbas), intent(in) :: n_int
-    integer :: i
+    integer(ip), dimension(nbas), intent(in) :: n_int
+    integer(ip) :: i
 
     has_sigma = .false.
     do i = 1, nbas
@@ -345,10 +346,10 @@ contains
     !! find if there is Cn op in the list
     implicit none
     logical :: has_cn
-    integer, intent(in) :: nbas
+    integer(ip), intent(in) :: nbas
     character(len=1), dimension(nbas), intent(in) :: op
-    integer, dimension(nbas), intent(in) :: n_int
-    integer :: i
+    integer(ip), dimension(nbas), intent(in) :: n_int
+    integer(ip) :: i
 
     has_cn = .false.
     do i = 1, nbas
@@ -366,11 +367,11 @@ contains
     !!
     implicit none
     logical :: is_valid
-    real, dimension(3,3), intent(in) :: rmat
-    real, dimension(3), intent(in) :: bfield
+    real(rp), dimension(3,3), intent(in) :: rmat
+    real(rp), dimension(3), intent(in) :: bfield
 
-    real, dimension(3) :: bdir, vec
-    real :: det, dotp
+    real(rp), dimension(3) :: bdir, vec
+    real(rp) :: det, dotp
 
     is_valid = .false.
 
@@ -392,11 +393,11 @@ contains
   subroutine construct_reflection( ax, rmat )
     !! construct reflection matrix from axis, as:
     !! rmat = I - 2.0* ( <x x^T> / <x^T x>), where x is the axis
-    real, dimension(3), intent(in) :: ax
-    real, dimension(3,3), intent(out) :: rmat
+    real(rp), dimension(3), intent(in) :: ax
+    real(rp), dimension(3,3), intent(out) :: rmat
 
-    real, dimension(3,3) :: id, rr
-    integer :: i, j
+    real(rp), dimension(3,3) :: id, rr
+    integer(ip) :: i, j
 
     id(:,:) = 0.0
     do i = 1, 3
@@ -415,12 +416,12 @@ contains
   subroutine construct_rotation(ax_in, angle, rmat)
     !! wikipedia/rotation_matrix#quaternion
     implicit none
-    real, dimension(3), intent(in) :: ax_in
-    real, intent(in) :: angle
-    real, dimension(3,3), intent(out) :: rmat
+    real(rp), dimension(3), intent(in) :: ax_in
+    real(rp), intent(in) :: angle
+    real(rp), dimension(3,3), intent(out) :: rmat
 
-    real, dimension(3) :: ax
-    real :: c, s, c_one
+    real(rp), dimension(3) :: ax
+    real(rp) :: c, s, c_one
 
     ax = ax_in/norm2(ax_in)
 
@@ -452,9 +453,9 @@ contains
   !! if x==0, then flip such that y>0
   subroutine ax_convention( ax )
     implicit none
-    real, intent(inout) :: ax(3)
+    real(rp), intent(inout) :: ax(3)
 
-    real :: flip
+    real(rp) :: flip
 
     flip = 1.0
     if( ax(3) .lt. -epsilon ) then

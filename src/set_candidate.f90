@@ -12,16 +12,18 @@ subroutine set_candidates( nat1, typ1, coords1, &
                            nat2, typ2, coords2, &
                            candidate1, candidate2 )
 
-  integer,                  intent(in) :: nat1
-  integer, dimension(nat1), intent(in) :: typ1
-  real, dimension(3,nat1),  intent(in) :: coords1
-  integer,                  intent(in) :: nat2
-  integer, dimension(nat2), intent(in) :: typ2
-  real, dimension(3,nat2),  intent(in) :: coords2
-  integer, dimension(nat1), intent(out) :: candidate1
-  integer, dimension(nat2), intent(out) :: candidate2
+  use ira_precision
+  implicit none
+  integer(ip),                  intent(in) :: nat1
+  integer(ip), dimension(nat1), intent(in) :: typ1
+  real(rp), dimension(3,nat1),  intent(in) :: coords1
+  integer(ip),                  intent(in) :: nat2
+  integer(ip), dimension(nat2), intent(in) :: typ2
+  real(rp), dimension(3,nat2),  intent(in) :: coords2
+  integer(ip), dimension(nat1), intent(out) :: candidate1
+  integer(ip), dimension(nat2), intent(out) :: candidate2
 
-  integer :: i, dnat, k
+  integer(ip) :: i, dnat, k
 
   candidate1(:) = 0
   candidate2(:) = 0
@@ -65,11 +67,12 @@ end subroutine set_candidates
 
 
 subroutine select_rc( nat, coords, c_idx, rc )
+  use ira_precision
   implicit none
-  integer, intent(in) :: nat
-  real, dimension(3,nat), intent(in) :: coords
-  integer, intent(in) :: c_idx
-  real, dimension(3), intent(out) :: rc
+  integer(ip), intent(in) :: nat
+  real(rp), dimension(3,nat), intent(in) :: coords
+  integer(ip), intent(in) :: c_idx
+  real(rp), dimension(3), intent(out) :: rc
 
   if( c_idx .eq. 0 ) then
      write(*,*) 'ERROR in select_rc'
