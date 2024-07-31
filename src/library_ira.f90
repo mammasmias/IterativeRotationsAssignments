@@ -350,7 +350,7 @@ subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version"
   character(5) :: fstring
   integer :: fdate, i, n
 
-  call get_version( fstring, fdate )
+  call ira_get_version( fstring, fdate )
   cdate = int( fdate, c_int )
   n = len_trim(fstring)
   if( n .gt. 5 ) write(*,*) "WARNING: IRA version string seems long, check!"

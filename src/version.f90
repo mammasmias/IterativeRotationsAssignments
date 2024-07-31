@@ -4,7 +4,7 @@
 !!
 !! @param[out] string :: version string
 !! @param[out] date :: date of release, format: YYYYmmdd
-subroutine get_version( string, date )
+subroutine ira_get_version( string, date )
   implicit none
   character(len=5), intent(out) :: string
   integer, intent(out) :: date
@@ -17,4 +17,4 @@ subroutine get_version( string, date )
   date = 20240718
 
 
-end subroutine get_version
+end subroutine ira_get_version

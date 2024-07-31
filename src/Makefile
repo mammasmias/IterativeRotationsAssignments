@@ -22,7 +22,6 @@ FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native 
 #FFLAGS += -g -DDEBUG -pedantic -std=f2008
 
 SRC = $(PWD)
-SRC = $(realpath .)
 OBJ = $(SRC)/Obj
 
 MOD = -I$(OBJ) -J$(OBJ)
@@ -88,8 +87,8 @@ $(IRALIB): $(outils) $(olib)
 #====
 # pack the shared library
 #====
-$(SHLIB): $(olib) $(outils)
-	$(F90) -o $@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK)
+$(SHLIB): $(outils) $(olib)
+	$(F90) -o $@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
 
 msg:
 	@echo 'Use one of the following:'
