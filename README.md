@@ -50,7 +50,6 @@ HAL: [hal-03406717](https://hal.laas.fr/hal-03406717), arXiv:
 Gunde M.: *Development of IRA: a shape matching algorithm, its implementation
 and utility in a general off-lattice kMC kernel*, PhD dissertation, Université Toulouse III - Paul Sabatier,
 November 2021,
-<!-- [PDF link](http://thesesups.ups-tlse.fr/5109/1/2021TOU30132.pdf) -->
 [link](https://theses.hal.science/tel-03635139v2).
 
 <a id="3">[3]</a>
