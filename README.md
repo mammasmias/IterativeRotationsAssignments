@@ -48,11 +48,14 @@ HAL: [hal-03406717](https://hal.laas.fr/hal-03406717), arXiv:
 
 <a id="2">[2]</a>
 Gunde M.: *Development of IRA: a shape matching algorithm, its implementation
-and utility in a general off-lattice kMC kernel*, PhD dissertation,
-November 2021.
-[PDF link](http://thesesups.ups-tlse.fr/5109/1/2021TOU30132.pdf)
+and utility in a general off-lattice kMC kernel*, PhD dissertation, Université Toulouse III - Paul Sabatier,
+November 2021,
+<!-- [PDF link](http://thesesups.ups-tlse.fr/5109/1/2021TOU30132.pdf) -->
+[link](https://theses.hal.science/tel-03635139v2).
 
 <a id="3">[3]</a>
 Gunde M., Salles N., Grisanti L., Hemeryck A., Martin Samos L.
 *SOFI: Finding point group symmetries in atomic clusters as finding the set of degenerate solutions in a shape-matching problem*,
- (submitted)
+Journal of Chemical Physics (2024), DOI:
+[https://doi.org/10.1063/5.0215689](https://doi.org/10.1063/5.0215689),
+arXiv: [2408.06131](https://arxiv.org/abs/2408.06131).
