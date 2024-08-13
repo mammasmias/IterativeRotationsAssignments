@@ -116,7 +116,7 @@ subroutine svd(m, n, a, u, s, v, ierr)
   !
   !  Make the MxN matrix S from the diagonal values in SDIAG.
   !
-  s(1:m, 1:n) = 0.0D+00
+  s(1:m, 1:n) = 0.0_rp
   do i = 1, min(m, n)
      s(i, i) = sdiag(i)
   end do
@@ -267,7 +267,7 @@ subroutine set_orthonorm_bas(vec1, vec2, basis, fail)
 
   !! threshold for too small vectors
   !! (for numerical reasons, don't want to normalize a too small vector)
-  small_size_thr = 1e-1
+  small_size_thr = 1e-1_rp
 
   fail = .true.
   basis(:, :) = 0.0
@@ -383,8 +383,8 @@ subroutine svdrot_m(nat1, typ1, coords1_in, &
   coords2(:, :) = coords2_in(:, :)
 
   !! set geo centers
-  gc1(:) = 0.0
-  gc2(:) = 0.0
+  gc1(:) = 0.0_rp
+  gc2(:) = 0.0_rp
   gc1(:) = sum(coords1(:, :), 2)/nat1
   gc2(:) = sum(coords2(:, :), 2)/nat2
 
@@ -511,8 +511,8 @@ subroutine svd_forcerot(nat1, typ1, coords1_in, &
   coords2(:, :) = coords2_in(:, :)
 
   !! set geo centers
-  gc1(:) = 0.0
-  gc2(:) = 0.0
+  gc1(:) = 0.0_rp
+  gc2(:) = 0.0_rp
   gc1(:) = sum(coords1(:, :), 2)/nat1
   gc2(:) = sum(coords2(:, :), 2)/nat2
 

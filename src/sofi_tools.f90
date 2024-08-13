@@ -399,9 +399,9 @@ contains
     real(rp), dimension(3,3) :: id, rr
     integer(ip) :: i, j
 
-    id(:,:) = 0.0
+    id(:,:) = 0.0_rp
     do i = 1, 3
-       id(i,i) = 1.0
+       id(i,i) = 1.0_rp
     end do
 
     !! outer product
@@ -410,7 +410,7 @@ contains
     end forall
     rr(:,:) = rr / norm2(ax)
 
-    rmat(:,:) = id(:,:) - 2.0*rr(:,:)
+    rmat(:,:) = id(:,:) - 2.0_rp*rr(:,:)
 
   end subroutine construct_reflection
   subroutine construct_rotation(ax_in, angle, rmat)
@@ -427,7 +427,7 @@ contains
 
     c = cos(angle)
     s = sin(angle)
-    c_one = 1.0 - c
+    c_one = 1.0_rp - c
 
     rmat(1,1) = ax(1)**2*c_one + c
     rmat(1,2) = ax(1)*ax(2)*c_one - ax(3)*s

@@ -207,7 +207,7 @@
 
 
     !! init output
-    dists = 999.9
+    dists = 999.9_rp
     found = 0
 
     !!
@@ -249,7 +249,7 @@
                 tmpmin(i) = j
              end if
           else
-             chkmat(j,i) = 995.0
+             chkmat(j,i) = 995.0_rp
           end if
           !!
        end do
@@ -326,7 +326,7 @@
              !! if the previous found is closer, set the current distance
              !! to smth big, so its not found ever again!
              !!
-             chkmat(j,i) = 999.0
+             chkmat(j,i) = 999.0_rp
              tmpmin(i) = minloc(chkmat(:,i),1)
              !!
              !!
@@ -340,7 +340,7 @@
              !! if the previous found is larger then the new, the old idx should
              !! be searched again and the same distance should not be found!
              !!
-             chkmat(j, idx_old) = 999.0
+             chkmat(j, idx_old) = 999.0_rp
              lsearch( idx_old ) = .true.
              tmpmin(idx_old) = minloc( chkmat(:,idx_old), 1)
              assigned(idx_old) = 0

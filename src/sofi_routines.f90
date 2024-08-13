@@ -2068,7 +2068,7 @@ subroutine sofi_construct_operation( op, axis, angle, matrix, ierr )
   real(rp), dimension(3,3) :: tmp
   real(rp), dimension(3) :: ax
   real(rp) :: an
-  real(rp), parameter :: twopi=8.0*atan(1.0)
+  real(rp), parameter :: twopi=8.0_rp*atan(1.0_rp)
 
   ierr = 0
   !! put angle into 2pi units
