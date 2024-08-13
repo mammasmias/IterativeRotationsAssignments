@@ -191,7 +191,7 @@ Example:
 
 .. code-block:: bash
 
-   gcc -o c_caller_program.x c_caller_program.c /your/path/to/IRA/src/libira.so
+   gfortran -o caller_program.x caller_program.f90 -L/your/path/to/IRA/src/ -lira -Wl,-rpath,/your/path/to/IRA/src
 
 
 You might need to add ``-llapack``, or equivalent to your compilation.
@@ -199,7 +199,9 @@ You might need to add ``-llapack``, or equivalent to your compilation.
 The base-level implementations are not placed in modules, therefore all routines are in principle acessible to the
 caller. Care must be taken to ensure the correct type, kind, shape, etc. of the arguments, i.e. interface matching
 needs to be checked manually.
+The default precision is equivalent to ``c_int`` for integers, and ``c_double`` for reals.
 
+The C-headers are located in the ``IRA/interface`` directory, and can be included in compilation by ``-I/your/path/to/IRA/interface``.
 
 
 Tutorials and How-to

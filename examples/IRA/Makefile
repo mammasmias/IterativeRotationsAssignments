@@ -18,8 +18,8 @@ FFLAGS = -Wall -fdefault-real-8 -fbounds-check
 CFLAGS =
 
 SRC = $(PWD)
-SRCDIR = $(SRC)/../../src
-INTERFDIR = $(SRC)/../../interface
+SRCDIR = $(realpath $(SRC)/../../src)
+INTERFDIR = $(realpath $(SRC)/../../interface)
 OBJ = $(SRC)/Obj
 
 MOD = -I$(OBJ) -J$(OBJ) -I$(INTERFDIR)

@@ -22,8 +22,8 @@ CFLAGS =
 # directories
 #
 SRC := $(CURDIR)
-SRCDIR := $(SRC)/../../src
-INTERFDIR = $(SRC)/../../interface
+SRCDIR := $(realpath $(SRC)/../../src)
+INTERFDIR = $(realpath $(SRC)/../../interface)
 
 #
 # include directory of header for C program
@@ -40,7 +40,7 @@ C_INCLUDE = -I$(INTERFDIR)
 
 # Using shared library:
 #
-IRALIB = -Wl,-rpath,$(SRCDIR) $(SRCDIR)/libira.so
+IRALIB = -L$(SRCDIR) -lira -Wl,-rpath,$(SRCDIR)
 
 
 # Using the static library: uncomment the following:
