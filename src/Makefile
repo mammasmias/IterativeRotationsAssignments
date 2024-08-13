@@ -18,7 +18,7 @@ LIBLAPACK = -llapack
 # compilation flags
 #
 FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native -ffast-math -funroll-loops
-#FFLAGS = -fdefault-real-8 -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -O1
+#FFLAGS = -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -O0
 #FFLAGS += -g -DDEBUG -pedantic -std=f2008
 
 SRC = $(PWD)
