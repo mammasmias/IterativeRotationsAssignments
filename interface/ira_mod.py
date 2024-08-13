@@ -594,6 +594,14 @@ class SOFI(algo):
     The main result of SOFI is a list of operations :math:`\\theta`. This list can be post-processed to
     obtain the point group name, and other properties associated to each :math:`\\theta`.
 
+    For further details see the publication:
+
+    M Gunde, N Salles, L Grisanti, L Martin-Samos, A Hemeryck:
+    J. Chem. Phys. 2024, 161, 6, 062503
+    DOI: https://doi.org/10.1063/5.0215689
+    arXiv: https://arxiv.org/abs/2408.06131
+
+
     In order to use the module, the path to this file should be added to the environment variable PYTHONPATH:
 
     .. code-block:: bash

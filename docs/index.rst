@@ -40,7 +40,7 @@ Some other miscallaneous routines are contained, see the section of :ref:`How-to
 CShDA
 -----
 
-CShDA is the really fundamental algorithm for the rest of this library.
+Constrained Shortest Distance Assignments (CShDA, [ira2021]_) is the really fundamental algorithm for the rest of this library.
 It solves the so-called Linear Assignment Problem (LAP), and then computes the distance between two
 atomic structures :math:`A` and :math:`B`.
 
@@ -75,7 +75,7 @@ The heuristic can be disregarded by simply inputting a very high value for this 
 IRA
 ---
 
-IRA solves the so-called `shape matching` problem, also sometimes called `structural alignment`, or similar:
+Iterative Rotations and Assignments (IRA, [ira2021]_) solves the so-called `shape matching` problem, also sometimes called `structural alignment`, or similar:
 
 .. _eq-pb3:
 .. math::
@@ -125,7 +125,7 @@ list of structures, where the structure is certain to be present in the list
 SOFI
 ----
 
-SOFI is an algorithm for finding point group symmetry operations of
+Symmetry Operation Finder (SOFI, [sofi2024]_) is an algorithm for finding point group symmetry operations of
 atomic structures.
 
 By definition, the transformation of a structure by a symmetry operation, should give a structure that
@@ -151,6 +151,7 @@ SOFI solves this problem.
 It can be seen as an extension of IRA, where IRA gives a single, optimal solution to matching two (near-)congruent
 structures, SOFI gives all degenerate solutions of matching a structure to itself.
 
+.. [sofi2024] M. Gunde, N. Salles, L. Grisanti, L. Martin-Samos, A. Hemeryck, `JCP, 2024`, `DOI: 10.1063/5.0215689 <https://doi.org/10.1063/5.0215689>`_, `arXiv: 2408.06131 <https://arxiv.org/abs/2408.06131>`_
 
 Installation
 ============
