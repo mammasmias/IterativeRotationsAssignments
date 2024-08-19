@@ -5,6 +5,7 @@ The data and scripts used for benchmark tests done in the original IRA publicati
 
 ## SOFI comparison tests
 The data and scripts used for comparison tests done in the original SOFI publication [[2]](#2), are available from [zenodo](https://zenodo.org/records/12773914).
+The results are available in the [Supplementary Materials](https://aip.figshare.com/articles/journal_contribution/Supplementary_Material/26352949?backTo=%2Fcollections%2FSOFI_Finding_point_group_symmetries_in_atomic_clusters_as_finding_the_set_of_degenerate_solutions_in_a_shape-matching_problem%2F7360975&file=47859538) of the related article.
 
 
 
