@@ -175,8 +175,12 @@ To clean the build type:
    make clean
 
 
-For customising the default compilation, see the ``src/Makefile``.
-If you need to specify a custom ``lapack`` location, change the default value ``LIBLAPACK = -llapack`` to your value.
+.. admonition:: lapack library
+   :class: tip
+
+   The lapack library is needed for compilation.
+   If you need to specify a custom ``lapack`` location, change the default value in ``src/Makefile`` from ``LIBLAPACK = -llapack`` to your value.
+   If the lapack library is not available on your system, you can leave the variable undefined ``LIBLAPACK =``. This will compile a local version of the needed routines, which is however not optimized.
 
 
 
@@ -187,14 +191,11 @@ A program compiled with ``gcc`` or ``gfortran`` can easily link the IRA library,
 library ``libira.so``, or the static version ``libira.a``. They are both located in the ``src/`` directory after
 compilation.
 
-Example:
+Example for fortran program:
 
 .. code-block:: bash
 
    gfortran -o caller_program.x caller_program.f90 -L/your/path/to/IRA/src/ -lira -Wl,-rpath,/your/path/to/IRA/src
-
-
-You might need to add ``-llapack``, or equivalent to your compilation.
 
 The base-level implementations are not placed in modules, therefore all routines are in principle acessible to the
 caller. Care must be taken to ensure the correct type, kind, shape, etc. of the arguments, i.e. interface matching
@@ -202,6 +203,13 @@ needs to be checked manually.
 The default precision is equivalent to ``c_int`` for integers, and ``c_double`` for reals.
 
 The C-headers are located in the ``IRA/interface`` directory, and can be included in compilation by ``-I/your/path/to/IRA/interface``.
+
+When linking the static library ``libira.a`` to a C-program, you need to add the math (``-lm``), and fortran (``-lgfortran``, or equivalent) to the compilation:
+
+.. code-block:: bash
+
+   gcc -I/your/path/IRA/interface -o c_prog.x c_prog.c -L/your/path/to/IRA/src -lira -Wl,-rpath,/your/path/to/IRA/src -lm -lgfortran
+
 
 
 Tutorials and How-to

@@ -9,11 +9,13 @@ F90 = gfortran
 AR = ar
 
 #
-# lapack flag.
-# You can use: /path/to/lapack/liblapack.so instead
+# lapack flag, optional:
+# if not provided, local copy will be compiled (not optimized).
 #
-LIBLAPACK = -llapack
+LIBLAPACK= -llapack
 
+
+#=======================
 #
 # compilation flags
 #
@@ -21,7 +23,8 @@ FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native 
 #FFLAGS = -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -O0
 #FFLAGS += -g -DDEBUG -pedantic -std=f2008
 
-SRC = $(PWD)
+# absolute path of this Makefile
+SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ = $(SRC)/Obj
 
 MOD = -I$(OBJ) -J$(OBJ)
@@ -30,11 +33,10 @@ MOD = -I$(OBJ) -J$(OBJ)
 
 # Produced filenames
 #
-IRALIB = libira.a
-SHLIB = libira.so
+IRALIB = $(SRC)/libira.a
+SHLIB = $(SRC)/libira.so
 
 
-#=======================
 # object files
 #
 # utils
@@ -52,20 +54,28 @@ futils := \
 
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
+ifndef LIBLAPACK
+outils:=$(OBJ)/lap.o $(outils)
+endif
+
+
 
 flib := $(SRC)/library_ira.f90 \
 	$(SRC)/library_sofi.f90
 olib := $(patsubst $(SRC)%,$(OBJ)%,$(flib:%.f90=%.o))
 
-#======================
-
 
 default: msg
-
 all : lib shlib
 
-$(OBJ)%.o: $(SRC)/%.f90
-	$(F90) $(FFLAGS) $(MOD) -c $< -o $@
+# rules
+$(OBJ)/%.o: $(SRC)/%.f90
+	$(F90) $(FFLAGS) $(MOD) -c $^ -o $@
+
+# local lapack file if needed (keep -O0 to be sure)
+$(OBJ)/lap.o: $(SRC)/lap.f
+	$(F90) $(MOD) -c -O0 -funroll-loops -g $^ -o $@
+
 
 
 lib: $(OBJ) $(IRALIB)
