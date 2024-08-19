@@ -715,7 +715,7 @@ subroutine libira_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="libira
   end do
 
   !! compute dist with cshda
-  call cshda( nat, ptr_typ, ptr_coords, nat, tf_typ, tf_coords, 10.0, found, dists )
+  call cshda( nat, ptr_typ, ptr_coords, nat, tf_typ, tf_coords, 10.0_c_double, found, dists )
 
   ! do i = 1, nat
   !    write(*,*) i, found(i), dists(i)
