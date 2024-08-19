@@ -5,35 +5,32 @@ FCOMP = gfortran
 CCOMP=gcc
 
 #
-# lapack flag. 
-# You can use: -L/path/to/lapack/ instead
-#
-LIBLAPACK = -llapack
-
-
-#
 # compilation flags
 #
-FFLAGS = -Wall -fdefault-real-8 -fbounds-check
+FFLAGS = -fdefault-real-8 -fbounds-check
 CFLAGS =
 
-SRC = $(PWD)
+SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 SRCDIR = $(realpath $(SRC)/../../src)
 INTERFDIR = $(realpath $(SRC)/../../interface)
 OBJ = $(SRC)/Obj
 
-MOD = -I$(OBJ) -J$(OBJ) -I$(INTERFDIR)
+MOD = # -I$(OBJ) -J$(OBJ)
 
 #
-# path to src/libira.so
+# path to src/libira
 #
-#SHLIB = $(SRCDIR)/libira.so
-SHLIB = -Wl,-rpath=$(SRCDIR) -L$(SRCDIR) -lira
+SHLIB = -L$(SRCDIR) -lira -Wl,-rpath,$(SRCDIR)
+
+#
+# when linking to static library libira.a define these:
+#
+LIBS= #-lm -lgfortran -llapack
 
 # Produced filenames
 #
-IRAUNI_X = f90_program.x
-C_PROG = c_program.x
+IRAUNI_X = $(SRC)/f90_program.x
+C_PROG = $(SRC)/c_program.x
 
 
 #=======================
@@ -43,7 +40,6 @@ f_uni := $(SRC)/f90_program.f90
 o_uni := $(patsubst $(SRC)%, $(OBJ)%, $(f_uni:%.f90=%.o))
 
 cprog := $(SRC)/c_program.c
-#======================
 
 
 default: msg
@@ -69,13 +65,13 @@ $(OBJ):
 # Compile the f90 executable
 #====
 $(IRAUNI_X): $(o_uni)
-	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBLAPACK)
+	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBS)
 
 #====
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CCOMP) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB)
+	$(CCOMP) -I$(INTERFDIR) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB) $(LIBS)
 
 
 msg:

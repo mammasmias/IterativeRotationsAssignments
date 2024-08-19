@@ -4,13 +4,6 @@
 F90 = gfortran
 CC=gcc
 
-#
-# lapack flag. 
-# You can use: -L/path/to/lapack/ instead
-#
-LIBLAPACK = -llapack
-LIBS += $(LIBLAPACK)
-
 
 #
 # compilation flags
@@ -21,7 +14,7 @@ CFLAGS =
 #
 # directories
 #
-SRC := $(CURDIR)
+SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 SRCDIR := $(realpath $(SRC)/../../src)
 INTERFDIR = $(realpath $(SRC)/../../interface)
 
@@ -36,15 +29,15 @@ C_INCLUDE = -I$(INTERFDIR)
 ##
 ## Options for compilation with the shared library libira.so, or static libira.a
 ## SRCDIR is path to IRA/src/
-## 
+##
 
 # Using shared library:
 #
 IRALIB = -L$(SRCDIR) -lira -Wl,-rpath,$(SRCDIR)
 
 
-# Using the static library: uncomment the following:
-#
+## When using the static library: uncomment the following:
+##
 #IRALIB = $(SRCDIR)/libira.a
 #LIBMATH = -lm
 #LIBFORTRAN = -lgfortran
@@ -56,8 +49,8 @@ IRALIB = -L$(SRCDIR) -lira -Wl,-rpath,$(SRCDIR)
 #
 # Produced filenames
 #
-F_PROG = f90_program.x
-C_PROG = c_program.x
+F_PROG = $(SRC)/f90_program.x
+C_PROG = $(SRC)/c_program.x
 
 
 
@@ -81,13 +74,13 @@ cprog: $(C_PROG)
 # Compile the f90 executable
 #====
 $(F_PROG): $(fprog)
-	$(F90) $(FFLAGS) -o $@ $^ $(IRALIB) $(LIBS)
+	$(F90) $(FFLAGS) -o $@ $^ $(IRALIB)
 
 #====
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CC) $(CFLAGS) $(C_INCLUDE) -o $@ $^ $(IRALIB) $(LIBS)
+	$(CC) $(CFLAGS) $(C_INCLUDE) -o $@ $^ $(IRALIB)
 
 
 msg:
