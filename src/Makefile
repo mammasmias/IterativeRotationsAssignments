@@ -74,7 +74,7 @@ $(OBJ)/%.o: $(SRC)/%.f90
 
 # local lapack file if needed (keep -O0 to be sure)
 $(OBJ)/lap.o: $(SRC)/lap.f
-	$(F90) $(MOD) -c -O0 -funroll-loops -g $^ -o $@
+	$(F90) $(MOD) -c -fPIC -O0 -funroll-loops -g $^ -o $@
 
 
 
