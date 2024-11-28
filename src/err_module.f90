@@ -11,6 +11,7 @@ module err_module
        ERR_TOO_SMALL_KMAX = -1, &
        ERR_OTHER          = -2, &
        ERR_BETA           = -3, &
+       ERR_SVD            = -9, &
        !!
        !! SOFI errors
        ERR_DETERMINANT    = -4, &
@@ -42,6 +43,10 @@ contains
     case( ERR_BETA )
        write(str, "(5x,a,1x,a)") err, &
             "Cannot set beta basis!"
+
+    case( ERR_SVD )
+       write(str, "(5x,a,1x,a)") err, &
+            "Lapack could not compute SVD."
 
     case( ERR_DETERMINANT )
        write(str, "(5x,a,1x,a)") err, &

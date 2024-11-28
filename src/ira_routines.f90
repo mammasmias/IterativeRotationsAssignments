@@ -60,6 +60,7 @@ end subroutine sort
 !! @param[out] ierr  :: error code
 subroutine svd(m, n, a, u, s, v, ierr)
   use ira_precision
+  use err_module
   implicit none
 
   integer(ip), intent(in) :: m
@@ -110,7 +111,7 @@ subroutine svd(m, n, a, u, s, v, ierr)
      write (*, '(a)') '  The SVD could not be calculated.'
      write (*, '(a)') '  LAPACK routine DGESVD returned a nonzero'
      write (*, '(a,i8)') '  value of the error flag, INFO = ', info
-     ierr = -1
+     ierr = ERR_SVD
      return
   end if
   !
