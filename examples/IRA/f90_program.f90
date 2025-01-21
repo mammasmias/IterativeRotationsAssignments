@@ -96,6 +96,7 @@ program main
   !! apply to structure 2
   !!
   typ2(:) = typ2(permutation(:))
+  styp2(:) = styp2(permutation(:))
   coords2(:,:) = coords2(:,permutation(:))
   do i = 1, nat2
      coords2(:,i) = matmul(rotation,coords2(:,i)) + translation
@@ -110,12 +111,12 @@ program main
   write(*,*) nat1
   write(*,*)
   do i = 1, nat1
-     write(*,*) typ1(i), coords1(:,i)
+     write(*,*) styp1(i), coords1(:,i)
   end do
   write(*,*) nat2
   write(*,*)
   do i = 1, nat2
-     write(*,*) typ2(i),coords2(:,i)
+     write(*,*) styp2(i),coords2(:,i)
   end do
 
   hd = 0.0
