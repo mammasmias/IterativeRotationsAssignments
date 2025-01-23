@@ -29,21 +29,7 @@ SOFI is described in the publication [[3]](#3).
 
 
 # Compile and run
-To run IRA/SOFI on any platform, you first need to compile it. See `src/README` or the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/#installation).
-
-## `conda` compatible build
-
-For local machines, it is possible to use `pixi`[^1] to get a working version of the
-Python bindings in a fairly automated manner.
-
-``` sh
-curl -fsSL https://pixi.sh/install.sh | bash
-# build the library with openblas
-pixi run build_lib
-pixi shell # sets the environment variable
-cd examples/IRA
-python python_program.py
-```
+To run IRA/SOFI on any platform, you first need to compile it. See the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/#installation).
 
 
 # Terms and conditions
@@ -72,5 +58,3 @@ Gunde M., Salles N., Grisanti L., Hemeryck A., Martin Samos L.
 Journal of Chemical Physics (2024), DOI:
 [https://doi.org/10.1063/5.0215689](https://doi.org/10.1063/5.0215689),
 arXiv: [2408.06131](https://arxiv.org/abs/2408.06131).
-
-[^1]: Installation instructions here: https://pixi.sh/latest/
