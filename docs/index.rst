@@ -153,8 +153,11 @@ structures, SOFI gives all degenerate solutions of matching a structure to itsel
 
 .. [sofi2024] M. Gunde, N. Salles, L. Grisanti, L. Martin-Samos, A. Hemeryck, `JCP, 2024`, `DOI: 10.1063/5.0215689 <https://doi.org/10.1063/5.0215689>`_, `arXiv: 2408.06131 <https://arxiv.org/abs/2408.06131>`_
 
-Installation
-============
+Compilation
+===========
+
+Traditional ``make``
+--------------------
 
 To compile the IRA library, you need the ``lapack`` library.
 On a standard linux machine, it should suffice to type:
@@ -179,9 +182,35 @@ To clean the build type:
    :class: tip
 
    The lapack library is needed for compilation.
-   If you need to specify a custom ``lapack`` location, change the default value in ``src/Makefile`` from ``LIBLAPACK = -llapack`` to your value.
-   If the lapack library is not available on your system, you can leave the variable undefined ``LIBLAPACK =``. This will compile a local version of the needed routines, which is however not optimized.
+   Default flag is ``LIBLAPACK=-llapack``, however if you wish to change that, i.e. with openblas, you can specify it from the command as:
 
+   .. code-block:: bash
+
+      LIBLAPACK=-lopenblas make all
+
+   If the lapack library is not available on your system, you can leave the variable undefined (this will compile a local version of the needed lapack routines, which is however not optimal):
+
+   .. code-block:: bash
+
+      LIBLAPACK='' make all
+
+
+``conda`` compatible build
+--------------------------
+
+For local machines, it is possible to use ``pixi`` [pixi-install]_ to get a working version of the
+Python bindings in a fairly automated manner.
+
+.. code-block:: bash
+
+   curl -fsSL https://pixi.sh/install.sh | bash
+   # build the library with openblas
+   pixi run build_lib
+   pixi shell # sets the environment variable
+   cd examples/IRA
+   python python_program.py
+
+.. [pixi-install] Installation instructions here: `<https://pixi.sh/latest/>`_
 
 
 Linking a program to libira

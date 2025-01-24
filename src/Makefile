@@ -12,7 +12,7 @@ AR = ar
 # lapack flag, optional:
 # if not provided, local copy will be compiled (not optimized).
 #
-LIBLAPACK= -llapack
+LIBLAPACK?= -llapack
 
 
 #=======================
