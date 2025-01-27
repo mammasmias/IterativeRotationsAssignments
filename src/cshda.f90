@@ -370,7 +370,7 @@
     if( nat1 .eq. nat2 ) return
 
     !! if any found maps to zero, cshda has exited
-    if( any(found .eq. 0) ) return
+    if( any(found(1:nat1) .eq. 0) ) return
 
     ! write(*,*) "found now"
     ! write(*,"(10i3)") found
