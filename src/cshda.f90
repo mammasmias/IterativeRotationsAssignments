@@ -449,6 +449,8 @@
     real(rp) :: dist, dist_old
 
     dists(:) = 999.9
+    !! set found to zero
+    found(:) = 0
     !!
     !! set up distance matrix
     chkmat(:,:) = 0.0
@@ -487,9 +489,6 @@
 
     !! set up the queue of searches
     search(:) = 1
-
-    !! set found to zero
-    found(:) = 0
 
     !! set first search
     i = 1
