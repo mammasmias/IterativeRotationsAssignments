@@ -26,6 +26,7 @@ FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native 
 # absolute path of this Makefile
 SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ = $(SRC)/Obj
+LIBOUT = $(realpath $(SRC)/../lib)
 
 MOD = -I$(OBJ) -J$(OBJ)
 
@@ -33,8 +34,8 @@ MOD = -I$(OBJ) -J$(OBJ)
 
 # Produced filenames
 #
-IRALIB = $(SRC)/libira.a
-SHLIB = $(SRC)/libira.so
+IRALIB = libira.a
+SHLIB  = libira.so
 
 
 # object files
@@ -73,7 +74,7 @@ $(OBJ)/%.o: $(SRC)/%.f90
 	$(F90) $(FFLAGS) $(MOD) -c $^ -o $@
 
 # local lapack file if needed (keep -O0 to be sure)
-$(OBJ)/lap.o: $(SRC)/lap.f
+$(OBJ)/lap.o: $(SRC)/../lap_local/lap.f
 	$(F90) $(MOD) -c -fPIC -O0 -funroll-loops -g $^ -o $@
 
 
@@ -86,19 +87,23 @@ shlib: $(OBJ) $(SHLIB)
 #
 $(OBJ):
 	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ) ; fi
+$(LIBOUT):
+	@if [ ! -d $(LIBOUT) ]; then mkdir $(LIBOUT) ; fi
 
 
 #====
 # pack the library
 #====
 $(IRALIB): $(outils) $(olib)
-	$(AR) -rcv $@ $^
+	$(AR) -rcv $(LIBOUT)/$@ $^
+	@ln -sf $(LIBOUT)/$@ .
 
 #====
 # pack the shared library
 #====
 $(SHLIB): $(outils) $(olib)
-	$(F90) -o $@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
+	$(F90) -o $(LIBOUT)/$@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
+	@ln -sf $(LIBOUT)/$@ .
 
 msg:
 	@echo 'Use one of the following:'
