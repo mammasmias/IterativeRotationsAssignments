@@ -8,6 +8,8 @@ source-dir = "src"
 [fortran]
 implicit-external = true
 
+[dependencies]
+blas="*"
 
 [preprocess]
 [preprocess.cpp]
