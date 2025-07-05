@@ -29,7 +29,7 @@ SOFI is described in the publication [[3]](#3).
 
 
 # Compile and run
-To run IRA/SOFI on any platform, you first need to compile it. See the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/#installation).
+To run IRA/SOFI on any platform, you first need to compile it. See the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/#compilation).
 
 
 # Terms and conditions
