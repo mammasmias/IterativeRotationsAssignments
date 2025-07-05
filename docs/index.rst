@@ -168,7 +168,7 @@ On a standard linux machine, it should suffice to type:
    make all
 
 
-This will generate the static and shared libraries: ``libira.a``, and ``libira.so``.
+This will generate the static and shared libraries: ``libira.a``, and ``libira.so`` in the ``lib/`` directory.
 To compile only one of them, type ``make lib`` or ``make shlib``, respectively.
 
 To clean the build type:
@@ -211,6 +211,17 @@ Python bindings in a fairly automated manner.
    python python_program.py
 
 .. [pixi-install] Installation instructions here: `<https://pixi.sh/latest/>`_
+
+
+Using ``fpm``
+-------------
+
+Required minimum ``fpm`` version 0.12.0. This will build only the shared library ``lib/libira.so``.
+
+.. code-block:: bash
+
+   FPM_FFLAGS="-fPIC -fcheck=bounds -ffree-line-length-none -Ofast -march=native -ffast-math -funroll-loops" fpm build
+   fpm install --prefix .
 
 
 Linking a program to libira

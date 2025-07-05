@@ -1,0 +1,17 @@
+name = "ira"
+version = "2.1.0"
+
+[library]
+type = "shared"
+source-dir = "src"
+
+[fortran]
+implicit-external = true
+
+
+[preprocess]
+[preprocess.cpp]
+
+[install]
+library=true
+
