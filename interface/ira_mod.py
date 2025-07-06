@@ -46,7 +46,7 @@ class algo():
         # one directory up
         mypath=dirname(mypath)
         # by default, the lib should be there:
-        path = join(mypath,"src/libira.so")
+        path = join(mypath,"lib/libira.so")
 
         if shlib:
             # user provde path

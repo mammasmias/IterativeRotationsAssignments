@@ -220,7 +220,7 @@ Required minimum ``fpm`` version 0.12.0. This will build only the shared library
 
 .. code-block:: bash
 
-   FPM_FFLAGS="-fPIC -fcheck=bounds -ffree-line-length-none -Ofast -march=native -ffast-math -funroll-loops" fpm build
+   fpm build --flag "-fPIC -fcheck=bounds -ffree-line-length-none -Ofast -march=native -ffast-math -funroll-loops"
    fpm install --prefix .
 
 
