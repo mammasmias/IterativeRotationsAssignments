@@ -18,7 +18,6 @@ find_package(LAPACK REQUIRED)
 
 # add directory
 add_subdirectory(src)
-add_subdirectory(interface)
 
 
 
