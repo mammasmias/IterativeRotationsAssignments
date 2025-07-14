@@ -26,9 +26,8 @@ FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native 
 # absolute path of this Makefile
 SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ = $(SRC)/Obj
+MOD = $(abspath $(SRC)/../include)
 LIBOUT = $(abspath $(SRC)/../lib)
-
-MOD = -I$(OBJ) -J$(OBJ)
 
 
 
@@ -71,16 +70,16 @@ all : lib shlib
 
 # rules
 $(OBJ)/%.o: $(SRC)/%.f90
-	$(F90) $(FFLAGS) $(MOD) -c $^ -o $@
+	$(F90) $(FFLAGS) -J$(MOD) -I$(MOD) -c $^ -o $@
 
 # local lapack file if needed (keep -O0 to be sure)
 $(OBJ)/lap.o: $(SRC)/../lap_local/lap.f
-	$(F90) $(MOD) -c -fPIC -O0 -funroll-loops -g $^ -o $@
+	$(F90) -J$(MOD) -c -fPIC -O0 -funroll-loops -g $^ -o $@
 
 
 
-lib: $(OBJ) $(LIBOUT) $(IRALIB)
-shlib: $(OBJ) $(LIBOUT) $(SHLIB)
+lib: $(OBJ) $(MOD) $(LIBOUT) $(IRALIB)
+shlib: $(OBJ) $(MOD) $(LIBOUT) $(SHLIB)
 
 #
 # object folder
@@ -89,6 +88,8 @@ $(OBJ):
 	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ) ; fi
 $(LIBOUT):
 	@if [ ! -d $(LIBOUT) ]; then mkdir $(LIBOUT) ; fi
+$(MOD):
+	@if [ ! -d $(MOD) ]; then mkdir $(MOD) ; fi
 
 
 #====
@@ -102,7 +103,7 @@ $(IRALIB): $(outils) $(olib)
 # pack the shared library
 #====
 $(SHLIB): $(outils) $(olib)
-	$(F90) -o $(LIBOUT)/$@ -shared $(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
+	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
 	@ln -sf $(LIBOUT)/$@ .
 
 msg:
@@ -121,6 +122,6 @@ msg:
 
 clean:
 	rm -rf $(IRALIB) $(SHLIB)
-	rm -rf $(OBJ)
+	rm -rf $(OBJ) $(MOD) $(LIBOUT)
 
 

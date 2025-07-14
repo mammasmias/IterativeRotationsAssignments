@@ -15,8 +15,8 @@ On a standard linux machine, it should suffice to type:
    make all
 
 
-This will generate the static and shared libraries: ``libira.a``, and ``libira.so``.
-To compile only one of them, type ``make lib`` or ``make shlib``, respectively.
+This will generate the static and shared libraries: ``libira.a``, and ``libira.so`` in the ``IRA/lib`` dirctory, and the module files in ``IRA/include`` directory.
+To compile only one of the libraries, type ``make lib`` or ``make shlib``, respectively.
 
 To clean the build type:
 
@@ -86,12 +86,13 @@ Required minimum ``fpm`` version 0.12.0. This will build only the shared library
    fpm install --prefix .
 
 
+
 Linking a program to libira
 ===========================
 
 A program compiled with ``gcc`` or ``gfortran`` can easily link the IRA library, as-is, by linking either the shared
 library ``libira.so``, or the static version ``libira.a``. They are both located in the ``lib/`` directory after
-compilation.
+compilation. The module files are located in ``include/``.
 
 Example for fortran program:
 
