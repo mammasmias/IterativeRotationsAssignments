@@ -4,7 +4,7 @@ channels = ["conda-forge"]
 description = "Algorithms for Iterative Rotations and Assignments (IRA), and the Symmetry Operations FInder (SOFI)."
 name = "IterativeRotationsAssignments"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
-version = "0.1.0"
+version = "2.1.0"
 
 [tasks]
 build_lib = { cmd = "make all", cwd = "src", env = { LIBLAPACK = "-lopenblas" } }
