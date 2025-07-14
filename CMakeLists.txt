@@ -11,7 +11,7 @@ enable_language(Fortran)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/Obj/)
 
 # compiler flags
-add_compile_options(-cpp -ffree-line-length-none -march=native -funroll-loops)
+add_compile_options(-cpp -ffree-line-length-none -march=native -funroll-loops -ffast-math -Ofast)
 
 # find lapack/blas
 find_package(LAPACK REQUIRED)
