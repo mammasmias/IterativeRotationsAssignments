@@ -12,6 +12,7 @@ CFLAGS =
 
 SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 SRCDIR = $(realpath $(SRC)/../../src)
+LIBDIR = $(realpath $(SRC)/../../lib)
 INTERFDIR = $(realpath $(SRC)/../../interface)
 OBJ = $(SRC)/Obj
 
@@ -20,7 +21,7 @@ MOD = # -I$(OBJ) -J$(OBJ)
 #
 # path to src/libira
 #
-SHLIB = -L$(SRCDIR) -lira -Wl,-rpath,$(SRCDIR)
+SHLIB = -L$(LIBDIR) -lira -Wl,-rpath,$(LIBDIR)
 
 #
 # when linking to static library libira.a define these:

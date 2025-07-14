@@ -26,7 +26,7 @@ FFLAGS =  -fcheck=bounds -ffree-line-length-512 -fPIC -cpp -Ofast -march=native 
 # absolute path of this Makefile
 SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ = $(SRC)/Obj
-LIBOUT = $(realpath $(SRC)/../lib)
+LIBOUT = $(abspath $(SRC)/../lib)
 
 MOD = -I$(OBJ) -J$(OBJ)
 
@@ -79,8 +79,8 @@ $(OBJ)/lap.o: $(SRC)/../lap_local/lap.f
 
 
 
-lib: $(OBJ) $(IRALIB)
-shlib: $(OBJ) $(SHLIB)
+lib: $(OBJ) $(LIBOUT) $(IRALIB)
+shlib: $(OBJ) $(LIBOUT) $(SHLIB)
 
 #
 # object folder
