@@ -16,7 +16,7 @@
 
 from ctypes import *
 import numpy as np
-from os.path import dirname,abspath,join
+from os.path import dirname,abspath,join,exists
 from inspect import getsourcefile
 
 class algo():
@@ -47,6 +47,9 @@ class algo():
         mypath=dirname(mypath)
         # by default, the lib should be there:
         path = join(mypath,"lib/libira.so")
+        # if not, try in interface dir (happens when pip install)
+        if(not exists(path) ):
+            path = join(mypath,"ira_mod/lib/libira.so")
 
         if shlib:
             # user provde path

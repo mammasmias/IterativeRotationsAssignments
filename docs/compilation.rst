@@ -3,86 +3,134 @@
 Compilation
 ===========
 
-Traditional ``make``
---------------------
+The compilation will produce directories ``IRA/lib`` and ``IRA/include``, which contain the library and module files respectively. Other directories may be creted, depending on the flavour of build tool used.
 
-To compile the IRA library, you need the ``lapack`` library.
-On a standard linux machine, it should suffice to type:
+Python module via ``pip``
+-------------------------
 
-.. code-block:: bash
-
-   cd src/
-   make all
-
-
-This will generate the static and shared libraries: ``libira.a``, and ``libira.so`` in the ``IRA/lib`` dirctory, and the module files in ``IRA/include`` directory.
-To compile only one of the libraries, type ``make lib`` or ``make shlib``, respectively.
-
-To clean the build type:
+If you just want the ``ira_mod`` python module, it can be done by running in ``IRA/`` root directory (this relies on ``cmake``):
 
 .. code-block:: bash
 
-   make clean
+   python -m pip install .
+
+Then you can directly use it:
+
+.. code-block:: python
+
+   >>> import ira_mod
+   >>> ira = ira_mod.IRA()
 
 
-.. admonition:: lapack library
-   :class: tip
+Other build tools
+-----------------
 
-   The lapack library is needed for compilation.
-   Default flag is ``LIBLAPACK=-llapack``, however if you wish to change that, i.e. with openblas, you can specify it from the command as:
+Other build tools are available, use one of the following:
 
-   .. code-block:: bash
+.. tab-set::
 
-      LIBLAPACK=-lopenblas make all
+   .. tab-item:: Traditional ``make``
 
-   If the lapack library is not available on your system, you can leave the variable undefined (this will compile a local version of the needed lapack routines, which is however not optimal):
+      To compile the IRA library, you need the ``lapack`` library.
+      On a standard linux machine, it should suffice to type:
 
-   .. code-block:: bash
+      .. code-block:: bash
 
-      LIBLAPACK='' make all
-
-
-``conda`` compatible build
---------------------------
-
-For local machines, it is possible to use ``pixi`` [pixi-install]_ to get a working version of the
-Python bindings in a fairly automated manner.
-
-.. code-block:: bash
-
-   curl -fsSL https://pixi.sh/install.sh | bash
-   # build the library with openblas
-   pixi run build_lib
-   pixi shell # sets the environment variable
-   cd examples/IRA
-   python python_program.py
-
-.. [pixi-install] Installation instructions here: `<https://pixi.sh/latest/>`_
+         cd src/
+         make all
 
 
+      This will generate the static and shared libraries: ``libira.a``, and ``libira.so``.
+      To compile only one of the libraries, type ``make lib`` or ``make shlib``, respectively.
 
-Using ``cmake``
----------------
+      To clean the build type:
 
-To install with ``cmake``, it is assumed you have the ``lapack`` or ``blas`` library installed on your system.
-It will install the library into ``IRA/lib`` directory, and the module file into ``IRA/include``.
+      .. code-block:: bash
 
-.. code-block:: bash
-
-   cmake -B build
-   cmake --build build
+         make clean
 
 
+      .. admonition:: lapack library
+         :class: tip
 
-Using ``fpm``
--------------
+         The lapack library is needed for compilation.
+         Default flag is ``LIBLAPACK=-llapack``, however if you wish to change that, i.e. with openblas, you can specify it from the command as:
 
-Required minimum ``fpm`` version 0.12.0. This will build only the shared library ``lib/libira.so``.
+         .. code-block:: bash
 
-.. code-block:: bash
+            LIBLAPACK=-lopenblas make all
 
-   fpm build --flag "-fPIC -fcheck=bounds -ffree-line-length-none -Ofast -march=native -ffast-math -funroll-loops"
-   fpm install --prefix .
+         If the lapack library is not available on your system, you can leave the variable undefined (this will compile a local version of the needed lapack routines, which is however not optimal):
+
+         .. code-block:: bash
+
+            LIBLAPACK='' make all
+
+
+      .. admonition:: python module ``ira_mod``
+         :class: tip
+
+         To use the python module, you will need to set the ``PYTHONPATH`` variable:
+
+         .. code-block::
+
+            export PYTHONPATH=/path/to/IRA/interface:$PYTHONPATH
+
+
+   .. tab-item:: ``conda`` compatible build
+
+      For local machines, it is possible to use ``pixi`` [pixi-install]_ to get a working version of the
+      Python bindings in a fairly automated manner.
+
+      .. code-block:: bash
+
+         curl -fsSL https://pixi.sh/install.sh | bash
+         # build the library with openblas
+         pixi run build_lib
+         pixi shell # sets the environment variable
+         cd examples/IRA
+         python python_program.py
+
+      .. [pixi-install] Installation instructions here: `<https://pixi.sh/latest/>`_
+
+
+   .. tab-item:: Using ``cmake``
+
+      To install with ``cmake``, it is assumed you have the ``lapack`` or ``blas`` library installed on your system.
+
+      .. code-block:: bash
+
+         cmake -B builddir
+         cmake --build builddir
+
+      .. admonition:: python module ``ira_mod``
+         :class: tip
+
+         To use the python module, you will need to set the ``PYTHONPATH`` variable:
+
+         .. code-block::
+
+            export PYTHONPATH=/path/to/IRA/interface:$PYTHONPATH
+
+
+
+   .. tab-item:: Using ``fpm``
+
+      Required minimum ``fpm`` version 0.12.0.
+
+      .. code-block:: bash
+
+         fpm build --flag "-fPIC -fcheck=bounds -ffree-line-length-none -Ofast -march=native -ffast-math -funroll-loops"
+         fpm install --prefix .
+
+      .. admonition:: python module ``ira_mod``
+         :class: tip
+
+         To use the python module, you will need to set the ``PYTHONPATH`` variable:
+
+         .. code-block::
+
+            export PYTHONPATH=/path/to/IRA/interface:$PYTHONPATH
 
 
 
