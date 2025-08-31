@@ -65,13 +65,12 @@ Using ``cmake``
 ---------------
 
 To install with ``cmake``, it is assumed you have the ``lapack`` or ``blas`` library installed on your system.
-It will install the library into ``IRA/lib`` directory, and the module file into ``IRA/include``, regardless of the ``CMAKE_INSTALL_PREFIX`` variable.
+It will install the library into ``IRA/lib`` directory, and the module file into ``IRA/include``.
 
 .. code-block:: bash
 
    cmake -B build
    cmake --build build
-   cmake --install build
 
 
 
