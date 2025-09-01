@@ -19,20 +19,28 @@ import numpy as np
 from os.path import dirname,abspath,join,exists
 from inspect import getsourcefile
 
+
 class algo():
     """
     This is the python interface to the IRA and SOFI shared library file `libira.so`.
-    In order to use it, the path to this file should be added to
-    the environment variable PYTHONPATH:
+    In order to use it, install it via ``pip`` from the root directory:
 
     .. code-block:: bash
 
-        export PYTHONPATH=$PYTHONPATH:/your/path/to/IRA/interface
+       python -m pip install .
+
+    Or, compile the IRA library with any other build tool, and then add
+    the directory of this file to the environment variable PYTHONPATH:
+
+    .. code-block:: bash
+
+        export PYTHONPATH=/your/path/to/IRA/interface:$PYTHONPATH
 
 
     Then IRA and SOFI can be imported and used in python as:
 
     >>> import ira_mod
+    >>> print( ira_mod.version )
     >>> ira = ira_mod.IRA()
     >>> sofi = ira_mod.SOFI( )
 
@@ -57,6 +65,7 @@ class algo():
 
         self.lib = CDLL(path)
         self.__version__, self.__date__ = self.get_version()
+
 
     def tf_int(self, arr_in):
         """
@@ -1563,3 +1572,7 @@ class SOFI(algo):
         for i in range(3):
             ax[i] = c_ax[i]
         return c_col.value, ax
+
+
+# version tag outside of any class
+version, _ = IRA().get_version()

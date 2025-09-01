@@ -19,6 +19,7 @@ Then you can directly use it:
 .. code-block:: python
 
    >>> import ira_mod
+   >>> print( ira_mod.version )
    >>> ira = ira_mod.IRA()
 
 
