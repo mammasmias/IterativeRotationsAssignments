@@ -21,8 +21,8 @@ CShDA
 -----
 
 Constrained Shortest Distance Assignments (CShDA, [ira2021]_) is the really fundamental algorithm for the rest of this library.
-It solves the so-called Linear Assignment Problem (LAP), and then computes the distance between two
-atomic structures :math:`A` and :math:`B`.
+It solves the so-called Linear Assignment Problem (LAP), also referred to as the "point-set registry",
+and then computes the distance between two atomic structures :math:`A` and :math:`B`.
 
 More precisely, it solves the problem sometimes referred to as `bottleneck-LAP`, and uses that solution to
 compute the Hausdorff distance:
@@ -44,7 +44,7 @@ Finally, the distance between :math:`A` and :math:`B` is taken as the maximal va
 It enforces a strict one-to-one assignment of the atoms, and works also for structures containing
 different numbers of atoms.
 
-Since CShDA is quite computationally heavy, a heuristic early-exit criterion is set up, and used whenever possible.
+Since CShDA can be relatively heavy to compute many times, a heuristic early-exit criterion is set up, and used whenever possible.
 The criterion is in the form of a distance threshold: as soon as it is established that the final distance
 value returned by CShDA cannot be below the given threshold, the computation exits with a high distance value.
 The heuristic can be disregarded by simply inputting a very high value for this threshold.
@@ -64,12 +64,13 @@ Iterative Rotations and Assignments (IRA, [ira2021]_) solves the so-called `shap
 where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a rotation/reflection matrix,
 :math:`\mathbf{t}` is a translation vector, and :math:`P_B` is a permutation matrix of atomic indices in :math:`B`.
 
-The problem of finding an optimal rotation :math:`\mathbf{R}` when :math:`A` and :math:`B` do not include permutations is known as
+The problem of finding an optimal rotation :math:`\mathbf{R}` when :math:`A` and :math:`B` do *not* include permutations is known as
 the `orthogonal Procrustes problem`, and can be easily solved by Singular Value Decomposition method (SVD),
 see `the wikipedia article <https://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem>`_.
 The routines to solve it are also included in this library.
 
-The shape-matching problem of Eq. :ref:`(2) <eq-pb3>` is however more complicated, and can be rewritten as optimization problem:
+The shape-matching problem of Eq. :ref:`(2) <eq-pb3>` is however more complicated since :math:`A` and :math:`B` generally *do* include permutations,
+but it can be rewritten as an optimization problem:
 
 .. _eq-argmin:
 .. math::
@@ -80,12 +81,10 @@ in which :math:`D` is a general distance function between two sets, that is (i) 
 :math:`{\bf t}`, (ii) invariant under permutation :math:`P_B`, and (iii) returns value 0 when :math:`{\bf R}` and
 :math:`{\bf t}` are such that Eq. :ref:`(2) <eq-pb3>` is satisfied, i.e. when the best match is found.
 
-The function :math:`D` in Eq. :ref:`(3) <eq-argmin>` is computed by CShDA.
-
-The IRA algorithm specifies a way to parse the space of rigid transformations associated to the atomic structure,
-computes CShDA on the way, and returns the single transformation that minimizes it.
-In presence of distortions, it calls the SVD-based algorithm to further minimize the rotations, given permutation
-computed by CShDA.
+The IRA algorithm solves the Eq. :ref:`(3) <eq-argmin>` by parsing the space of rigid transformations associated to the atomic structure,
+computing :math:`D()` for each candidate, and returning the single transformation that minimizes it.
+In presence of distortions, it calls the SVD-based algorithm to further minimize the rotations.
+The function :math:`D()` in Eq. :ref:`(3) <eq-argmin>` is computed by CShDA.
 
 When :math:`A` and :math:`B` are congruent, IRA is guaranteed to return the optimal solution,
 independently of the initial orientation and permutation of the structures, which is not entirely

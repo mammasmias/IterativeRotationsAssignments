@@ -41,6 +41,12 @@ The IRA library is imported into python by:
 
       export PYTHONPATH=/your/path/to/IRA_library/interface:$PYTHONPATH
 
+   Alternatively, use ``pip`` to install the module:
+
+   .. code-block:: bash
+
+      python -m pip install .
+
 
 The corresponding algorithm class (IRA or SOFI) has to be initialised by:
 

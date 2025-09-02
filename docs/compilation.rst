@@ -21,6 +21,7 @@ Then you can directly use it:
    >>> import ira_mod
    >>> print( ira_mod.version )
    >>> ira = ira_mod.IRA()
+   >>> sofi = ira_mod.SOFI()
 
 
 Other build tools
