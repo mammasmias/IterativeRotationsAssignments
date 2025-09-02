@@ -29,11 +29,19 @@ SOFI is described in the publication [[3]](#3).
 
 
 # Compile and run
-To run IRA/SOFI on any platform, you first need to compile it. See the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/compilation.html).
 
 For the impatient:
 
     python -m pip install .
+
+Python module:
+
+    >>> import ira_mod
+    >>> ira_mod.version
+    >>> ira = ira_mod.IRA()
+    >>> sofi = ira_mod.SOFI()
+
+For other build tools and more details, see the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/compilation.html).
 
 
 # Terms and conditions
