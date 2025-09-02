@@ -271,7 +271,7 @@ subroutine set_orthonorm_bas(vec1, vec2, basis, fail)
   small_size_thr = 1e-1_rp
 
   fail = .true.
-  basis(:, :) = 0.0
+  basis(:, :) = 0.0_rp
   ! write(*,*) vec1
   ! write(*,*) vec2
 
@@ -577,7 +577,7 @@ subroutine svd_forcerot(nat1, typ1, coords1_in, &
   call determinant3x3(rmat, det_r)
 
   !! force rmat to be rotation: Vt is written row-wise
-  if (det_r .lt. -0.5) vt(3, :) = -vt(3, :)
+  if (det_r .lt. -0.5_rp) vt(3, :) = -vt(3, :)
   rmat = matmul(u, vt)
 
   ! write(*,*) 'rmat:', det_r
@@ -671,7 +671,7 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
   !!
   do i = 1, nat2
      d_o(1, i) = norm2(coords2(:, i))
-     d_o(2, i) = real(i)
+     d_o(2, i) = real(i, rp)
   end do
   !!
   call sort(nat2, 2, d_o, 1)

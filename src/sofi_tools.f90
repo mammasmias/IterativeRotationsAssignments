@@ -33,14 +33,14 @@ module sofi_tools
   !!   Also, groups with order > 8 are super rare in atomic clusters. But can happen in
   !!   for example nanotubes, where main ax is in center of tube, around this ax
   !!   many rotations can happen, then order of group can be any.
-  ! real(rp), parameter :: m_thr = 1.4      !! C6
-  ! real(rp), parameter :: m_thr = 1.07     !! C8
-  ! real(rp), parameter :: m_thr = 0.73     !! C12
-  ! real(rp), parameter :: m_thr = 0.49     !! C18
-  ! real(rp), parameter :: m_thr = 0.36     !! C24
-  ! real(rp), parameter :: m_thr = 0.19     !! C48
-  ! real(rp), parameter :: m_thr = 0.092     !! C96
-  real(rp), parameter :: m_thr = 0.044     !! C200
+  ! real(rp), parameter :: m_thr = 1.4_rp      !! C6
+  ! real(rp), parameter :: m_thr = 1.07_rp     !! C8
+  ! real(rp), parameter :: m_thr = 0.73_rp     !! C12
+  ! real(rp), parameter :: m_thr = 0.49_rp     !! C18
+  ! real(rp), parameter :: m_thr = 0.36_rp     !! C24
+  ! real(rp), parameter :: m_thr = 0.19_rp     !! C48
+  ! real(rp), parameter :: m_thr = 0.092_rp     !! C96
+  real(rp), parameter :: m_thr = 0.044_rp     !! C200
 
 
   !! Schoenflies symbols for operations
@@ -53,9 +53,9 @@ module sofi_tools
        OP_MIRROR     = "S" !! "M"
 
 
-  real(rp), parameter :: pi = 4.0*atan(1.0)
-  real(rp), parameter :: epsilon = 1e-6
-  real(rp), parameter :: collinearity_thr = 0.95
+  real(rp), parameter :: pi = 4.0_rp*atan(1.0_rp)
+  real(rp), parameter :: epsilon = 1e-6_rp
+  real(rp), parameter :: collinearity_thr = 0.95_rp
 
   !! limit value for n in sofi_analmat.
   ! integer(ip), parameter :: lim_n_val = 24
@@ -111,7 +111,7 @@ contains
 
     integer(ip) :: i, j
 
-    dist = 0.0
+    dist = 0.0_rp
     do i = 1, 3
        do j  =1, 3
           dist = dist + ( a(i,j) - b(i,j) )**2
@@ -133,7 +133,7 @@ contains
 
     rij = matmul( a, transpose(b) )
     rij = transpose(rij)
-    tr = rij(1,1) + rij(2,2) + rij(3,3) - 3.0
+    tr = rij(1,1) + rij(2,2) + rij(3,3) - 3.0_rp
     tr = abs(tr)
     dist = tr
 
@@ -168,8 +168,8 @@ contains
     getvec = 'N'
     if( vec == 1 ) getvec='V'
     lda = n
-    eigvals_i(:) = 0.0
-    eigvec(:,:) = 0.0
+    eigvals_i(:) = 0.0_rp
+    eigvec(:,:) = 0.0_rp
 
     mat = A
     !! test workspace
@@ -386,7 +386,7 @@ contains
 
     !! compare vec to bdir, shoudl be equal: dot = 1.0
     dotp = dot_product( vec, bdir )
-    if( dotp .gt. 0.999 ) is_valid = .true.
+    if( dotp .gt. 0.999_rp ) is_valid = .true.
 
   end function op_valid_ext_b
 
@@ -457,7 +457,7 @@ contains
 
     real(rp) :: flip
 
-    flip = 1.0
+    flip = 1.0_rp
     if( ax(3) .lt. -epsilon ) then
        !! z is negative, flip
        flip = -flip

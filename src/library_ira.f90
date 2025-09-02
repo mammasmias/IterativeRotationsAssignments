@@ -310,7 +310,7 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
   end do
 
   !! measure dH
-  pp=0.0
+  pp=0.0_c_double
   do i = 1, nat1
      rdum = p_coords1(:,i) - fcoords2(:,i)
      pp = max( pp, norm2(rdum) )

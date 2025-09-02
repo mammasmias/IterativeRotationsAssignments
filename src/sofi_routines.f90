@@ -342,7 +342,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   allocate( d_o(1:2,1:nat))
   do i = 1, nat
      d_o(1,i) = norm2(coords(:,i))
-     d_o(2,i) = real(i)
+     d_o(2,i) = real(i, rp)
      rmin = min(rmin, d_o(1,i))
      rmax = max(rmax, d_o(1,i))
   end do
@@ -481,7 +481,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   !!========
   nn = 0
   kloop_: do k = 1, nat
-     if( abs( d_i - norm2(coords(:,k))) .gt. 1.1*sym_thr ) cycle
+     if( abs( d_i - norm2(coords(:,k))) .gt. 1.1_rp*sym_thr ) cycle
      if( typ(k) .ne. ti ) cycle
      do l = 1, nat
         if( k.eq.l) cycle
@@ -672,7 +672,7 @@ subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dHausdorf
      end do
 
      !! recompute dists, now should be good
-     dists(:) = 0.0
+     dists(:) = 0.0_rp
      do j = 1, nat
         rdum = coords(:,j) - c_local(:,found(j))
         dists(j) = norm2( rdum )
@@ -1324,10 +1324,10 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
            !! keep maximal n value of C operations
            if( op(j) == OP_PROP_ROT) max_n_val = max( max_n_val, n_int(j))
            !! count how many ops have this ax
-           uniq_ax(5,nax) = uniq_ax(5,nax) + 1.0
+           uniq_ax(5,nax) = uniq_ax(5,nax) + 1.0_rp
         end if
      end do
-     uniq_ax(4,nax) = real(max_n_val)
+     uniq_ax(4,nax) = real(max_n_val, rp)
   end do
 
 

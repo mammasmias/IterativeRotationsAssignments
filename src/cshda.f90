@@ -46,8 +46,8 @@
         integer(ip) :: i
 
         do i = 1, 3
-          if( c(i) .lt. -0.5 ) c(i) = c(i) + 1.0
-          if( c(i) .ge. 0.5 ) c(i) = c(i) - 1.0
+          if( c(i) .lt. -0.5_rp ) c(i) = c(i) + 1.0_rp
+          if( c(i) .ge. 0.5_rp ) c(i) = c(i) - 1.0_rp
         end do
 
       end subroutine periodic
@@ -78,9 +78,6 @@
         real(rp) :: detct
         real(rp), dimension(3,3) :: bt
 
-        bt(:,:)=0.0
-        xc(:) = 0.0
-
         ! -----------------------------------------------
         !  inverse matrix of ct(:,:)
         !------------------------------------------------
@@ -108,7 +105,6 @@
 
         xpp(:) = xc(:)
 
-        return
       end subroutine cart_to_crist
 
 
@@ -134,18 +130,13 @@
         real(rp), dimension(3,3), intent(in)    :: bt
         real(rp), dimension(3) :: xc
 
-        xc(:) = 0.0
-
 
         xc(1) = (xpp(1)*bt(1,1)+xpp(2)*bt(2,1)+xpp(3)*bt(3,1))
         xc(2) = (xpp(1)*bt(1,2)+xpp(2)*bt(2,2)+xpp(3)*bt(3,2))
         xc(3) = (xpp(1)*bt(1,3)+xpp(2)*bt(2,3)+xpp(3)*bt(3,3))
 
-        xpp(:)=0.0
-
         xpp(:) = xc(:)
 
-        return
       end subroutine crist_to_cart
 
   end module
@@ -448,12 +439,12 @@
     integer(ip) :: n_count
     real(rp) :: dist, dist_old
 
-    dists(:) = 999.9
+    dists(:) = 999.9_rp
     !! set found to zero
     found(:) = 0
     !!
     !! set up distance matrix
-    chkmat(:,:) = 0.0
+    chkmat(:,:) = 0.0_rp
     !!
     !! ATTENTION: the double loop needs to go from 1 to nat, for i and j
     !!    because there are permutations in the set, so the distance matrix is
@@ -472,7 +463,7 @@
           !! if the atoms are not of same typ, set some large distance:
           !! like this they will not be found paired
           !!
-          if( typ1(i) .ne. typ2(j) ) dist = 99990.0
+          if( typ1(i) .ne. typ2(j) ) dist = 99990.0_rp
           !!
           chkmat(i,j) = dist
           !!
@@ -502,7 +493,7 @@
        !!
        if( n_count .gt. nat1**2) then
           found(i) = 0
-          dists(i) = 999.9
+          dists(i) = 999.9_rp
           write(*,*) " PROBLEM in cshda_pbc: huge number of searches"
           return
        endif
@@ -535,7 +526,7 @@
              !! if the previous found is closer, set the current distance
              !! to smth big, so its not found ever again!
              !!
-             chkmat(i,j) = 999.9
+             chkmat(i,j) = 999.9_rp
              !!
              !!
              !! and the current index should be searched again
@@ -548,7 +539,7 @@
              !! if the previous found is larger then the new, the old idx should
              !! be searched again and the same distance should not be found!
              !!
-             chkmat(idx_old, j) = 999.9
+             chkmat(idx_old, j) = 999.9_rp
              search( idx_old ) = 1
              !!
           endif
