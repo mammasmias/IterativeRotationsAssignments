@@ -63,6 +63,7 @@ module sofi_tools
   ! integer(ip), parameter :: lim_n_val = 96
   integer(ip), parameter :: lim_n_val = 200
 
+
 contains
 
   subroutine cross_prod( a, b, c )
@@ -152,6 +153,17 @@ contains
     !! @param [in]    vec	      0 if don't want to compute eigenvectors, 1 otherwise
     !!
     IMPLICIT NONE
+    interface
+       subroutine dgeev(jobvl, jobvr, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
+         use, intrinsic :: iso_fortran_env, only: dp=>real64
+         integer, intent(out) :: info
+         integer, intent(in) :: lda, ldvl, ldvr, lwork, n
+         character(1), intent(in) :: jobvl, jobvr
+         real(dp), intent(inout) :: a(lda, *), vl(ldvl, *), vr(ldvr, *), wi(*), wr(*)
+         real(dp), intent(out) :: work(max(1,lwork))
+         intrinsic :: max
+       end subroutine dgeev
+    end interface
     INTEGER(IP),              intent(in) :: n
     REAL(RP), DIMENSION(n,n), intent(inout) :: A
     REAL(RP), DIMENSION(n),   intent(out) :: eigvals
@@ -174,14 +186,12 @@ contains
     mat = A
     !! test workspace
     lwork = -1
-    call dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, &
-              dummy, 1, eigvec, n, dummy, lwork, info)
+    call dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, dummy, 1, eigvec, n, dummy, lwork, info)
 
     !! choose optimal size of workspace (as in example from intel website)
     lwork = min( 1000, nint(dummy(1)) )
     !! compute stuffs
-    call dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, &
-                dummy, 1, eigvec, n, dummy, lwork, info)
+    call dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, dummy, 1, eigvec, n, dummy, lwork, info)
 
     ! write(*,*) 'diagonal matrix'
     ! ! mat = matmul(mat, transpose(A))

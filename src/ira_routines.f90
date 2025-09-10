@@ -62,7 +62,17 @@ subroutine svd(m, n, a, u, s, v, ierr)
   use ira_precision
   use err_module
   implicit none
-
+  interface
+     ! lapack
+     subroutine dgesvd( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO )
+       use, intrinsic :: iso_fortran_env, only: ddp => real64
+       character(len=1), intent(in) :: JOBU, JOBVT
+       integer, intent(in)   :: LDA, LDU, LDVT, LWORK, M, N
+       integer, intent(out)   :: INFO
+       real(ddp), intent(inout) :: A( LDA, * ), S( * ), U( LDU, * ), VT( LDVT, * )
+       real(ddp), intent(out) :: WORK( * )
+     end subroutine dgesvd
+  end interface
   integer(ip), intent(in) :: m
   integer(ip), intent(in) :: n
   real(rp), dimension(m, n), intent(in) :: a
