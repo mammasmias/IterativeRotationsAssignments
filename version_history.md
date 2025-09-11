@@ -35,3 +35,12 @@ Version history:
   - add some example inputs for SOFI;
   - some changes in API calls;
   - slight speedup in CShDA achieved through more aggressive compiler flags;
+
+
+ * Version 2.2.0: September 2025 (20250911)
+
+ Minor changes:
+  - add `ira_precision`;
+  - add more build systems (pip, pixi, cmake, fpm);
+  - add local version of lapack routines if needed;
+  - solve a rare bug in cshda when different number of atoms;
