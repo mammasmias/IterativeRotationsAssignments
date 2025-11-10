@@ -39,7 +39,7 @@ jobs:
 
 
       - name: build
-        run: which gfortran && ls -a ${{github.workspace }} && cd docs && make html && ls -a ${{github.workspace}}
+        run: ls -a ${{github.workspace }} && cd src && LIBLAPACK='' make all && cd ../docs && make html
         #run: sphinx-build -b html docs public
       #- run: make html
       
