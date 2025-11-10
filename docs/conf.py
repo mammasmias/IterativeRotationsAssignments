@@ -23,9 +23,6 @@ import subprocess, os
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 
-# compile lib
-subprocess.call(["make", "all"], cwd="../src", env=dict(LIBLAPACK=""))
-
 # Doxygen
 subprocess.call('doxygen Doxyfile.in', shell=True)
 
