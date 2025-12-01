@@ -127,7 +127,7 @@ class algo():
         return string, date
 
 class IRA(algo):
-    """
+    r"""
     The Iterative Rotatitions and Assignments (IRA) algorithm is a shape matching algorithm
     designed for matching generic atomic structures.
     It solves the problem:
@@ -172,7 +172,7 @@ class IRA(algo):
     """
 
     def cshda( self, nat1, typ1, coords1, nat2, typ2, coords2, lat=None, thr=None):
-        """
+        r"""
 
         Constrained Shortest Distance Assignment (CShDA) algorithm, is a LAP
         (Linear Assignment Problem) solver, which constrains the atoms to be assigned
@@ -296,7 +296,7 @@ class IRA(algo):
 
 
     def match( self, nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor, candidate1=None, candidate2=None ):
-        """
+        r"""
 
         The Iterative Rotatitions and Assignments (IRA) procedure to match two structures, including
         the SVD correction at the end.
@@ -592,7 +592,7 @@ class sym_data():
 
 
 class SOFI(algo):
-    """
+    r"""
 
     The Symmetry Operation FInder (SOFI) is an algorithm for finding point group symmetry operations of
     atomic structures. It solves the problem:
@@ -1159,7 +1159,7 @@ class SOFI(algo):
 
     def get_perm( self, nat, typ_in, coords, nm_in, mat_list ):
 
-        '''
+        """
 
         Description:
         Obtain the list of permutations and maximal distances for each matrix in input.
@@ -1192,7 +1192,7 @@ class SOFI(algo):
                      each matrix in the `mat_list` to the structure. Can be seen as "score" of each symmetry
         :type dHausdorff: np.ndarray( nm_in, dtype = float )
 
-        '''
+        """
 
         # check if input types are already c_int or not
         typ = self.tf_int( typ_in )
@@ -1235,7 +1235,7 @@ class SOFI(algo):
 
     def get_combos( self, nat, typ_in, coords, nm_in, mat_list ):
 
-        '''
+        """
         Description:
         Obtain all unique combinations of input matrices, which are symmetry operations of given structure.
 
@@ -1267,7 +1267,7 @@ class SOFI(algo):
         :param mat_out: list of output matrices
         :type mat_out: np.ndarray( (nm_out, 3, 3), dtype = float )
 
-        '''
+        """
 
         nmax=self._nmax
         # check if input types are already c_int or not
@@ -1313,7 +1313,7 @@ class SOFI(algo):
 
 
     def try_mat( self, nat, typ_in, coords, theta ):
-        '''
+        """
         Description:
         Apply a given matrix `theta` to the structure, and compute the distance between the transformed
         and original structure. If the distance is small, then `theta` is a symmetry operation (or close to).
@@ -1346,7 +1346,7 @@ class SOFI(algo):
         :param perm: permutations of atoms which were assignmed by CShDA upon application of `theta`
         :type perm: np.ndarray((nat), dtype = int )
 
-        '''
+        """
         typ = self.tf_int( typ_in )
 
         #input
@@ -1375,7 +1375,7 @@ class SOFI(algo):
         return dh, perm
 
     def construct_operation( self, op, axis, angle ):
-        '''
+        """
         Description:
         Construct the 3x3 matrix corresponding to operation encoded by the Schoenflies Op,
         such that it acts along the desired axis, and given angle.
@@ -1412,7 +1412,7 @@ class SOFI(algo):
             The operation "S" with angle=0.0 is a reflection.
 
 
-        '''
+        """
         c_op=op.encode()
         c_ax = axis.ctypes.data_as(POINTER(c_double))
         c_angle = c_double(angle)
@@ -1438,7 +1438,7 @@ class SOFI(algo):
 
     def mat_combos( self, nm_in, mat_list ):
 
-        '''
+        """
         Description:
         Obtain all unique combinations of matrices in input, without checking them against any
         specific structure.
@@ -1462,7 +1462,7 @@ class SOFI(algo):
         :param mat_out: list of output matrices
         :type mat_out: np.ndarray( (nm_out, 3, 3), dtype = float )
 
-        '''
+        """
 
         nmax=self._nmax
 
@@ -1496,7 +1496,7 @@ class SOFI(algo):
         return nm_out, mat_out
 
     def matrix_distance( self, m1, m2 ):
-        '''
+        """
         Compute the distance between two matrices using the ``matrix_distance`` function.
         This function is used internally in SOFI to determine if two matrices are equal or not,
         if the value of distance is below ``m_thr``, then the matrices are considered equal.
@@ -1516,7 +1516,7 @@ class SOFI(algo):
         :param d: distance value
         :type d: float
 
-        '''
+        """
 
         # input
         mc1 = m1.ctypes.data_as(POINTER(c_double))
@@ -1535,7 +1535,7 @@ class SOFI(algo):
 
 
     def check_collinear( self, nat, coords ):
-        '''
+        """
         Check if the input structure is collinear or not.
 
         **== input ==**
@@ -1554,7 +1554,7 @@ class SOFI(algo):
         :param ax: axis of collinearity, if structure is collinear
         :type ax: np.ndarray(3, dtype=float)
 
-        '''
+        """
         #input
         n = c_int( nat )
         c = coords.ctypes.data_as( POINTER(c_double) )
