@@ -127,17 +127,17 @@ class algo():
         return string, date
 
 class IRA(algo):
-    r"""
+    """
     The Iterative Rotatitions and Assignments (IRA) algorithm is a shape matching algorithm
     designed for matching generic atomic structures.
     It solves the problem:
 
     .. math::
-        P_B B = \mathbf{R} A + \mathbf{t}
+        P_B B = \\mathbf{R} A + \\mathbf{t}
 
 
-    where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a rotation matrix,
-    :math:`\mathbf{t}` is a translation vector,
+    where :math:`A` and :math:`B` are two atomic structures, :math:`\\mathbf{R}` is a rotation matrix,
+    :math:`\\mathbf{t}` is a translation vector,
     and :math:`P_B` is a permutation matrix.
 
     For futher details please see the publication:
@@ -172,7 +172,7 @@ class IRA(algo):
     """
 
     def cshda( self, nat1, typ1, coords1, nat2, typ2, coords2, lat=None, thr=None):
-        r"""
+        """
 
         Constrained Shortest Distance Assignment (CShDA) algorithm, is a LAP
         (Linear Assignment Problem) solver, which constrains the atoms to be assigned
@@ -188,7 +188,7 @@ class IRA(algo):
         This is a wrapper to the libira_cshda and libira_cshda_pbc routines from library_ira.f90
 
         .. note::
-           Requirement: nat1 :math:`\le` nat2
+           Requirement: nat1 :math:`\\le` nat2
 
         **== input: ==**
 
@@ -296,7 +296,7 @@ class IRA(algo):
 
 
     def match( self, nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor, candidate1=None, candidate2=None ):
-        r"""
+        """
 
         The Iterative Rotatitions and Assignments (IRA) procedure to match two structures, including
         the SVD correction at the end.
@@ -306,11 +306,11 @@ class IRA(algo):
         It returns the solution to:
 
         .. math::
-            P_B B = \mathbf{R} A + \mathbf{t}
+            P_B B = \\mathbf{R} A + \\mathbf{t}
 
 
-        where :math:`A` and :math:`B` are two atomic structures, :math:`\mathbf{R}` is a rotation matrix,
-        :math:`\mathbf{t}` is a translation vector,
+        where :math:`A` and :math:`B` are two atomic structures, :math:`\\mathbf{R}` is a rotation matrix,
+        :math:`\\mathbf{t}` is a translation vector,
         and :math:`P_B` is a permutation matrix.
 
         Solution is to be applied to struc2, as:
@@ -329,7 +329,7 @@ class IRA(algo):
             >>> typ2[:] = typ2[permutation]
 
         .. note::
-            Requirement: nat1 :math:`\le` nat2
+            Requirement: nat1 :math:`\\le` nat2
 
         **== input: ==**
 
@@ -592,7 +592,7 @@ class sym_data():
 
 
 class SOFI(algo):
-    r"""
+    """
 
     The Symmetry Operation FInder (SOFI) is an algorithm for finding point group symmetry operations of
     atomic structures. It solves the problem:
