@@ -1,8 +1,5 @@
 # Description
 
-<!-- The shape matching algorithm Iterative Rotations and Assignments (IRA) is described in the publication -->
-<!-- [[1]](#1). It is also the main subject of the dissertation [[2]](#2), where a workflow -->
-<!-- inserting IRA into an off-lattice kMC algorithm is developed. -->
 This directory contains the source code to IRA, CShDA, and SOFI algorithms, implemented in Fortran.
 Further descriptions of these algorithms are given in [[1]](#1), [[2]](#2), and [[3]](#3).
 
@@ -61,4 +58,6 @@ November 2021.
 <a id="3">[3]</a>
 Gunde M., Salles N., Grisanti L., Hemeryck A., Martin Samos L.
 *SOFI: Finding point group symmetries in atomic clusters as finding the set of degenerate solutions in a shape-matching problem*,
-Journal of Chemical Information and Modeling (submitted)
+Journal of Chemical Physics (2024), DOI:
+[https://doi.org/10.1063/5.0215689](https://doi.org/10.1063/5.0215689),
+arXiv: [2408.06131](https://arxiv.org/abs/2408.06131).
