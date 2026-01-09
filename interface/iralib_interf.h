@@ -17,6 +17,12 @@ void libira_svdrot(int nat1, int *typ1, double *coords1, \
                    int nat2, int *typ2, double *coords2, \
                    double **rotation, double **translation, int *ierr );
 
+void libira_cshda_svd( int nat1, int* typ1, double* coords1, \
+                       int nat2, int* typ2, double* coords2, \
+                       double dthr, int recenter, \
+                       int** perm, double** dists, \
+                       double** rmat, double** tr, int* ierr );
+
 void libira_get_version( char *string, int *date );
 
 

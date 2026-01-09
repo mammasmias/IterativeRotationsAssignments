@@ -385,6 +385,81 @@ subroutine libira_svdrot( nat1, typ1, coords1, nat2, typ2, coords2, rotation, tr
 end subroutine libira_svdrot
 
 !> @details
+!! call to cshda, followed by single-shot svd.
+!! This is a wrapper to cshda_svd() from ira_routines.f90
+!!
+!! @param[in]  nat1    :: number of atoms in structure 1
+!! @param[in]  typ1(nat1)    :: atomic types of structure 1
+!! @param[in]  coords1(3,nat1) :: atomic positions of structure 1
+!! @param[in]  nat2    :: number of atoms in structure 2
+!! @param[in]  typ2(nat2)    :: atomic types of structure 2
+!! @param[in]  coords2(3,nat2) :: atomic positions of structure 2
+!! @param[in]  dthr :: distance threshold for first cshda (if unsure, input a large value like 999.9)
+!! @param[in]  recenter :: boolean, val=true will recenter to gc for cshda (svd is recentered by default)
+!! @param[in]  perm(nat2) :: the atomic permutations in C order (start at 0)
+!! @param[in]  dists(nat2) :: distances after permutation
+!! @param[in]  rmat(3,3) :: the 3x3 rotation matrix in C order
+!! @param[in]  tr(3) :: the 3D translation vector
+!! @param[out]  ierr :: error value (negative on error, zero otherwise)
+!! @returns perm, dists, rmat, tr, ierr
+!!
+!! C-header:
+!!~~~~~~~~~~~~~{.c}
+!! void libira_cshda_svd( int nat1, int* typ1, double* coords1,
+!!                        int nat2, int* typ2, double* coords2,
+!!                        double dthr, int recenter,
+!!                        int** perm, double** dists,
+!!                        double** rmat, double** tr, int* ierr );
+!!~~~~~~~~~~~~~
+subroutine libira_cshda_svd(nat1, typ1, coords1, nat2, typ2, coords2, &
+     dthr, recenter, perm, dists, rmat, tr, ierr )bind(C,name="libira_cshda_svd")
+  use, intrinsic :: iso_c_binding, only: c_int, c_double, c_ptr, c_bool, c_f_pointer
+  use ira_precision
+  implicit none
+  integer(c_int), value, intent(in) :: nat1
+  type( c_ptr ),  value, intent(in) :: typ1
+  type( c_ptr ),  value, intent(in) :: coords1
+  integer(c_int), value, intent(in) :: nat2
+  type( c_ptr ),  value, intent(in) :: typ2
+  type( c_ptr ),  value, intent(in) :: coords2
+  real(c_double), value, intent(in) :: dthr
+  logical(c_bool), value, intent(in) :: recenter
+  type( c_ptr ),         intent(in) :: perm
+  type( c_ptr ),         intent(in) :: dists
+  type( c_ptr ),         intent(in) :: rmat
+  type( c_ptr ),         intent(in) :: tr
+  integer(c_int),        intent(out) :: ierr
+
+  integer(c_int), pointer :: p_typ1(:)=>null(), p_typ2(:)=>null()
+  real( c_double ), pointer :: p_coords1(:,:)=>null(), p_coords2(:,:)=>null()
+  real(c_double), pointer :: p_rmat(:,:)=>null(), p_tr(:)=>null()
+  real(c_double), pointer :: p_dists(:)=>null()
+  integer(c_int), pointer :: p_perm(:)=>null()
+  real(rp) :: f_rmat(3,3), f_tr(3)
+  real(rp) :: f_dists(nat2)
+
+  call c_f_pointer( typ1, p_typ1, [nat1] )
+  call c_f_pointer( typ2, p_typ2, [nat2] )
+  call c_f_pointer( coords1, p_coords1, [3,nat1] )
+  call c_f_pointer( coords2, p_coords2, [3,nat2] )
+  call c_f_pointer( perm, p_perm, [nat2] )
+  call c_f_pointer( dists, p_dists, [nat2] )
+  call c_f_pointer( rmat, p_rmat, [3,3] )
+  call c_f_pointer( tr, p_tr, [3] )
+
+  call cshda_svd( nat1, p_typ1, p_coords1, &
+       nat2, p_typ2, p_coords2, &
+       real(dthr,kind=rp), logical(recenter), &
+       p_perm, f_dists, f_rmat, f_tr, ierr )
+  ! return C-style data
+  p_rmat = real(f_rmat, kind=c_double )
+  p_rmat = transpose(p_rmat)
+  p_tr = real( f_tr, kind=c_double )
+  p_perm = p_perm-1
+  p_dists = real( f_dists, kind=c_double)
+end subroutine libira_cshda_svd
+
+!> @details
 !! Get the IRA version string, and date.
 !! This is a wrapper to get_version from version.f90
 !!
