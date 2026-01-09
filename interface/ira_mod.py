@@ -294,6 +294,93 @@ class IRA(algo):
 
         return found, dists
 
+    def svdrot( self, nat1, typ1, coords1, nat2, typ2, coords2 ):
+        """
+        call the Singular-Value-Decomposition (SVD) procedure for obtaining the
+        rotation matrix and translation vector that minimizes the RMSD distance
+        between structures A and B, for a fixed permutation.
+
+        Solution is to be applied to struc2, as:
+
+            >>> for i in range(nat2):
+            >>>     coords2[i] = np.matmul( rotation, coords2[i] ) + translation
+
+        or alternatively to struc1 as:
+
+            >>> for i in range(nat1):
+            >>>     coords1[i] = np.matmul( rotation.T, coords1[i] ) - np.matmul( rotation.T, translation )
+
+
+        **== input ==**:
+
+        :param nat1: number of atoms of structure 1
+        :type nat1: int
+
+        :param typ1: atomic types of structure 1
+        :type typ1: np.ndarray( nat1, dtype = int or string )
+
+        :param coords1: atomic positions of structure 1
+        :type coords1: np.ndarray( (nat1, 3), dtype = float )
+
+        :param nat2: number of atoms of structure 2
+        :type nat2: int
+
+        :type typ2: atomic types of structure 2
+        :param typ2: np.ndarray( nat2, dtype = int or string )
+
+        :param coords2: atomic positions of structure 2
+        :type coords2: np.ndarray( (nat2, 3), dtype = float)
+
+
+        **== output ==**:
+
+        :param rotation: rotation matrix
+        :type rotation: np.ndarray( (3,3), dtype = float)
+
+        :param translation: translation vector
+        :type translation: np.ndarray( 3, dtype = float)
+
+        """
+        # check typ arrays
+        u_typ1, u_typ2  = self.tf_int2( typ1, typ2 )
+
+        n1 = c_int(nat1)
+        n2 = c_int(nat2)
+        t1 = u_typ1.ctypes.data_as( POINTER(c_int) )
+        t2 = u_typ2.ctypes.data_as( POINTER(c_int) )
+        c1 = coords1.ctypes.data_as( POINTER(c_double) )
+        c2 = coords2.ctypes.data_as( POINTER(c_double) )
+
+        # allocate C output
+        c_rmat = (c_double*9)()
+        c_tr = (c_double*3)()
+        c_err = c_int()
+
+        self.lib.libira_svdrot.restype=None
+        self.lib.libira_svdrot.argtypes= \
+            [c_int, POINTER(c_int), POINTER(c_double), \
+             c_int, POINTER(c_int), POINTER(c_double), \
+             POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), POINTER(c_int)]
+        self.lib.libira_svdrot( n1, t1, c1, n2, t2, c2, pointer(c_rmat), pointer(c_tr), pointer(c_err) )
+
+        if c_err.value != 0:
+            msg = "error"
+            raise ValueError(msg)
+
+        # convert output C data
+        rotation = np.ndarray((3,3),dtype=float)
+        m=0
+        for i in range(3):
+            for j in range(3):
+                rotation[i][j] = c_rmat[m]
+                m+=1
+
+        # output
+        translation = np.ndarray(3,dtype=float)
+        for i in range(3):
+            translation[i] = c_tr[i]
+
+        return rotation, translation
 
     def match( self, nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor, candidate1=None, candidate2=None ):
         """

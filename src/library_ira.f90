@@ -328,6 +328,62 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
 end subroutine libira_match
 
 
+!>@details
+!! Call the SVD procedure to obtain rotation and translation that minimizes the RMSD for a
+!! fixed permutation between A and B.
+!! This is a wrapper to svdrot_m from ira_routines.f90
+!!
+!! @param[in]  nat1            :: number of atoms in structure 1
+!! @param[in]  typ1(nat1)      :: atomic types of structure 1
+!! @param[in]  coords1(3,nat1) :: atomic positions of structure 1
+!! @param[in]  nat2            :: number of atoms in structure 2
+!! @param[in]  typ2(nat2)      :: atomic types of structure 2
+!! @param[in]  coords2(3,nat2) :: atomic positions of structure 2
+!! @param[in]  rotation(3,3)   :: the 3x3 rotation matrix in C order
+!! @param[in]  translation(3)  :: the 3D translation vector
+!! @param[out]  ierr           :: error value (negative on error, zero otherwise)
+!! @returns rotation, translation, ierr
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~~~~~~~~~~{.c}
+!! void libira_svdrot( int nat1, int* typ1, double* coords1,
+!!                     int nat2, int* typ2, double* coords2,
+!!                     double** rotation, double** translation, int* ierr )
+!!~~~~~~~~~~~~~~~~~~~~~~~~
+subroutine libira_svdrot( nat1, typ1, coords1, nat2, typ2, coords2, rotation, translation, ierr )&
+     bind(C, name="libira_svdrot")
+  use, intrinsic :: iso_c_binding, only: c_int, c_ptr, c_double, c_f_pointer
+  use ira_precision
+  implicit none
+  integer(c_int), value, intent(in) :: nat1
+  type( c_ptr ),  value, intent(in) :: typ1
+  type( c_ptr ),  value, intent(in) :: coords1
+  integer(c_int), value, intent(in) :: nat2
+  type( c_ptr ),  value, intent(in) :: typ2
+  type( c_ptr ),  value, intent(in) :: coords2
+  type( c_ptr ),         intent(in) :: rotation
+  type( c_ptr ),         intent(in) :: translation
+  integer(c_int),        intent(out) :: ierr
+
+  integer(c_int), pointer :: p_typ1(:)=>null(), p_typ2(:)=>null()
+  real( c_double ), pointer :: p_coords1(:,:)=>null(), p_coords2(:,:)=>null()
+  real(c_double), pointer :: p_rmat(:,:)=>null(), p_tr(:)=>null()
+  real(rp) :: rmat(3,3), tr(3)
+
+  call c_f_pointer( typ1, p_typ1, [nat1] )
+  call c_f_pointer( typ2, p_typ2, [nat2] )
+  call c_f_pointer( coords1, p_coords1, [3,nat1] )
+  call c_f_pointer( coords2, p_coords2, [3,nat2] )
+  call c_f_pointer( rotation, p_rmat, [3,3] )
+  call c_f_pointer( translation, p_tr, [3] )
+
+  call svdrot_m( nat1, p_typ1, p_coords1, nat2, p_typ2, p_coords2, rmat, tr, ierr )
+  ! return C-style data
+  p_rmat = real( rmat, kind=c_double )
+  p_rmat = transpose( p_rmat )
+  p_tr = real( tr, kind=c_double )
+end subroutine libira_svdrot
+
 !> @details
 !! Get the IRA version string, and date.
 !! This is a wrapper to get_version from version.f90

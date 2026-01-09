@@ -13,6 +13,10 @@ void libira_match(int nat1, int *typ1, double *coords1, int *cand1,\
                   int nat2, int *typ2, double *coords2, int *cand2, \
                   double km_factor, double **rmat, double **tr, int **perm, double *hd, int *cerr);
 
+void libira_svdrot(int nat1, int *typ1, double *coords1, \
+                   int nat2, int *typ2, double *coords2, \
+                   double **rotation, double **translation, int *ierr );
+
 void libira_get_version( char *string, int *date );
 
 
