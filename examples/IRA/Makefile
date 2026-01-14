@@ -29,7 +29,7 @@ INCDIR = $(realpath $(SRC)/../../include)
 # interface dir (path to iralib_interf.h)
 INTERFDIR = $(realpath $(SRC)/../../interface)
 
-MOD = -I$(INCDIR) #-I$(OBJ) -J$(OBJ)
+MOD = -I$(INCDIR)
 
 #
 # specify link to libira
@@ -76,7 +76,6 @@ $(F_PROG): $(fprog)
 	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB)
 	@echo ' >> Fortran program compiled successfully: $(F_PROG)'
 	@echo ' >> Launch as: ./$(F_PROG) < example_inputs/input1.xyz'
-	
 
 #====
 # Compile the C executable

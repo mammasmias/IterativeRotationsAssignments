@@ -6,32 +6,33 @@ program sofi
   !! with the list of found SymmOps.
   !!
   !!
+  use ira_precision, only: ira_rp => rp
   implicit none
 
-  integer :: nat                             !< @brief number of atoms
-  integer, allocatable :: typ(:)             !< @brief integer of atomic types
-  character(len=4), allocatable :: styp(:)   !< @string of atomic types
-  real, allocatable :: coords(:,:)           !< @brief atomic positions
+  integer :: nat                             ! number of atoms
+  integer, allocatable :: typ(:)             ! integer of atomic types
+  character(len=4), allocatable :: styp(:)   ! of atomic types
+  real(ira_rp), allocatable :: coords(:,:)   ! atomic positions
 
   integer :: i, j
 
-  real, dimension(3) :: gc                   !< @brief origin point (geometric center)
-  real :: sym_thr                            !< @brief threshold for symmetry operations
-  real, allocatable :: bas_list(:,:,:)       !< @brief list of symmetry operations
-  integer, allocatable :: perm_list(:,:)     !< @brief list of permutations for each symmetry operation
-  integer :: nbas                            !< @brief total number of symmetry operations
-  integer :: nmax                            !< @brief max space for allocation (see sofi_tools.f90)
-  character(len=10) :: pg                    !< @brief the point group
-  integer :: n_prin_ax                       !< @brief number of principal axes
-  real, allocatable :: prin_ax(:,:)          !< @brief list of principal axes
+  real(ira_rp), dimension(3) :: gc                   ! origin point (geometric center)
+  real(ira_rp) :: sym_thr                            ! threshold for symmetry operations
+  real(ira_rp), allocatable :: bas_list(:,:,:)       ! list of symmetry operations
+  integer, allocatable :: perm_list(:,:)     ! list of permutations for each symmetry operation
+  integer :: nbas                            ! total number of symmetry operations
+  integer :: nmax                            ! max space for allocation (see sofi_tools.f90)
+  character(len=10) :: pg                    ! the point group
+  integer :: n_prin_ax                       ! number of principal axes
+  real(ira_rp), allocatable :: prin_ax(:,:)          ! list of principal axes
   logical :: prescreen_ih
 
-  real, allocatable :: angle_out(:)          !< @brief list of angles of symm operations
-  real, allocatable :: ax_out(:,:)           !< @brief list of axes of symmetry operations
-  character(len=1), allocatable :: op_out(:) !< @brief list of Op
-  integer, allocatable :: n_out(:)           !< @brief list of n values
-  integer, allocatable :: p_out(:)           !< @brief list of p values
-  real, allocatable :: dHausdorff_out(:)           !< @brief list of dHausdorff values
+  real(ira_rp), allocatable :: angle_out(:)          ! list of angles of symm operations
+  real(ira_rp), allocatable :: ax_out(:,:)           ! list of axes of symmetry operations
+  character(len=1), allocatable :: op_out(:) ! list of Op
+  integer, allocatable :: n_out(:)           ! list of n values
+  integer, allocatable :: p_out(:)           ! list of p values
+  real(ira_rp), allocatable :: dHausdorff_out(:)     ! list of dHausdorff values
   integer :: ierr
   character(128) :: msg
 
@@ -39,13 +40,13 @@ program sofi
   nmax = 400
 
   !! threshold for sym
-  sym_thr = 0.05
+  sym_thr = 0.05_ira_rp
 
   read(*,*) nat
   read(*,*)
-  allocate( typ(1:nat), source=0)
-  allocate( coords(1:3,1:nat), source=0.0)
-  allocate( styp(1:nat), source="aaaa")
+  allocate( typ(1:nat) )
+  allocate( coords(1:3,1:nat) )
+  allocate( styp(1:nat) )
   do i = 1, nat
      !! read at typ into string
      read(*,*) styp(i), coords(:,i)
