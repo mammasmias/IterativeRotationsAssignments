@@ -26,15 +26,17 @@ degenerate shape-matching problem. It also uses the CShDA algorithm.
 
 Source files:
 
+ - ira_precision.f90  : define the real and integer precision;
  - cshda.f90          : the CShDA routine for pbc and non-pbc cases;
  - ira_routines.f90   : all the routines specific to IRA;
  - set_candidate.f90  : routines for selecting candidate central atoms and their vectors;
- - read_typ.f90       : a function to read atomic types from xyz format;
  - sorting_module.f90 : the mergesort algorithm;
  - sofi_tools.f90     : misc routines and definitions for SOFI;
  - sofi_routines      : all routines specific to SOFI;
  - library_ira.f90    : C-bound wrappers to the main routines of IRA, compiles into `libira.so`;
- - library_sofi.f90   : C-bound wrappers to the main routines of SOFI, compiles into `libira.so`
+ - library_sofi.f90   : C-bound wrappers to the main routines of SOFI, compiles into `libira.so`;
+ - err_module.f90     : internal error management;
+ - version.f90        : version information;
 
 ## Compile
 
