@@ -366,6 +366,7 @@ end subroutine set_orthonorm_bas
 !!
 !! @param[out] rmat(3,3)    -> 3x3 optimal rotation matrix
 !! @param[out] translate(3) -> optimal translation vector
+!! @param[out] ierr   -> error value (negative on error, zero otherwise)
 !! @returns rmat, translate
 !!
 subroutine svdrot_m(nat1, typ1, coords1_in, &
@@ -1359,6 +1360,87 @@ subroutine ira_svd(nat1, typ1_in, coords1_in, &
   rmsd = sqrt(rmsd/nat1)
 
 end subroutine ira_svd
+
+!> @details
+!! Single-shot cshda followed by svd
+!!
+!! apply as:
+!! ```f90
+!! ! on B:
+!! coords2(:,i) = matmul( rmat, coords2(:,i) ) + tr
+!! ! perm
+!! typ2(:) = typ2(perm)
+!! coords2(:,:) = coords2(:,perm)
+!! ```
+subroutine cshda_svd( nat1, typ1_in, coords1_in, &
+     nat2, typ2_in, coords2_in, &
+     dthr, recenter, &
+     perm, dists, rmat, tr, ierr )
+  use ira_precision
+  implicit none
+  integer(ip), intent(in) :: nat1
+  integer(ip), intent(in) :: typ1_in(nat1)
+  real(rp),    intent(in) :: coords1_in(3,nat1)
+  integer(ip), intent(in) :: nat2
+  integer(ip), intent(in) :: typ2_in(nat2)
+  real(rp),    intent(in) :: coords2_in(3,nat2)
+  real(rp),    intent(in) :: dthr !! used for first cshda
+  logical,     intent(in) :: recenter
+  integer(ip), intent(out) :: perm(nat2)
+  real(rp),    intent(out) :: dists(nat2)
+  real(rp),    intent(out) :: rmat(3,3)
+  real(rp),    intent(out) :: tr(3)
+  integer(ip), intent(out) :: ierr
+  !
+  integer :: i
+  real(rp) :: rmat_svd(3,3), tr_svd(3)
+  real(rp) :: coords1(3,nat1), coords2(3,nat2)
+  real(rp) :: rc1(3), rc2(3), rdum(3), rj(3)
+
+  ! init values
+  ierr = -1_ip
+  rmat = 0.0_rp
+  rmat(1,1)=1.0_rp
+  rmat(2,2)=1.0_rp
+  rmat(3,3)=1.0_rp
+  tr=0.0_rp
+  ! recenter for cshda
+  rc1 = 0.0_rp
+  rc2 = 0.0_rp
+  if( recenter ) then
+     rc1 = sum( coords1_in(:,:), 2)/nat1
+     rc2 = sum( coords2_in(:,:), 2)/nat2
+  end if
+  do i = 1, nat1
+     coords1(:,i) = coords1_in(:,i) - rc1
+  end do
+  do i = 1, nat2
+     coords2(:,i) = coords2_in(:,i) - rc2
+  end do
+
+  ! get perm, dists
+  call cshda( nat1, typ1_in, coords1, nat2, typ2_in, coords2, dthr, perm, dists )
+  ! cshda couldnt assign?
+  if( any(perm(1:nat1).eq.0) ) return
+
+  ! do svd with init coords
+  call svdrot_m( nat1, typ1_in, coords1_in, &
+                 nat1, typ2_in(perm(1:nat1)), coords2_in(1:3,perm(1:nat1)), &
+                 rmat_svd, tr_svd, ierr )
+  !
+  if( ierr /= 0_ip ) return
+  ! copy over the svd values
+  rmat = rmat_svd
+  tr = tr_svd
+  ! recompute dists
+  do i = 1, nat1
+     ! transform 2
+     rj = matmul( rmat, coords2_in(:,perm(i)) ) + tr
+     ! new dist
+     dists(i) = norm2( coords1_in(:,i) - rj )
+  end do
+
+end subroutine cshda_svd
 
 subroutine ira_get_err_msg(ierr, msg)
   use ira_precision

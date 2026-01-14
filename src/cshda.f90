@@ -196,7 +196,6 @@
     real(rp) :: dist, dist_old, dmin
     integer(ip), dimension(nat1) :: tmpmin
 
-
     !! init output
     dists = 999.9_rp
     found = 0
@@ -212,6 +211,7 @@
     th2 = th*th
     m_th = -th
     do i = 1, nat1
+       ! write(*,*) "i",i
        ti = typ1(i)
        ci = coords1(:,i)
        dmin = huge( dmin )
@@ -231,14 +231,15 @@
              !! dist squared
              dist = dx*dx + dy*dy + dz*dz
              !!
+             ! write(*,*) j, dist
              chkmat(j,i) = dist
              !!
              !! keep for minimum row
-             ! dmin = min( dmin, dist )
-             if( dist .lt. dmin ) then
-                dmin = dist
-                tmpmin(i) = j
-             end if
+             dmin = min( dmin, dist )
+             ! if( dist .lt. dmin ) then
+             !    dmin = dist
+             !    tmpmin(i) = j
+             ! end if
           else
              chkmat(j,i) = 995.0_rp
           end if
@@ -255,15 +256,62 @@
        !!
     end do
 
-    ! write(*,"(3x)",advance="no")
-    ! do i = 1, nat2
-    !    write(*,"(i4,1x)", advance="no") i
-    ! end do
-    ! write(*,*)
-    ! do i = 1, nat1
-    !    write(*,"(i2,1x,*(f4.2,:,1x))")  i, chkmat(:,i)
-    ! end do
+    !! assign chkmat
+    call cshda_from_cost( nat2, nat1, chkmat, found, dists )
+    !! do sqrt of dists
+    dists = sqrt(dists)
+  end subroutine cshda
 
+
+  !> @details
+  !! Linear Assignment Problem (LAP) algorithm:
+  !! Constrained Shortest Distance Assignment (CShDA).
+  !! Solve it based on given cost matrix.
+  !!
+  !! Assign atoms of configuration 1 to atoms of configuration 2 based on
+  !! the CShDA algorithm.
+  !!
+  !! @note
+  !!  WARNING nat1 must be lower or equal nat2!
+  !!
+  !!================================================
+  !! @param[in]    n2    -> dimension 1 (rows) of cost matrix (number of atoms in conf 2);
+  !! @param[in]    n1    -> dimension 2 (columns) of cost matrix (number of atoms in conf 1);
+  !! @param[in]    cost[n2,n1] -> the cost matrix to assign:
+  !!                              cost(j,i) = cost of j \in struc2 -> i \in struc1
+  !! @param[out]   found   -> list of assigned atoms of conf 2 to conf 1:
+  !!                          e.g. found(3) = 9 means atom 3 from conf 1 is assigned
+  !!                          to atom 9 in conf 2;
+  !! @param[out]   dists   -> assigned values of the cost matrix, i.e.:
+  !!                          distances from atom i in conf 1 to atom found(i) in conf 2;
+  !!
+  ! subroutine cshda_from_cost( n2, n1, chkmat, found, dists )
+  subroutine cshda_from_cost( n2, n1, cost, found, dists )
+    use ira_precision
+    implicit none
+    integer(ip), intent(in) :: n2
+    integer(ip), intent(in) :: n1
+    ! real(rp), intent(inout) :: chkmat(n2,n1)
+    real(rp), intent(in) :: cost(n2,n1)
+    integer(ip), intent(out) :: found(n2)
+    real(rp), intent(out) :: dists(n2)
+
+    real(rp) :: chkmat(n2,n1)
+    logical :: lsearch(n1)
+    integer(ip) :: assigned(n2), tmpmin(n1)
+    integer(ip) :: n_count, i, j, idx_old, k, nmax
+    real(rp) :: dist, dist_old
+    !! copy input cost
+    chkmat(:,:) = cost(:,:)
+
+    !! init output
+    found = 0
+    dists=999.9_rp
+
+    !! init tmpmin
+    do i = 1, n1
+       tmpmin(i) = minloc( chkmat(:,i), 1)
+    end do
 
     !! set up the queue of searches
     lsearch(:) = .true.
@@ -274,7 +322,7 @@
     i = 1
 
     n_count = 1
-    nmax = nat1*nat2
+    nmax = n1*n2
     !! in worst case do n searches on each of the n sites -> nmax = n**2
     do n_count = 1, nmax
        !!
@@ -350,26 +398,19 @@
        !!
     end do
 
-
-    !! do sqrt of dists
-    do i = 1, nat1
-       dists(i) = sqrt(dists(i))
-    end do
-
-
     !! for equal sizes of structures we should be done
-    if( nat1 .eq. nat2 ) return
+    if( n1 .eq. n2 ) return
 
     !! if any found maps to zero, cshda has exited
-    if( any(found(1:nat1) .eq. 0) ) return
+    if( any(found(1:n1) .eq. 0) ) return
 
     ! write(*,*) "found now"
     ! write(*,"(10i3)") found
 
     !! find indices of conf2 not represented in found,
     !! and put them at end
-    k = nat1
-    do i = 1, nat2
+    k = n1
+    do i = 1, n2
        !! if this i is already found, do nothing
        if( any(i .eq. found(:) ) ) cycle
        !! add this i to last spot
@@ -381,9 +422,7 @@
 
     end do
 
-
-
-  end subroutine cshda
+  end subroutine cshda_from_cost
 
 
   !> @details
