@@ -105,6 +105,66 @@ subroutine libira_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, d
 end subroutine libira_cshda
 
 
+!> @brief wrapper to the cshda_from_cost routine from cshda.f90
+!!
+!! @details
+!! All parameters are as intent(in). The output is written into arrays
+!! ``found`` and ``dists``, which are assumed to be allocated by the caller
+!! to their correct size. ``size(found) = size(dists) = [n2]``
+!!
+!! @param[in]    n2    -> dimension 1 (rows) of cost matrix (number of atoms in conf 2);
+!! @param[in]    n1    -> dimension 2 (columns) of cost matrix (number of atoms in conf 1);
+!! @param[in]    cost[n2,n1] -> the cost matrix to assign:
+!!                              cost(j,i) = cost of j \in struc2 -> i \in struc1
+!! @param[out]   found   -> list of assigned atoms of conf 2 to conf 1:
+!!                          e.g. found(3) = 9 means atom 3 from conf 1 is assigned
+!!                          to atom 9 in conf 2;
+!! @param[out]   dists   -> assigned values of the cost matrix, i.e.:
+!!                          distances from atom i in conf 1 to atom found(i) in conf 2;
+!!
+!! C-header:
+!!~~~~~~~~~~~~~~~~{.c}
+!! void libira_cshda_from_cost( int n2, int n1, double* cost, \
+!!                              int** found, double** dists );
+!!~~~~~~~~~~~~~~~~
+subroutine libira_cshda_from_cost( n2, n1, cost, found, dists )bind(C,name="libira_cshda_from_cost")
+  use, intrinsic :: iso_c_binding, only: c_int, c_ptr, c_double, c_f_pointer
+  implicit none
+  integer(c_int), value, intent(in) :: n2
+  integer(c_int), value, intent(in) :: n1
+  type(c_ptr), value, intent(in) :: cost
+  type(c_ptr), intent(in) :: found
+  type(c_ptr), intent(in) :: dists
+
+  integer(c_int), pointer :: p_found(:) => null()
+  real(c_double), pointer :: p_dists(:) => null()
+  real(c_double), pointer :: p_cost(:,:) => null()
+
+  call c_f_pointer( cost, p_cost, [n2,n1] )
+  call c_f_pointer( found, p_found, [n2] )
+  call c_f_pointer( dists, p_dists, [n2] )
+  ! block
+  !   integer :: i, j
+  !   write(*,"('i \ j')", advance="no")
+  !   do j = 1, n2
+  !      write(*,"(i7,1x)",advance="no") j
+  !   end do
+  !   write(*,*)
+  !   do i = 1, n1
+  !      write(*,"(i3,':',1x)",advance="no") i
+  !      do j = 1, n2
+  !         write(*,"(f7.4, 1x)",advance="no") p_cost(j ,i)
+  !      end do
+  !      write(*,*)
+  !   end do
+  ! end block
+
+  call cshda_from_cost( n2, n1, p_cost, p_found, p_dists )
+  ! output C-style indices, starting at 0
+  p_found = p_found - 1
+end subroutine libira_cshda_from_cost
+
+
 !> @brief wrapper to the cshda_pbc routine from cshda.f90
 !!
 !! @details

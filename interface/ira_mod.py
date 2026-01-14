@@ -294,6 +294,57 @@ class IRA(algo):
 
         return found, dists
 
+    def cshda_from_cost( self, n1, n2, cost ):
+        """
+        Solve CShDA for a given cost matrix.
+
+
+        **== input ==**:
+
+        :param n1: dim1 of cost
+        :type n1: int
+
+        :param n2: dim2 of cost
+        :type n2: int
+
+        :param cost: the cost matrix to be assigned by CShDA.
+                     Element: cost[i][j] = distance( coords2[j] - coords1[i] )
+        :type cost: np.ndarray( [n1,n2], dtype=float)
+
+        **== output ==**:
+
+        :param found: array of assignments of the cost matrix,
+                      e.g.: `found[3]=4` means the cost element [3][4] was assigned
+        :type found: np.ndarray( n2, dtype = int )
+
+        :param dists: array of cost matrix values that have been assigned
+        :type dists: np.ndarray( n1, dtype = float )
+
+        """
+        # convert input to C-style
+        n1_c = c_int(n1)
+        n2_c = c_int(n2)
+        cost_c = cost.ctypes.data_as( POINTER(c_double) )
+        # allocate output arrays
+        found_c = (c_int*n2)()
+        dists_c = (c_double*n2)()
+
+        self.lib.libira_cshda_from_cost.restype=None
+        self.lib.libira_cshda_from_cost.argtypes = \
+            [ c_int, c_int, POINTER(c_double), \
+              POINTER(POINTER(c_int*n2)), POINTER(POINTER(c_double*n2)) ]
+        # call
+        self.lib.libira_cshda_from_cost( n1_c, n2_c, cost_c, pointer(found_c), pointer(dists_c) )
+        # output
+        found=np.ndarray(n2, dtype=int)
+        dists=np.ndarray(n2, dtype=float)
+        for i in range(n2):
+            found[i] = found_c[i]
+            dists[i] = dists_c[i]
+
+        return found, dists
+
+
     def svdrot( self, nat1, typ1, coords1, nat2, typ2, coords2 ):
         """
         call the Singular-Value-Decomposition (SVD) procedure for obtaining the

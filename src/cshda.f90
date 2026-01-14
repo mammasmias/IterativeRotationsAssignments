@@ -235,11 +235,11 @@
              chkmat(j,i) = dist
              !!
              !! keep for minimum row
-             ! dmin = min( dmin, dist )
-             if( dist .lt. dmin ) then
-                dmin = dist
-                tmpmin(i) = j
-             end if
+             dmin = min( dmin, dist )
+             ! if( dist .lt. dmin ) then
+             !    dmin = dist
+             !    tmpmin(i) = j
+             ! end if
           else
              chkmat(j,i) = 995.0_rp
           end if
@@ -255,8 +255,11 @@
        endif
        !!
     end do
+
     !! assign chkmat
-    call cshda_from_cost( nat1, nat2, chkmat, found, dists )
+    call cshda_from_cost( nat2, nat1, chkmat, found, dists )
+    !! do sqrt of dists
+    dists = sqrt(dists)
   end subroutine cshda
 
 
@@ -272,38 +275,43 @@
   !!  WARNING nat1 must be lower or equal nat2!
   !!
   !!================================================
-  !! @param[in]    n1    -> dimension 1 of cost matrix (number of atoms in conf 1);
-  !! @param[in]    n2    -> dimension 2 of cost matrix (number of atoms in conf 2);
-  !! @param[in]    cost[n1,n2] -> the cost matrix to assign
+  !! @param[in]    n2    -> dimension 1 (rows) of cost matrix (number of atoms in conf 2);
+  !! @param[in]    n1    -> dimension 2 (columns) of cost matrix (number of atoms in conf 1);
+  !! @param[in]    cost[n2,n1] -> the cost matrix to assign:
+  !!                              cost(j,i) = cost of j \in struc2 -> i \in struc1
   !! @param[out]   found   -> list of assigned atoms of conf 2 to conf 1:
   !!                          e.g. found(3) = 9 means atom 3 from conf 1 is assigned
   !!                          to atom 9 in conf 2;
   !! @param[out]   dists   -> assigned values of the cost matrix, i.e.:
   !!                          distances from atom i in conf 1 to atom found(i) in conf 2;
   !!
-  subroutine cshda_from_cost( n1, n2, chkmat, found, dists )
+  ! subroutine cshda_from_cost( n2, n1, chkmat, found, dists )
+  subroutine cshda_from_cost( n2, n1, cost, found, dists )
     use ira_precision
     implicit none
-    integer(ip), intent(in) :: n1
     integer(ip), intent(in) :: n2
-    real(rp), intent(inout) :: chkmat(n2,n1)
+    integer(ip), intent(in) :: n1
+    ! real(rp), intent(inout) :: chkmat(n2,n1)
+    real(rp), intent(in) :: cost(n2,n1)
     integer(ip), intent(out) :: found(n2)
     real(rp), intent(out) :: dists(n2)
 
-    ! real(rp) :: chkmat(n2,n1)
+    real(rp) :: chkmat(n2,n1)
     logical :: lsearch(n1)
     integer(ip) :: assigned(n2), tmpmin(n1)
     integer(ip) :: n_count, i, j, idx_old, k, nmax
     real(rp) :: dist, dist_old
     !! copy input cost
-    ! chkmat(:,:) = cost(:,:)
+    chkmat(:,:) = cost(:,:)
 
     !! init output
     found = 0
     dists=999.9_rp
 
     !! init tmpmin
-    tmpmin = minloc( chkmat(:,:), 1)
+    do i = 1, n1
+       tmpmin(i) = minloc( chkmat(:,i), 1)
+    end do
 
     !! set up the queue of searches
     lsearch(:) = .true.
@@ -389,13 +397,6 @@
 
        !!
     end do
-
-
-    !! do sqrt of dists
-    do i = 1, n1
-       dists(i) = sqrt(dists(i))
-    end do
-
 
     !! for equal sizes of structures we should be done
     if( n1 .eq. n2 ) return
