@@ -30,7 +30,7 @@ subprocess.call('doxygen Doxyfile.in', shell=True)
 project = 'lib_IRA'
 copyright = '2024, MAMMASMIAS Consortium'
 author = 'MG'
-release = 'v1.6'
+release = 'v2.2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
