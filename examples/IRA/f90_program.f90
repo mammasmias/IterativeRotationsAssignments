@@ -1,19 +1,20 @@
 program main
+  use ira_precision, only: ira_rp => rp
   implicit none
 
   integer :: nat1, nat2, dnat, nat_pass
   character(len=4), allocatable :: styp1(:), styp2(:)
   integer, allocatable :: typ1(:), typ2(:), typ_pass(:)
-  real, allocatable :: coords1(:,:), coords2(:,:), coords_pass(:,:)
+  real(ira_rp), allocatable :: coords1(:,:), coords2(:,:), coords_pass(:,:)
   integer :: i, ierr
   integer, allocatable :: candidate_1(:), candidate_2(:)
-  real, dimension(3) :: translation, svd_tr
-  real, dimension(3,3) :: rotation, svd_rot
-  real :: hd_out, hd
+  real(ira_rp), dimension(3) :: translation, svd_tr
+  real(ira_rp), dimension(3,3) :: rotation, svd_rot
+  real(ira_rp) :: hd_out, hd
   integer, allocatable :: permutation(:)
-  real :: kmax_factor
-  real :: rmsd
-  real, dimension(3) :: rdum
+  real(ira_rp) :: kmax_factor
+  real(ira_rp) :: rmsd
+  real(ira_rp), dimension(3) :: rdum
   character(len=512) :: msg
 
   !!
@@ -79,7 +80,7 @@ program main
   !! =================================
   !!
   allocate( permutation(1:nat2))
-  kmax_factor = 1.9
+  kmax_factor = 1.9_ira_rp
   call ira_svd( nat1, typ1, coords1, &
                 nat2, typ2, coords2, &
                 kmax_factor, rotation, translation, permutation, hd, rmsd, ierr )

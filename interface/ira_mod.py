@@ -294,6 +294,144 @@ class IRA(algo):
 
         return found, dists
 
+    def cshda_from_cost( self, n1, n2, cost ):
+        """
+        Solve CShDA for a given cost matrix.
+
+
+        **== input ==**:
+
+        :param n1: dim1 of cost
+        :type n1: int
+
+        :param n2: dim2 of cost
+        :type n2: int
+
+        :param cost: the cost matrix to be assigned by CShDA.
+                     Element: cost[i][j] = distance( coords2[j] - coords1[i] )
+        :type cost: np.ndarray( [n1,n2], dtype=float)
+
+        **== output ==**:
+
+        :param found: array of assignments of the cost matrix,
+                      e.g.: `found[3]=4` means the cost element [3][4] was assigned
+        :type found: np.ndarray( n2, dtype = int )
+
+        :param dists: array of cost matrix values that have been assigned
+        :type dists: np.ndarray( n1, dtype = float )
+
+        """
+        # convert input to C-style
+        n1_c = c_int(n1)
+        n2_c = c_int(n2)
+        cost_c = cost.ctypes.data_as( POINTER(c_double) )
+        # allocate output arrays
+        found_c = (c_int*n2)()
+        dists_c = (c_double*n2)()
+
+        self.lib.libira_cshda_from_cost.restype=None
+        self.lib.libira_cshda_from_cost.argtypes = \
+            [ c_int, c_int, POINTER(c_double), \
+              POINTER(POINTER(c_int*n2)), POINTER(POINTER(c_double*n2)) ]
+        # call
+        self.lib.libira_cshda_from_cost( n1_c, n2_c, cost_c, pointer(found_c), pointer(dists_c) )
+        # output
+        found=np.ndarray(n2, dtype=int)
+        dists=np.ndarray(n2, dtype=float)
+        for i in range(n2):
+            found[i] = found_c[i]
+            dists[i] = dists_c[i]
+
+        return found, dists
+
+
+    def svdrot( self, nat1, typ1, coords1, nat2, typ2, coords2 ):
+        """
+        call the Singular-Value-Decomposition (SVD) procedure for obtaining the
+        rotation matrix and translation vector that minimizes the RMSD distance
+        between structures A and B, for a fixed permutation.
+
+        Solution is to be applied to struc2, as:
+
+            >>> for i in range(nat2):
+            >>>     coords2[i] = np.matmul( rotation, coords2[i] ) + translation
+
+        or alternatively to struc1 as:
+
+            >>> for i in range(nat1):
+            >>>     coords1[i] = np.matmul( rotation.T, coords1[i] ) - np.matmul( rotation.T, translation )
+
+
+        **== input ==**:
+
+        :param nat1: number of atoms of structure 1
+        :type nat1: int
+
+        :param typ1: atomic types of structure 1
+        :type typ1: np.ndarray( nat1, dtype = int or string )
+
+        :param coords1: atomic positions of structure 1
+        :type coords1: np.ndarray( (nat1, 3), dtype = float )
+
+        :param nat2: number of atoms of structure 2
+        :type nat2: int
+
+        :type typ2: atomic types of structure 2
+        :param typ2: np.ndarray( nat2, dtype = int or string )
+
+        :param coords2: atomic positions of structure 2
+        :type coords2: np.ndarray( (nat2, 3), dtype = float)
+
+
+        **== output ==**:
+
+        :param rotation: rotation matrix
+        :type rotation: np.ndarray( (3,3), dtype = float)
+
+        :param translation: translation vector
+        :type translation: np.ndarray( 3, dtype = float)
+
+        """
+        # check typ arrays
+        u_typ1, u_typ2  = self.tf_int2( typ1, typ2 )
+
+        n1 = c_int(nat1)
+        n2 = c_int(nat2)
+        t1 = u_typ1.ctypes.data_as( POINTER(c_int) )
+        t2 = u_typ2.ctypes.data_as( POINTER(c_int) )
+        c1 = coords1.ctypes.data_as( POINTER(c_double) )
+        c2 = coords2.ctypes.data_as( POINTER(c_double) )
+
+        # allocate C output
+        c_rmat = (c_double*9)()
+        c_tr = (c_double*3)()
+        c_err = c_int()
+
+        self.lib.libira_svdrot.restype=None
+        self.lib.libira_svdrot.argtypes= \
+            [c_int, POINTER(c_int), POINTER(c_double), \
+             c_int, POINTER(c_int), POINTER(c_double), \
+             POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), POINTER(c_int)]
+        self.lib.libira_svdrot( n1, t1, c1, n2, t2, c2, pointer(c_rmat), pointer(c_tr), pointer(c_err) )
+
+        if c_err.value != 0:
+            msg = "error"
+            raise ValueError(msg)
+
+        # convert output C data
+        rotation = np.ndarray((3,3),dtype=float)
+        m=0
+        for i in range(3):
+            for j in range(3):
+                rotation[i][j] = c_rmat[m]
+                m+=1
+
+        # output
+        translation = np.ndarray(3,dtype=float)
+        for i in range(3):
+            translation[i] = c_tr[i]
+
+        return rotation, translation
 
     def match( self, nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor, candidate1=None, candidate2=None ):
         """
@@ -508,6 +646,130 @@ class IRA(algo):
 
         return rotation, translation, permutation, hd
 
+    def cshda_svd( self, nat1, typ1, coords1, nat2, typ2, coords2, dthr=None, recenter=True ):
+        """
+        Single call to cshda, followed by one-shot SVD.
+
+        Solution is to be applied to struc2, as:
+
+            >>> for i in range(nat2):
+            >>>     coords2[i] = np.matmul( rotation, coords2[i] ) + translation
+
+        or alternatively to struc1 as:
+
+            >>> for i in range(nat1):
+            >>>     coords1[i] = np.matmul( rotation.T, coords1[i] ) - np.matmul( rotation.T, translation )
+
+        Apply permutation:
+
+            >>> coords2[:] = coords2[permutation]
+            >>> typ2[:] = typ2[permutation]
+
+
+        **== input ==**:
+
+        :param nat1: number of atoms of structure 1
+        :type nat1: int
+
+        :param typ1: atomic types of structure 1
+        :type typ1: np.ndarray( nat1, dtype = int or string )
+
+        :param coords1: atomic positions of structure 1
+        :type coords1: np.ndarray( (nat1, 3), dtype = float )
+
+        :param nat2: number of atoms of structure 2
+        :type nat2: int
+
+        :type typ2: atomic types of structure 2
+        :param typ2: np.ndarray( nat2, dtype = int or string )
+
+        :param coords2: atomic positions of structure 2
+        :type coords2: np.ndarray( (nat2, 3), dtype = float)
+
+        **== optional ==**:
+
+        :param dthr: distance threshold for first cshda, in terms of dH. Default=999.9 (match anything)
+        :type dthr: float
+
+        :param recenter: whether the frist cshda should be centered to geo center or not. Default=True
+        :type recenter: bool
+
+        **== output ==**:
+
+        :param perm: array of assignments of atoms of structure1 to structure2,
+                     e.g.: `perm[3]=4` means the atom index 3 from structure1 has been assigned to
+                     atom index 4 from structure2 (python starts counting at zero btw).
+        :type perm: np.ndarray( nat2, dtype = int )
+
+        :param dists: array of distances from atom index `i` in structure1 to atom `perm[i]` in structure2.
+                      The Hausdorff distance can be obtained as `dH = np.max( dists )`
+        :type dists: np.ndarray( nat2, dtype = float )
+
+
+        :param rmat: rotation matrix
+        :type rmat: np.ndarray( (3,3), dtype = float)
+
+        :param tr: translation vector
+        :type tr: np.ndarray( 3, dtype = float)
+        """
+        # check typ arrays
+        u_typ1, u_typ2  = self.tf_int2( typ1, typ2 )
+
+        n1 = c_int(nat1)
+        n2 = c_int(nat2)
+        t1 = u_typ1.ctypes.data_as( POINTER(c_int) )
+        t2 = u_typ2.ctypes.data_as( POINTER(c_int) )
+        c1 = coords1.ctypes.data_as( POINTER(c_double) )
+        c2 = coords2.ctypes.data_as( POINTER(c_double) )
+
+        # allocate C output
+        c_perm = (c_int*nat2)()
+        c_dists = (c_double*nat2)()
+        c_rmat = (c_double*9)()
+        c_tr = (c_double*3)()
+        c_err = c_int()
+
+        c_dthr=c_double(999.9)
+        if dthr is not None:
+            c_dthr=c_double(dthr)
+        c_recenter = c_bool(recenter)
+
+        self.lib.libira_cshda_svd.restype=None
+        self.lib.libira_cshda_svd.argtypes= \
+            [c_int, POINTER(c_int), POINTER(c_double), \
+             c_int, POINTER(c_int), POINTER(c_double), \
+             c_double, c_bool,
+             POINTER(POINTER(c_int*nat2)), POINTER(POINTER(c_double*nat2)),
+             POINTER(POINTER(c_double*9)), POINTER(POINTER(c_double*3)), POINTER(c_int)]
+        self.lib.libira_cshda_svd( n1, t1, c1, n2, t2, c2, \
+                                   c_dthr, c_recenter, \
+                                   pointer(c_perm), pointer(c_dists), \
+                                   pointer(c_rmat), pointer(c_tr), pointer(c_err) )
+
+        if c_err.value != 0:
+            msg = "error"
+            raise ValueError(msg)
+
+        # convert output C data
+        rmat = np.ndarray((3,3),dtype=float)
+        m=0
+        for i in range(3):
+            for j in range(3):
+                rmat[i][j] = c_rmat[m]
+                m+=1
+
+        # output
+        tr = np.ndarray(3,dtype=float)
+        for i in range(3):
+            tr[i] = c_tr[i]
+        ## output
+        perm=np.ndarray(nat2, dtype=int)
+        dists=np.ndarray(nat2, dtype=float)
+        for i in range(nat2):
+            perm[i] = c_perm[i]
+            dists[i] = c_dists[i]
+
+        return perm, dists, rmat, tr
 
 class sym_data():
     """

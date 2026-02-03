@@ -1,44 +1,60 @@
 #
-# Fortran compiler
+# Fortran/C compilers
 #
 FCOMP = gfortran
-CCOMP=gcc
+CCOMP = gcc
 
 #
 # compilation flags
 #
-FFLAGS = -fdefault-real-8 -fbounds-check
+FFLAGS = -fbounds-check
 CFLAGS =
 
+#
+# the needed paths:
+#
+
+# this path:
 SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
+# ira/src path:
 SRCDIR = $(realpath $(SRC)/../../src)
+
+# library dir (path to libira.a or libira.so)
 LIBDIR = $(realpath $(SRC)/../../lib)
+
+# include dir (path to .mod files)
+INCDIR = $(realpath $(SRC)/../../include)
+
+# interface dir (path to iralib_interf.h)
 INTERFDIR = $(realpath $(SRC)/../../interface)
-OBJ = $(SRC)/Obj
 
-MOD = # -I$(OBJ) -J$(OBJ)
-
-#
-# path to src/libira
-#
-SHLIB = -L$(LIBDIR) -lira -Wl,-rpath,$(LIBDIR)
+MOD = -I$(INCDIR)
 
 #
-# when linking to static library libira.a define these:
+# specify link to libira
 #
-LIBS= #-lm -lgfortran -llapack
+SHLIB = -L$(LIBDIR) -lira
+#
+# set runpath
+#
+SHLIB += -Wl,-rpath,$(LIBDIR)
+
+#
+# when linking to static library libira.a add these:
+#
+SHLIB += #-lm -lgfortran -llapack
 
 # Produced filenames
 #
-IRAUNI_X = $(SRC)/f90_program.x
+F_PROG = $(SRC)/f90_program.x
 C_PROG = $(SRC)/c_program.x
 
 
 #=======================
-# object files
+# program files
 #
-f_uni := $(SRC)/f90_program.f90
-o_uni := $(patsubst $(SRC)%, $(OBJ)%, $(f_uni:%.f90=%.o))
+fprog := $(SRC)/f90_program.f90
 
 cprog := $(SRC)/c_program.c
 
@@ -47,38 +63,33 @@ default: msg
 
 all : f90 cprog
 
-$(OBJ)%.o: $(SRC)/%.f90
-	$(FCOMP) $(FFLAGS) $(MOD) -c $< -o $@
 
-
-f90: $(OBJ) $(IRAUNI_X)
-cprog: $(OBJ) $(C_PROG)
-
-#
-# object folder
-#
-$(OBJ):
-	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ) ; fi
+f90: $(F_PROG)
+cprog: $(C_PROG)
 
 
 
 #====
 # Compile the f90 executable
 #====
-$(IRAUNI_X): $(o_uni)
-	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB) $(LIBS)
+$(F_PROG): $(fprog)
+	$(FCOMP) $(FFLAGS) $(MOD) $^ -o $@ $(SHLIB)
+	@echo ' >> Fortran program compiled successfully: $(F_PROG)'
+	@echo ' >> Launch as: ./$(F_PROG) < example_inputs/input1.xyz'
 
 #====
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CCOMP) -I$(INTERFDIR) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB) $(LIBS)
+	$(CCOMP) -I$(INTERFDIR) $(CFLAGS) $(MOD) -o $@ $^ $(SHLIB)
+	@echo ' >> C program compiled successfully: $(C_PROG)'
+	@echo ' >> Launch as: ./$(C_PROG)  example_inputs/input1.xyz'
 
 
 msg:
 	@echo 'Use one of the following:'
 	@echo ''
-	@echo ' make f90     -> compiles the f90 example program $(IRAUNI_X) executable'
+	@echo ' make f90     -> compiles the f90 example program $(F_PROG) executable'
 	@echo ' make cprog   -> compiles the C example program $(C_PROG)'
 	@echo ' make all     -> all of the above'
 	@echo ''
@@ -90,8 +101,7 @@ msg:
 
 
 clean:
-	rm -rf $(IRAUNI_X)  $(C_PROG)
-	rm -rf $(OBJ)
+	rm -rf $(F_PROG)  $(C_PROG)
 
 
 

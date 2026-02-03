@@ -26,12 +26,7 @@ The C program is run as:
 
 In the `c_program.c`, the threshold `sym_thr` is likewise hard-coded.
 
-The python program needs to know the location of the `ira_mod` module, to do this type (you might also put this into your `.bashrc`):
-
-    export PYTHONPATH=$PYTHONPATH:/path/to/IterativeRotationsAssignments/interface
-
-with the correct path to the `/interface` directory where `ira_mod.py` is located.
-Then run the python program as:
+The python program is run as:
 
     python3 python_program.py example_inputs/"filename"
 

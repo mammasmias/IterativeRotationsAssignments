@@ -8,16 +8,30 @@ CC=gcc
 #
 # compilation flags
 #
-FFLAGS = -fdefault-real-8 -fcheck=bounds
+# FFLAGS = -fdefault-real-8 -fcheck=bounds
+FFLAGS = -fcheck=bounds
 CFLAGS =
 
 #
-# directories
+# directories:
 #
+
+# this path
 SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
+# ira/src path:
 SRCDIR := $(realpath $(SRC)/../../src)
+
+# library dir (path to libira.a or libira.so)
+LIBDIR := $(realpath $(SRC)/../../lib)
+
+# include dir (path to .mod files)
+INCDIR := $(realpath $(SRC)/../../include)
+
+# interface dir (path to iralib_interf.h)
 INTERFDIR = $(realpath $(SRC)/../../interface)
 
+MOD = -I$(INCDIR)
 #
 # include directory of header for C program
 #
@@ -25,24 +39,19 @@ C_INCLUDE = -I$(INTERFDIR)
 
 
 
-##------------------
-##
-## Options for compilation with the shared library libira.so, or static libira.a
-## SRCDIR is path to IRA/src/
-##
-
-# Using shared library:
 #
-IRALIB = -L$(SRCDIR) -lira -Wl,-rpath,$(SRCDIR)
+# specify link to libira
+#
+SHLIB = -L$(LIBDIR) -lira
+#
+# set runpath
+#
+SHLIB += -Wl,-rpath,$(LIBDIR)
 
 
 ## When using the static library: uncomment the following:
 ##
-#IRALIB = $(SRCDIR)/libira.a
-#LIBMATH = -lm
-#LIBFORTRAN = -lgfortran
-#LIBS += $(LIBMATH) $(LIBFORTRAN)
-#------------------
+SHLIB += #-lm -lgfortran -llapack
 
 
 
@@ -74,13 +83,17 @@ cprog: $(C_PROG)
 # Compile the f90 executable
 #====
 $(F_PROG): $(fprog)
-	$(F90) $(FFLAGS) -o $@ $^ $(IRALIB)
+	$(F90) $(FFLAGS) $(MOD) -o $@ $^ $(SHLIB)
+	@echo ' >> Fortran program compiled successfully: $(F_PROG)'
+	@echo ' >> Launch as: $(F_PROG) < example_inputs/Th.xyz'
 
 #====
 # Compile the C executable
 #====
 $(C_PROG): $(cprog)
-	$(CC) $(CFLAGS) $(C_INCLUDE) -o $@ $^ $(IRALIB)
+	$(CC) $(CFLAGS) $(C_INCLUDE) $(MOD) -o $@ $^ $(SHLIB)
+	@echo ' >> C program compiled successfully: $(C_PROG)'
+	@echo ' >> Launch as: $(C_PROG) < example_inputs/Th.xyz'
 
 
 msg:

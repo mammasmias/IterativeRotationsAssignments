@@ -5,6 +5,9 @@ void libira_cshda( int nat1, int *typ1, double *coords1, \
                    int nat2, int *typ2, double *coords2, \
                    double thr, int **found, double **dists);
 
+void libira_cshda_from_cost( int n1, int n2, double *cost, \
+                             int **found, double **dists);
+
 void libira_cshda_pbc( int nat1, int *typ1, double *coords1, \
                        int nat2, int *typ2, double *coords2, double * lat2, \
                        double thr, int **found, double **dists);
@@ -12,6 +15,16 @@ void libira_cshda_pbc( int nat1, int *typ1, double *coords1, \
 void libira_match(int nat1, int *typ1, double *coords1, int *cand1,\
                   int nat2, int *typ2, double *coords2, int *cand2, \
                   double km_factor, double **rmat, double **tr, int **perm, double *hd, int *cerr);
+
+void libira_svdrot(int nat1, int *typ1, double *coords1, \
+                   int nat2, int *typ2, double *coords2, \
+                   double **rotation, double **translation, int *ierr );
+
+void libira_cshda_svd( int nat1, int* typ1, double* coords1, \
+                       int nat2, int* typ2, double* coords2, \
+                       double dthr, int recenter, \
+                       int** perm, double** dists, \
+                       double** rmat, double** tr, int* ierr );
 
 void libira_get_version( char *string, int *date );
 

@@ -27,11 +27,6 @@ The C program is run as:
     ./c_program.x  example_inputs/input2.xyz
     ./c_program.x  example_inputs/input3.xyz
 
-The python program needs to know the location of the `ira_mod` module, to do this type (you might also put this into your `.bashrc`):
-
-    export PYTHONPATH=$PYTHONPATH:/path/to/IterativeRotationsAssignments/interface
-
-with the correct path to the `/interface` directory where `ira_mod.py` is located.
-Then run the python program as:
+The python program is run as:
 
     python3 python_program.py
