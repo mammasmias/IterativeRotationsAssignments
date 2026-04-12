@@ -24,6 +24,16 @@ Then you can directly use it:
    >>> sofi = ira_mod.SOFI()
 
 
+``conda`` installation
+----------------------
+
+Using the conda-forge channel, you can download and install the ``ira_mod`` python module by:
+
+.. code-block:: bash
+
+   conda install ira
+
+
 Other build tools
 -----------------
 
@@ -79,7 +89,7 @@ Other build tools are available, use one of the following:
             export PYTHONPATH=/path/to/IRA/interface:$PYTHONPATH
 
 
-   .. tab-item:: ``conda`` compatible build
+   .. tab-item:: Using ``pixi``
 
       For local machines, it is possible to use ``pixi`` [pixi-install]_ to get a working version of the
       Python bindings in a fairly automated manner.

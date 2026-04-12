@@ -43,6 +43,12 @@ Python module:
 
 For other build tools and more details, see the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/compilation.html).
 
+# Conda build
+
+Using the conda-forge channel:
+
+    conda install ira
+
 
 # Terms and conditions
 The software in this repository is subject to the license(s) provided in the `LICENSE.txt` file.
