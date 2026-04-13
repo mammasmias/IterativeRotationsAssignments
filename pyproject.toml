@@ -1,3 +1,22 @@
 [build-system]
-requires = ["setuptools", "wheel", "cmake>=3.5"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "ira_mod"
+dynamic = ["version"]
+description = "Algorithms for Iterative Rotations and Assignments (IRA); Symmetry Operations FInder (SOFI); and Constrained Shortest Distance Assignment (CShDA)."
+authors = [{name = "MAMMASMIAS Consortium"}]
+urls = {Homepage = "https://github.com/mammasmias/IterativeRotationsAssignments"}
+license = {text = "GPL-3.0-or-later OR Apache-2.0"}
+dependencies = ["numpy>=2.2.6"]
+
+[tool.scikit-build]
+cmake.version = ">=3.5"
+wheel.packages = []  # Python files are installed via cmake install()
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/version.f90"
+regex = 'string = "(?P<value>[^"]+)"'
+

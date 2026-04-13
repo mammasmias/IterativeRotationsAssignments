@@ -49,3 +49,14 @@ find_package(LAPACK REQUIRED)
 
 # add directory
 add_subdirectory(src)
+
+# ######################################################################################
+# Install rules for Python packaging (scikit-build-core)
+install(TARGETS ira LIBRARY DESTINATION ira_mod/lib)
+install(FILES
+    interface/__init__.py
+    interface/ira_mod.py
+    DESTINATION ira_mod
+)
+# ######################################################################################
+
