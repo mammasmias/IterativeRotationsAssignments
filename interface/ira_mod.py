@@ -18,7 +18,7 @@ from ctypes import *
 import numpy as np
 from os.path import dirname,abspath,join,exists
 from inspect import getsourcefile
-
+from glob import glob
 
 class algo():
     """
@@ -49,19 +49,27 @@ class algo():
     """
 
     def __init__(self, shlib='' ):
-        # path to this file
-        mypath=dirname(abspath(getsourcefile(lambda:0)))
-        # one directory up
-        mypath=dirname(mypath)
-        # by default, the lib should be there:
-        path = join(mypath,"lib/libira.so")
-        # if not, try in interface dir (happens when pip install)
-        if(not exists(path) ):
-            path = join(mypath,"ira_mod/lib/libira.so")
-
         if shlib:
-            # user provde path
+            # user provide custom path to lib
             path=shlib
+        else:
+            # find lib based on location of this file
+            # path to this file
+            mydir=dirname(abspath(getsourcefile(lambda:0)))
+
+            # expected name of lib
+            libname = "lib/libira.*"
+
+            # search one dir up (source tree layout) then same dir (installed package layout)
+            path = None
+            for base in [dirname(mydir), mydir]:
+                matches = glob(join(base, libname))
+                if matches:
+                    path = matches[0]
+                    break
+            if path is None:
+                raise FileNotFoundError(f"Could not find shared library '{libname}'")
+
 
         self.lib = CDLL(path)
         self.__version__, self.__date__ = self.get_version()
