@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21)
 file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/version.txt vv )
 list(GET vv 0 sem_version)
 list(GET vv 1 date_version)
+message(STATUS "IRA version: ${sem_version}")
 
 project(IRA
   VERSION "${sem_version}"
@@ -11,7 +12,6 @@ project(IRA
   LANGUAGES Fortran C)
 
 
-message(STATUS "cmake_project_version: ${CMAKE_PROJECT_VERSION}")
 
 
 # find lapack/blas
@@ -19,13 +19,10 @@ find_package(LAPACK REQUIRED)
 ## TODO: if(NOT FOUND LAPACK) compile and link local
 
 # set module directory to root/include
-set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
+set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-# add directory
-# add_subdirectory(src)
-
-
-set(MY_MODS
+# sources
+set(ira_src
   src/version.f90
   src/ira_precision.f90
   src/timer.f90
@@ -49,39 +46,39 @@ set(flagstr "")
 #
 check_fortran_compiler_flag( "-ffree-line-length-0" ff0 )
 if(ff0)
-  list(APPEND flagstr ";-ffree-line-length-0" )
+  list(APPEND flagstr "-ffree-line-length-0" )
 else()
 endif()
 #
 check_fortran_compiler_flag("-march=native" march_native )
 if(march_native)
-  list(APPEND flagstr ";-march=native")
+  list(APPEND flagstr "-march=native")
 else()
   check_fortran_compiler_flag("-xHost" xhost )
   if(xhost)
-    list(APPEND flagstr ";-xHost")
+    list(APPEND flagstr "-xHost")
   endif()
 endif()
 #
 check_fortran_compiler_flag( "-funroll-loops" unroll_loops )
 if(unroll_loops)
-  list(APPEND flagstr ";-funroll-loops" )
+  list(APPEND flagstr "-funroll-loops" )
 endif()
 #
 check_fortran_compiler_flag( "-ffast-math" fast_math )
 if(fast_math)
-  list(APPEND flagstr ";-ffast-math" )
+  list(APPEND flagstr "-ffast-math" )
 endif()
 #
 check_fortran_compiler_flag( "-Ofast" Ofast )
 if(Ofast)
-  list(APPEND flagstr ";-Ofast" )
+  list(APPEND flagstr "-Ofast" )
 endif()
-message(STATUS ${flagstr})
+message(STATUS "Using compiler flags: ${flagstr}")
 
 
 # specify shared library libira.so from MY_MODS
-add_library(ira SHARED ${MY_MODS})
+add_library(ira SHARED ${ira_src})
 target_compile_options( ira
   PRIVATE
   -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
@@ -92,6 +89,7 @@ set_target_properties(ira PROPERTIES
   Fortran_PREPROCESS ON
   Fortran_FORMAT FREE
   POSITION_INDEPENDENT_CODE ON
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib"
   )
 
 # link lapack
