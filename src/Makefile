@@ -36,6 +36,10 @@ LIBOUT = $(abspath $(SRC)/../lib)
 IRALIB = libira.a
 SHLIB  = libira.so
 
+# version strings
+sem_version  := $(shell head -n 1 ../version.txt)
+date_version := $(shell head -n 2 ../version.txt | tail -n 1)
+IRA_VERSION := -DSTRVERSION=\"${sem_version}\" -DDATEVERSION=${date_version}
 
 # object files
 #
@@ -70,7 +74,7 @@ all : lib shlib
 
 # rules
 $(OBJ)/%.o: $(SRC)/%.f90
-	$(F90) $(FFLAGS) -J$(MOD) -I$(MOD) -c $^ -o $@
+	$(F90) $(FFLAGS) $(IRA_VERSION) -J$(MOD) -I$(MOD) -c $^ -o $@
 
 # local lapack file if needed (keep -O0 to be sure)
 $(OBJ)/lap.o: $(SRC)/../lap_local/lap.f

@@ -17,6 +17,6 @@ wheel.packages = []  # Python files are installed via cmake install()
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
-input = "src/version.f90"
-regex = 'string = "(?P<value>[^"]+)"'
+input = "version.txt"
+regex = "^(?P<value>\\d+\\.\\d+\\.\\d+)"
 
