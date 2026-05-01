@@ -11,17 +11,17 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 
 set(MY_MODS
   version.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/ira_precision.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/timer.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/sofi_tools.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/err_module.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/sorting_module.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/set_candidate.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/cshda.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/ira_routines.f90
-  ${CMAKE_CURRENT_SOURCE_DIR}/sofi_routines.f90
-	${CMAKE_CURRENT_SOURCE_DIR}/library_ira.f90
-	${CMAKE_CURRENT_SOURCE_DIR}/library_sofi.f90
+  ira_precision.f90
+  timer.f90
+  sofi_tools.f90
+  err_module.f90
+  sorting_module.f90
+  set_candidate.f90
+  cshda.f90
+  ira_routines.f90
+  sofi_routines.f90
+	library_ira.f90
+	library_sofi.f90
   CACHE INTERNAL "")
 
 # specify shared library libira.so from MY_MODS
