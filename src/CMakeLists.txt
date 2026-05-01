@@ -24,12 +24,55 @@ set(MY_MODS
 	library_sofi.f90
   CACHE INTERNAL "")
 
+
+include(CheckFortranCompilerFlag)
+
+# find some available flags
+set(flagstr "")
+#
+check_fortran_compiler_flag( "-ffree-line-length-0" ff0 )
+if(ff0)
+  list(APPEND flagstr ";-ffree-line-length-0" )
+else()
+endif()
+#
+check_fortran_compiler_flag("-march=native" march_native )
+if(march_native)
+  list(APPEND flagstr ";-march=native")
+else()
+  check_fortran_compiler_flag("-xHost" xhost )
+  if(xhost)
+    list(APPEND flagstr ";-xHost")
+  endif()
+endif()
+#
+check_fortran_compiler_flag( "-funroll-loops" unroll_loops )
+if(unroll_loops)
+  list(APPEND flagstr ";-funroll-loops" )
+endif()
+#
+check_fortran_compiler_flag( "-ffast-math" fast_math )
+if(fast_math)
+  list(APPEND flagstr ";-ffast-math" )
+endif()
+#
+check_fortran_compiler_flag( "-Ofast" Ofast )
+if(Ofast)
+  list(APPEND flagstr ";-Ofast" )
+endif()
+message(STATUS ${flagstr})
+
+
 # specify shared library libira.so from MY_MODS
 add_library(ira SHARED ${MY_MODS})
 target_compile_options( ira
   PRIVATE
   -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
-  $<$<COMPILE_LANGUAGE:Fortran>:-ffree-line-length-0>
+  $<$<COMPILE_LANGUAGE:Fortran>:${flagstr}>
+  # $<$<COMPILE_LANGUAGE:Fortran>:-march=native>
+  # $<$<COMPILE_LANGUAGE:Fortran>:-funroll-loops>
+  # $<$<COMPILE_LANGUAGE:Fortran>:-ffast-math>
+  # $<$<COMPILE_LANGUAGE:Fortran>:-Ofast>
   )
 
 set_target_properties(ira PROPERTIES
@@ -43,3 +86,5 @@ set_target_properties(ira PROPERTIES
 
 # link lapack
 target_link_libraries(ira PUBLIC ${LAPACK_LIBRARIES})
+
+
