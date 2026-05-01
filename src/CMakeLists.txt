@@ -7,7 +7,7 @@ find_package(LAPACK REQUIRED)
 ## TODO: if(NOT FOUND LAPACK) compile and link local
 
 # set module directory to root/include
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_SOURCE_DIR}/include)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 
 set(MY_MODS
   version.f90
@@ -36,7 +36,7 @@ set_target_properties(ira PROPERTIES
   Fortran_PREPROCESS ON
   Fortran_FORMAT FREE
   POSITION_INDEPENDENT_CODE ON
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib"
+  LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
   NO_SONAME 1
   UNITY_BUILD ON
   )
