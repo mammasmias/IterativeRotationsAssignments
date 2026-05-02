@@ -77,7 +77,7 @@ endif()
 message(STATUS "Using compiler flags: ${flagstr}")
 
 
-# specify shared library libira.so from MY_MODS
+# specify shared library libira
 add_library(ira SHARED ${ira_src})
 target_compile_options( ira
   PRIVATE
