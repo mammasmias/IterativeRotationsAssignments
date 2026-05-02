@@ -37,8 +37,8 @@ IRALIB = libira.a
 SHLIB  = libira.so
 
 # version strings
-sem_version  := $(shell head -n 1 ../version.txt)
-date_version := $(shell head -n 2 ../version.txt | tail -n 1)
+sem_version  := $(shell head -n 1 $(SRC)/../version.txt)
+date_version := $(shell tail -n 1 $(SRC)/../version.txt)
 IRA_VERSION := -DSTRVERSION=\"${sem_version}\" -DDATEVERSION=${date_version}
 
 # object files
