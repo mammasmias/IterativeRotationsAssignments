@@ -12,12 +12,6 @@ project(IRA
   LANGUAGES Fortran C)
 
 
-
-
-# find lapack/blas
-find_package(LAPACK REQUIRED)
-## TODO: if(NOT FOUND LAPACK) compile and link local
-
 # set module directory to root/include
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -36,7 +30,6 @@ set(ira_src
 	src/library_ira.f90
 	src/library_sofi.f90
   CACHE INTERNAL "")
-
 
 
 include(CheckFortranCompilerFlag)
@@ -77,23 +70,40 @@ endif()
 message(STATUS "Using compiler flags: ${flagstr}")
 
 
-# specify shared library libira
-add_library(ira SHARED ${ira_src})
+# specify static library libira (shared is needed for python interf, managed by pyproject.toml)
+option( BUILD_SHARED_LIBS "build shared libraries" OFF)
+add_library(ira ${ira_src})
 target_compile_options( ira
   PRIVATE
   -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
   $<$<COMPILE_LANGUAGE:Fortran>:${flagstr}>
   )
+target_include_directories(ira PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY})
 
 set_target_properties(ira PROPERTIES
   Fortran_PREPROCESS ON
   Fortran_FORMAT FREE
   POSITION_INDEPENDENT_CODE ON
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib" # for shared lib
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib" # for static lib, i.e. 'archive'
   )
 
+
+# find lapack/blas
+find_package(LAPACK)
+
 # link lapack
-target_link_libraries(ira PUBLIC ${LAPACK_LIBRARIES})
+if(${LAPACK_FOUND})
+  target_link_libraries(ira PUBLIC ${LAPACK_LIBRARIES})
+else()
+  # compile and link the local lapack files
+  message(STATUS "IRA :: LAPACK library not found. Compiling local version (un-optimised).")
+  add_library(lap_local OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f)
+  target_compile_options(lap_local PRIVATE -O0)
+  set_target_properties(lap_local PROPERTIES Fortran_FORMAT FIXED POSITION_INDEPENDENT_CODE ON)
+  target_link_libraries(ira lap_local)
+endif()
+
 
 
 
