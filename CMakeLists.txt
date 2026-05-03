@@ -111,7 +111,6 @@ target_include_directories(ira
 # find lapack/blas
 find_package(LAPACK)
 
-set(LAPACK_FOUND FALSE)
 # link lapack
 if(${LAPACK_FOUND})
   target_link_libraries(ira PUBLIC ${LAPACK_LIBRARIES})
