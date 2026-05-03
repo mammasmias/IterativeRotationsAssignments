@@ -71,18 +71,21 @@ message(STATUS "Using compiler flags: ${flagstr}")
 
 
 # specify shared library libira
-add_library(ira SHARED ${ira_src})
+option( BUILD_SHARED_LIBS "build shared libraries" OFF)
+add_library(ira ${ira_src})
 target_compile_options( ira
   PRIVATE
   -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
   $<$<COMPILE_LANGUAGE:Fortran>:${flagstr}>
   )
+target_include_directories(ira PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY})
 
 set_target_properties(ira PROPERTIES
   Fortran_PREPROCESS ON
   Fortran_FORMAT FREE
   POSITION_INDEPENDENT_CODE ON
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib" # for shared lib
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib" # for static lib, i.e. 'archive'
   )
 
 
