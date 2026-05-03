@@ -13,6 +13,7 @@ dependencies = ["numpy>=2.2.6"]
 
 [tool.scikit-build]
 cmake.version = ">=3.5"
+cmake.args = [ "-DBUILD_SHARED_LIBS=ON" ]
 wheel.packages = []  # Python files are installed via cmake install()
 
 [tool.scikit-build.metadata.version]

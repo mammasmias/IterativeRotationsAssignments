@@ -70,7 +70,7 @@ endif()
 message(STATUS "Using compiler flags: ${flagstr}")
 
 
-# specify shared library libira
+# specify static library libira (shared is needed for python interf, managed by pyproject.toml)
 option( BUILD_SHARED_LIBS "build shared libraries" OFF)
 add_library(ira ${ira_src})
 target_compile_options( ira
