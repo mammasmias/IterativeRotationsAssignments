@@ -42,7 +42,7 @@ Other build tools are available, use one of the following:
 .. tab-set::
 
 
-   .. tab-item:: Using ``cmake``
+   .. tab-item:: Using ``cmake`` (recommened)
 
       To install with ``cmake``, execute:
 
@@ -51,7 +51,7 @@ Other build tools are available, use one of the following:
          cmake -B builddir
          cmake --build builddir
 
-      This will produce directories ``lib`` and ``include`` in the root path of you IRA folder, they will contain
+      This will produce directories ``lib`` and ``include`` in the builddir path specified, they will contain
       the static library ``libira.a`` and the fortran module files, respectively.
       If you wish to compile the shared library, configure the build with ``-DBUILD_SHARED_LIBS=ON``:
 
@@ -60,14 +60,26 @@ Other build tools are available, use one of the following:
          cmake -B builddir -DBUILD_SHARED_LIBS=ON
          cmake --build builddir
 
+      To install the library and module files to a particular location, do:
+
+      .. code-block:: bash
+
+         cmake --install builddir --prefix your/install/path
+
+      This will copy the ``lib`` and ``include`` directories and their contents to ``your/install/path``.
+
       .. admonition:: python module ``ira_mod``
          :class: tip
 
-         To use the python module, you will need to compile the shared library, and set the ``PYTHONPATH`` variable:
+         To use the python module, you will need to pass the ``-DINSTALL_PYTHON=ON``, install the
+         library somewhere, and set the ``PYTHONPATH`` variable to that same path with adding ``/ira_mod``:
 
          .. code-block::
 
-            export PYTHONPATH=/path/to/IRA/interface:$PYTHONPATH
+            cmake -B builddir -DINSTALL_PYTHON=ON
+            cmake --build builddir
+            cmake --install builddir --prefix your/install/path
+            export PYTHONPATH=your/install/path/ira_mod
 
 
 

@@ -11,9 +11,20 @@ project(IRA
   "Algorithms for Iterative Rotations and Assignments (IRA); Symmetry Operations FInder (SOFI); and Constrained Shortest Distance Assignment (CShDA)."
   LANGUAGES Fortran C)
 
+# optionallt build tests
+option( BUILD_TESTS "build basic IRA tests" OFF )
+
+# specify static library libira
+option( BUILD_SHARED_LIBS "build shared libraries" OFF )
+
+option( INSTALL_PYTHON "install the python-specific files" OFF )
+if(INSTALL_PYTHON)
+  # shared lib is needed for python interf, managed by pyproject.toml
+  set(BUILD_SHARED_LIBS ON)
+endif()
 
 # set module directory to root/include
-set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
 
 # sources
 set(ira_src
@@ -70,28 +81,37 @@ endif()
 message(STATUS "Using compiler flags: ${flagstr}")
 
 
-# specify static library libira (shared is needed for python interf, managed by pyproject.toml)
-option( BUILD_SHARED_LIBS "build shared libraries" OFF)
+# define ira lib
 add_library(ira ${ira_src})
-target_compile_options( ira
-  PRIVATE
-  -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
-  $<$<COMPILE_LANGUAGE:Fortran>:${flagstr}>
-  )
-target_include_directories(ira PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY})
-
 set_target_properties(ira PROPERTIES
   Fortran_PREPROCESS ON
   Fortran_FORMAT FREE
   POSITION_INDEPENDENT_CODE ON
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib" # for shared lib
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib" # for static lib, i.e. 'archive'
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib" # for shared lib
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib" # for static lib, i.e. 'archive'
+  )
+# compile flags
+target_compile_options( ira PRIVATE
+  $<$<COMPILE_LANGUAGE:Fortran>:${flagstr}>
+  )
+# preprocessor defs
+target_compile_definitions( ira PRIVATE
+  -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
+  )
+# propagate include dirs for different callers:
+# PUBLIC means the dir is used for compilation, and has to be included when linking
+# INTERFACE means the dir is not used for compilation, but has to be included when linking
+target_include_directories(ira
+  PUBLIC    $<$<COMPILE_LANGUAGE:Fortran>:${CMAKE_Fortran_MODULE_DIRECTORY}>
+  INTERFACE $<$<COMPILE_LANGUAGE:C>:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+  INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/interface>
   )
 
 
 # find lapack/blas
 find_package(LAPACK)
 
+set(LAPACK_FOUND FALSE)
 # link lapack
 if(${LAPACK_FOUND})
   target_link_libraries(ira PUBLIC ${LAPACK_LIBRARIES})
@@ -105,13 +125,33 @@ else()
 endif()
 
 
+if(BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
 
 
-# Install rules for Python packaging (scikit-build-core)
-install(TARGETS ira LIBRARY DESTINATION ira_mod/lib)
-install(FILES
+if(INSTALL_PYTHON)
+  # Install rules for Python packaging (scikit-build-core):
+  # name of the directory is the name of python package
+  install(FILES
     interface/__init__.py
     interface/ira_mod.py
-    DESTINATION ira_mod
-)
+    DESTINATION ira_mod )
+  install( FILES $<TARGET_FILE:ira>
+    DESTINATION ira_mod/lib
+    )
+else()
+  # Regular install
+  include(GNUInstallDirs)
+  install(TARGETS ira
+    EXPORT IRATargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(FILES
+    interface/iralib_interf.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
 

@@ -1,4 +1,10 @@
+#ifndef IRALIB_H
+#define IRALIB_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /* declare functions from library_ira.f90 */
 void libira_cshda( int nat1, int *typ1, double *coords1, \
@@ -66,3 +72,10 @@ void libira_get_err_msg( int ierr, char** msg );
 void libira_matrix_distance( const double *mat1, const double *mat2, double *dist);
 
 void libira_check_collinear( int nat, double *coords, int *collinear, double **ax );
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
