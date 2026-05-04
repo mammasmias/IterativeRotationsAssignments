@@ -15,7 +15,7 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 9.0)
     message(FATAL_ERROR
       "gfortran >= 9.0 is required, found: ${CMAKE_Fortran_COMPILER_VERSION}
-       If executing the command `which gfortran` returns a different version,
+       If executing the command `gfortran --version` returns a different version,
        you can try to specify it manually to cmake:
           rm -rf <builddir>
           cmake -B <builddir> -DCMAKE_Fortran_COMPILER=$(which gfortran)
