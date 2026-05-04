@@ -533,16 +533,16 @@ end subroutine libira_cshda_svd
 !! @returns cstring, cdate
 !!
 subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version")
-  use, intrinsic :: iso_c_binding, only: c_int, c_null_char, c_char
+  use, intrinsic :: iso_c_binding, only: c_long, c_null_char, c_char
   implicit none
   character(len=1, kind=c_char), dimension(6) :: cstring
-  integer( c_int ) :: cdate
+  integer( c_long ) :: cdate
 
   character(5) :: fstring
   integer :: fdate, i, n
 
   call ira_get_version( fstring, fdate )
-  cdate = int( fdate, c_int )
+  cdate = int( fdate, c_long )
   n = len_trim(fstring)
   if( n .gt. 5 ) write(*,*) "WARNING: IRA version string seems long, check!"
   do i = 1, n

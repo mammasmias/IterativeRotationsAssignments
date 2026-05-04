@@ -123,9 +123,9 @@ class algo():
         obtain the IRA library version
         '''
         self.lib.libira_get_version.restype = None
-        self.lib.libira_get_version.argtypes = [ c_char_p, POINTER(c_int) ]
+        self.lib.libira_get_version.argtypes = [ c_char_p, POINTER(c_long) ]
         cstring = (c_char*10)()
-        cdate = c_int()
+        cdate = c_long()
 
         self.lib.libira_get_version( cstring, cdate )
 
