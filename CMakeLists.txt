@@ -11,9 +11,25 @@ project(IRA
   "Algorithms for Iterative Rotations and Assignments (IRA); Symmetry Operations FInder (SOFI); and Constrained Shortest Distance Assignment (CShDA)."
   LANGUAGES Fortran C)
 
-# optimize for natiive machine
+
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS 9.0)
+    message(FATAL_ERROR
+      "gfortran >= 9.0 is required, found: ${CMAKE_Fortran_COMPILER_VERSION}
+       If executing the command `gfortran --version` returns a different version,
+       you can try to specify it manually to cmake:
+          rm -rf <builddir>
+          cmake -B <builddir> -DCMAKE_Fortran_COMPILER=$(which gfortran)
+       Stopping.")
+  endif()
+endif()
+
+# optimize for native machine
 option(IRA_ENABLE_NATIVE_OPTIMIZATION
   "optimize IRA for native CPU (this adds flags: '-march=native -ffast-math' or equivalent)" ON)
+
+# optionally build tests
+option( BUILD_TESTS "build basic IRA tests" OFF )
 
 # optionally build tests
 option( IRA_BUILD_TESTS "build basic IRA tests" OFF )

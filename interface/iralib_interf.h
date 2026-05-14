@@ -32,7 +32,7 @@ void libira_cshda_svd( int nat1, int* typ1, double* coords1, \
                        int** perm, double** dists, \
                        double** rmat, double** tr, int* ierr );
 
-void libira_get_version( char *string, int *date );
+void libira_get_version( char *string, long *date );
 
 
 /* declare functions from library_sofi.f90 */

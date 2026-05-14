@@ -1,9 +1,13 @@
 #include "iralib_interf.h"
+#include <stdio.h>
 
 int main(){
-  int i;
-
+  long i;
   char str[5];
 
   libira_get_version( str, &i);
+
+  printf( "%li\n", i );
+  printf( "%s\n", str );
+  return 0;
 }
