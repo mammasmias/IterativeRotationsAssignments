@@ -11,22 +11,23 @@ project(IRA
   "Algorithms for Iterative Rotations and Assignments (IRA); Symmetry Operations FInder (SOFI); and Constrained Shortest Distance Assignment (CShDA)."
   LANGUAGES Fortran C)
 
-# optionallt build tests
-option( BUILD_TESTS "build basic IRA tests" OFF )
+# optimize for natiive machine
+option(IRA_ENABLE_NATIVE_OPTIMIZATION
+  "optimize IRA for native CPU (this adds flags: '-march=native -ffast-math' or equivalent)" ON)
 
-# specify static library libira
-option( BUILD_SHARED_LIBS "build shared libraries" OFF )
+# optionally build tests
+option( IRA_BUILD_TESTS "build basic IRA tests" OFF )
 
-option( INSTALL_PYTHON "install the python-specific files" OFF )
-if(INSTALL_PYTHON)
+option( IRA_INSTALL_PYTHON "install the python-specific files" OFF )
+if(IRA_INSTALL_PYTHON)
   # shared lib is needed for python interf, managed by pyproject.toml
   set(BUILD_SHARED_LIBS ON)
 endif()
 
-# set module directory to root/include
-set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
+# include variables for standard install directory names
+include(GNUInstallDirs)
 
-# sources
+# source files
 set(ira_src
   src/version.f90
   src/ira_precision.f90
@@ -40,7 +41,7 @@ set(ira_src
   src/sofi_routines.f90
 	src/library_ira.f90
 	src/library_sofi.f90
-  CACHE INTERNAL "")
+  )
 
 
 include(CheckFortranCompilerFlag)
@@ -54,57 +55,64 @@ if(ff0)
 else()
 endif()
 #
-check_fortran_compiler_flag("-march=native" march_native )
-if(march_native)
-  list(APPEND flagstr "-march=native")
-else()
-  check_fortran_compiler_flag("-xHost" xhost )
-  if(xhost)
-    list(APPEND flagstr "-xHost")
-  endif()
-endif()
-#
 check_fortran_compiler_flag( "-funroll-loops" unroll_loops )
 if(unroll_loops)
   list(APPEND flagstr "-funroll-loops" )
-endif()
-#
-check_fortran_compiler_flag( "-ffast-math" fast_math )
-if(fast_math)
-  list(APPEND flagstr "-ffast-math" )
 endif()
 #
 check_fortran_compiler_flag( "-Ofast" Ofast )
 if(Ofast)
   list(APPEND flagstr "-Ofast" )
 endif()
+#
+if( IRA_ENABLE_NATIVE_OPTIMIZATION )
+  check_fortran_compiler_flag( "-ffast-math" fast_math )
+  if(fast_math)
+    list(APPEND flagstr "-ffast-math" )
+  endif()
+  #
+  check_fortran_compiler_flag("-march=native" march_native )
+  if(march_native)
+    list(APPEND flagstr "-march=native")
+  else()
+    check_fortran_compiler_flag("-xHost" xhost )
+    if(xhost)
+      list(APPEND flagstr "-xHost")
+    endif()
+  endif()
+endif()
 message(STATUS "Using compiler flags: ${flagstr}")
 
-
 # define ira lib
+set(ira_includedir "${CMAKE_CURRENT_BINARY_DIR}/include")
 add_library(ira ${ira_src})
+add_library(IRA::ira ALIAS ira)  # alias target name
 set_target_properties(ira PROPERTIES
   Fortran_PREPROCESS ON
   Fortran_FORMAT FREE
   POSITION_INDEPENDENT_CODE ON
+  Fortran_MODULE_DIRECTORY "${ira_includedir}"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib" # for shared lib
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib" # for static lib, i.e. 'archive'
+  VERSION ${PROJECT_VERSION}
+  SOVERSION ${PROJECT_VERSION_MAJOR}
   )
 # compile flags
 target_compile_options( ira PRIVATE
-  $<$<COMPILE_LANGUAGE:Fortran>:${flagstr}>
+  ${flagstr}
   )
 # preprocessor defs
 target_compile_definitions( ira PRIVATE
-  -DSTRVERSION="${sem_version}" -DDATEVERSION=${date_version}
+  STRVERSION="${sem_version}" DATEVERSION=${date_version}
   )
 # propagate include dirs for different callers:
 # PUBLIC means the dir is used for compilation, and has to be included when linking
 # INTERFACE means the dir is not used for compilation, but has to be included when linking
 target_include_directories(ira
-  PUBLIC    $<$<COMPILE_LANGUAGE:Fortran>:${CMAKE_Fortran_MODULE_DIRECTORY}>
-  INTERFACE $<$<COMPILE_LANGUAGE:C>:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-  INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+  PUBLIC
+  $<BUILD_INTERFACE:${ira_includedir}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 
 
@@ -124,33 +132,49 @@ else()
 endif()
 
 
-if(BUILD_TESTS)
+if(IRA_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
 
-if(INSTALL_PYTHON)
+
+
+# install procedures
+if(IRA_INSTALL_PYTHON)
   # Install rules for Python packaging (scikit-build-core):
   # name of the directory is the name of python package
   install(FILES
     interface/__init__.py
     interface/ira_mod.py
     DESTINATION ira_mod )
-  install( FILES $<TARGET_FILE:ira>
-    DESTINATION ira_mod/lib
-    )
+  install(TARGETS ira
+    EXPORT IRATargets
+    LIBRARY DESTINATION  ira_mod/lib
+    INCLUDES DESTINATION ira_mod/include)
+
+  # install( FILES $<TARGET_FILE:ira>
+  #   DESTINATION ira_mod/lib
+    # )
 else()
   # Regular install
-  include(GNUInstallDirs)
   install(TARGETS ira
     EXPORT IRATargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-  install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
+  install(DIRECTORY ${ira_includedir}/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
   install(FILES
     interface/iralib_interf.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(EXPORT IRATargets
+    FILE IRAConfig.cmake
+    NAMESPACE IRA::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/)
+
+  # export config file during build
+  export(EXPORT IRATargets
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/IRAConfig.cmake
+    NAMESPACE IRA::)
 endif()
 

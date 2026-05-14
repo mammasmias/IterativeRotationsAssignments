@@ -60,6 +60,11 @@ Other build tools are available, use one of the following:
          cmake -B builddir -DBUILD_SHARED_LIBS=ON
          cmake --build builddir
 
+      The available options are:
+
+      * ``-DIRA_BUILD_TESTS``: build some simple tests (default OFF);
+      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON).
+
       To install the library and module files to a particular location, do:
 
       .. code-block:: bash
@@ -71,12 +76,12 @@ Other build tools are available, use one of the following:
       .. admonition:: python module ``ira_mod``
          :class: tip
 
-         To use the python module, you will need to pass the ``-DINSTALL_PYTHON=ON``, install the
+         To use the python module, you will need to pass the ``-DIRA_INSTALL_PYTHON=ON``, install the
          library somewhere, and set the ``PYTHONPATH`` variable to that same path with adding ``/ira_mod``:
 
          .. code-block::
 
-            cmake -B builddir -DINSTALL_PYTHON=ON
+            cmake -B builddir -DIRA_INSTALL_PYTHON=ON
             cmake --build builddir
             cmake --install builddir --prefix your/install/path
             export PYTHONPATH=your/install/path/ira_mod
@@ -175,31 +180,64 @@ Linking a program to libira
    .. tab-item:: Using ``cmake`` (recommended)
 
       To link your Fortran or C target in CMake with ``libira``, it suffices to add IRA project
-      into your ``CMakeLists.txt`` project by either ``FetchContent`` as:
+      into your ``CMakeLists.txt`` project by one of the following methods:
 
-      .. code-block:: cmake
+      * To include IRA as part of the build process of your program:
 
-         # add IRA via FetchContent:
-         include( FetchContent )
-         FetchContent_Declare( ira_git
-           GIT_REPOSITORY https://github.com/mammasmias/IterativeRotationsAssignments.git
-           GIT_TAG master
-           GIT_SHALLOW 1
-           )
-         FetchContent_MakeAvailable( ira_git )
+        * With ``FetchContent`` as:
 
-         # link it to your target:
-         target_link_libraries( your-target PRIVATE ira )
+          .. code-block:: cmake
 
-      Or add it with ``add_subdirectory()`` as submodule as:
+             # add IRA via FetchContent:
+             include( FetchContent )
+             FetchContent_Declare( ira_git
+               GIT_REPOSITORY https://github.com/mammasmias/IterativeRotationsAssignments.git
+               GIT_TAG master
+               GIT_SHALLOW 1
+               )
+             FetchContent_MakeAvailable( ira_git )
 
-      .. code-block:: cmake
+             # link it to your target:
+             target_link_libraries( your-target PRIVATE ira )
 
-         # i.e. IRA is a submodule located in a directory called 'IRA'
-         add_subdirectory( IRA )
+        * With ``add_subdirectory()`` as submodule as:
 
-         # link it to your target:
-         target_link_libraries( your-target PRIVATE ira )
+          .. code-block:: cmake
+
+             # i.e. IRA is a submodule located in a directory called 'IRA'
+             add_subdirectory( IRA )
+
+             # link it to your target:
+             target_link_libraries( your-target PRIVATE ira )
+
+      * To include an already-compiled IRA somewhere on your machine:
+
+        * With ``include()`` to locate the exported targets file. Note, IRA exports a config file during the build step, located in the binary/cmake dir, and during install step located in the install/lib/cmake dir.
+
+          .. code-block:: cmake
+
+             # using include() with the build directory:
+             include( path-to-ira-build/cmake/IRAConfig.cmake )
+
+             # using include() with the install directory:
+             include( path-to-ira-install/lib/cmake/IRAConfig.cmake )
+
+             # link to your target:
+             target_link_libraries( your-target PRIVATE IRA::ira )
+
+        * Or with ``find_package()`` as:
+
+          .. code-block:: cmake
+
+             # using find_package() with the build directory:
+             find_package( IRA HINTS path-to-ira-build/cmake )
+
+             # using find_package() with the install directory:
+             find_package( IRA HINTS path-to-ira-install/lib/cmake )
+
+             # link to your target:
+             target_link_libraries( your-target PRIVATE IRA::ira )
+
 
    .. tab-item:: Using traditional ``make``
 
