@@ -194,17 +194,17 @@ else()
     "${PROJECT_NAME}-targets"
     LIBRARY DESTINATION  "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION  "${CMAKE_INSTALL_LIBDIR}"
-    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
     )
   # the module directory
   install(DIRECTORY
     "${ira_includedir}/"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
     )
   # the C interface header
   install(FILES
     "interface/iralib_interf.h"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
     )
   # export the targets
   install(EXPORT
