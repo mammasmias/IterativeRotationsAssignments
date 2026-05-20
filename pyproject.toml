@@ -6,6 +6,8 @@ build-backend = "scikit_build_core.build"
 name = "ira_mod"
 dynamic = ["version"]
 description = "Algorithms for Iterative Rotations and Assignments (IRA); Symmetry Operations FInder (SOFI); and Constrained Shortest Distance Assignment (CShDA)."
+readme = "README.md"
+requires-python = ">=3.10"
 authors = [{name = "MAMMASMIAS Consortium"}]
 urls = {Homepage = "https://github.com/mammasmias/IterativeRotationsAssignments"}
 license = {text = "GPL-3.0-or-later OR Apache-2.0"}
