@@ -1,11 +1,11 @@
 name = "ira"
-version = "2.2.0"
+version = "version.txt"
 
 [build]
 link = "lapack"
 
 [library]
-type = "shared"
+type = ["static", "shared"]
 source-dir = "src"
 
 [fortran]
@@ -16,6 +16,13 @@ source-form="default"
 
 [preprocess]
 [preprocess.cpp]
+macros = ["STRVERSION=\\\"2.2.0\\\"", "DATEVERSION=20250911" ]
+
+[features]
+optimized.flags = "-ffree-line-length-0 -fPIC -Ofast -ffast-math -march=native -funroll-loops"
+
+[profiles]
+release=["optimized"]
 
 [install]
 library=true

@@ -29,9 +29,6 @@ option(IRA_ENABLE_NATIVE_OPTIMIZATION
   "optimize IRA for native CPU (this adds flags: '-march=native -ffast-math' or equivalent)" ON)
 
 # optionally build tests
-option( BUILD_TESTS "build basic IRA tests" OFF )
-
-# optionally build tests
 option( IRA_BUILD_TESTS "build basic IRA tests" OFF )
 
 option( IRA_INSTALL_PYTHON "install the python-specific files" OFF )
