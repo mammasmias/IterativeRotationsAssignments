@@ -142,6 +142,7 @@ set(LAPACKLIB_STR "")
 # link lapack
 if(${LAPACK_FOUND})
   target_link_libraries( ${PROJECT_NAME} PUBLIC ${LAPACK_LIBRARIES})
+  # the "-l" prefix is set here, so the @LAPACK_STR@ in template.pc is empty when local lapack is used
   set(LAPACKLIB_STR "-l${LAPACK_LIBRARIES}")
 else()
   # compile and link the local lapack files

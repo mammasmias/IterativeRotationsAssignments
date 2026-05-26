@@ -69,9 +69,11 @@ Other build tools are available, use one of the following:
 
       .. code-block:: bash
 
-         cmake --install builddir --prefix your/install/path
+         cmake -B builddir -DCMAKE_INSTALL_PREFIX=your/install/path
+         cmake --build builddir
+         cmake --install builddir
 
-      This will copy the ``lib`` and ``include`` directories and their contents to ``your/install/path``.
+      This will copy the ``lib`` and ``include`` directories and their contents to ``your/install/path``, and create files needed for other ``CMake`` and/or ``pkg-config`` based projects to find the library.
 
       .. admonition:: python module ``ira_mod``
          :class: tip
@@ -81,9 +83,9 @@ Other build tools are available, use one of the following:
 
          .. code-block::
 
-            cmake -B builddir -DIRA_INSTALL_PYTHON=ON
+            cmake -B builddir -DIRA_INSTALL_PYTHON=ON -DCMAKE_INSTALL_PREFIX=your/install/path
             cmake --build builddir
-            cmake --install builddir --prefix your/install/path
+            cmake --install builddir
             export PYTHONPATH=your/install/path/ira_mod
 
 
@@ -176,6 +178,15 @@ Other build tools are available, use one of the following:
 Linking a program to libira
 ===========================
 
+Linking a program to ``libira`` is simple, however note that:
+
+* The base-level implementations are not placed in modules, therefore all routines are in principle acessible to the
+  caller. Care must be taken to ensure the correct type, kind, shape, etc. of the arguments, i.e. interface matching
+  needs to be checked manually;
+* The default precision is equivalent to ``c_int`` for integers, and ``c_double`` for reals, they are defined in
+  the ``IRA/src/ira_precision.f90`` module.
+
+
 .. tab-set::
    .. tab-item:: Using ``cmake`` (recommended)
 
@@ -198,45 +209,45 @@ Linking a program to libira
              FetchContent_MakeAvailable( ira_git )
 
              # link it to your target:
-             target_link_libraries( your-target PRIVATE ira )
+             target_link_libraries( your-target PRIVATE ira::ira )
 
         * With ``add_subdirectory()`` as submodule as:
 
           .. code-block:: cmake
 
-             # i.e. IRA is a submodule located in a directory called 'IRA'
-             add_subdirectory( IRA )
+             # i.e. IRA is a submodule located in a directory 'path/to/IRA'
+             add_subdirectory( path/to/IRA )
 
              # link it to your target:
-             target_link_libraries( your-target PRIVATE ira )
+             target_link_libraries( your-target PRIVATE ira::ira )
 
       * To include an already-compiled IRA somewhere on your machine:
 
-        * With ``include()`` to locate the exported targets file. Note, IRA exports a config file during the build step, located in the binary/cmake dir, and during install step located in the install/lib/cmake dir.
+        * With ``include()`` to locate the exported targets file. Note, IRA exports a config file during the build step, located in the binary/cmake/ira dir, and during install step located in the install/lib/cmake/ira dir.
 
           .. code-block:: cmake
 
              # using include() with the build directory:
-             include( path-to-ira-build/cmake/IRAConfig.cmake )
+             include( path-to-ira-build/cmake/ira/ira-BuildConfig.cmake )
 
              # using include() with the install directory:
-             include( path-to-ira-install/lib/cmake/IRAConfig.cmake )
+             include( path-to-ira-install/lib/cmake/ira/ira-config.cmake )
 
              # link to your target:
-             target_link_libraries( your-target PRIVATE IRA::ira )
+             target_link_libraries( your-target PRIVATE ira::ira )
 
         * Or with ``find_package()`` as:
 
           .. code-block:: cmake
 
              # using find_package() with the build directory:
-             find_package( IRA HINTS path-to-ira-build/cmake )
+             find_package( ira HINTS path-to-ira-build/cmake/ira NAMES ira-Build )
 
              # using find_package() with the install directory:
-             find_package( IRA HINTS path-to-ira-install/lib/cmake )
+             find_package( ira HINTS path-to-ira-install )
 
              # link to your target:
-             target_link_libraries( your-target PRIVATE IRA::ira )
+             target_link_libraries( your-target PRIVATE ira::ira )
 
 
    .. tab-item:: Using traditional ``make``
@@ -250,11 +261,6 @@ Linking a program to libira
       .. code-block:: bash
 
          gfortran -o caller_program.x caller_program.f90 -L/your/path/to/IRA/lib/ -lira -Wl,-rpath,/your/path/to/IRA/lib
-
-      The base-level implementations are not placed in modules, therefore all routines are in principle acessible to the
-      caller. Care must be taken to ensure the correct type, kind, shape, etc. of the arguments, i.e. interface matching
-      needs to be checked manually.
-      The default precision is equivalent to ``c_int`` for integers, and ``c_double`` for reals, they are defined in ``IRA/src/ira_precision.f90`` module.
 
       The C-headers are located in the ``IRA/interface`` directory, and can be included in compilation by ``-I/your/path/to/IRA/interface``.
 
