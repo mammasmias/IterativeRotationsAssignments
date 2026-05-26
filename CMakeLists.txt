@@ -134,9 +134,9 @@ target_include_directories( ${PROJECT_NAME}
 
 
 # find lapack/blas
-# find_package(LAPACK)
+find_package(LAPACK)
+# set(LAPACK_FOUND False) ### test lapack not found
 
-set(LAPACK_FOUND False)
 # string for pkgconfig link to lapack in template.pc
 set(LAPACKLIB_STR "")
 # link lapack
