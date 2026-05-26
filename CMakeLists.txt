@@ -94,7 +94,7 @@ if( IRA_ENABLE_NATIVE_OPTIMIZATION )
     endif()
   endif()
 endif()
-message(STATUS "Using compiler flags: ${flagstr}")
+message(STATUS "IRA :: Using compiler flags: ${flagstr}")
 
 # define ira lib
 set(ira_includedir "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -129,7 +129,7 @@ target_include_directories( ${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${ira_includedir}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
   )
 
 
