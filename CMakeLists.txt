@@ -131,6 +131,9 @@ target_include_directories( ${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
   )
+# string for targets
+set(alltargets "")
+list(APPEND alltargets "${PROJECT_NAME}" )
 
 
 # find lapack/blas
@@ -152,7 +155,7 @@ else()
   set_target_properties(lap_local PROPERTIES Fortran_FORMAT FIXED POSITION_INDEPENDENT_CODE ON)
   target_link_libraries( ${PROJECT_NAME} lap_local)
   # add lap_local target to the exported targets
-  install(TARGETS lap_local EXPORT "${PROJECT_NAME}-targets")
+  list(APPEND alltargets "lap_local" )
 endif()
 
 
@@ -172,7 +175,7 @@ if(IRA_INSTALL_PYTHON)
     "interface/ira_mod.py"
     DESTINATION "ira_mod" )
   install(TARGETS
-    "${PROJECT_NAME}"
+    ${alltargets}
     EXPORT
     "${PROJECT_NAME}-targets"
     LIBRARY DESTINATION  "ira_mod/lib"
@@ -181,13 +184,13 @@ if(IRA_INSTALL_PYTHON)
 
   # install( FILES $<TARGET_FILE:ira>
   #   DESTINATION ira_mod/lib
-    # )
+  # )
 else()
   # Regular install
 
   # which targets to install, add for export
   install(TARGETS
-    "${PROJECT_NAME}"
+    ${alltargets}
     EXPORT
     "${PROJECT_NAME}-targets"
     LIBRARY DESTINATION  "${CMAKE_INSTALL_LIBDIR}"
