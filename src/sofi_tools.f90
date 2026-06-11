@@ -63,6 +63,7 @@ module sofi_tools
   ! integer(ip), parameter :: lim_n_val = 96
   integer(ip), parameter :: lim_n_val = 200
 
+  ! overwrite findloc intrinsic, to lower the required version of compiler
   interface findloc
      procedure :: findloc_i, findloc_b
   end interface findloc
@@ -492,7 +493,7 @@ contains
   end subroutine ax_convention
 
 
-  ! overwrite findloc intrinsic, to lower the required version of compiler
+  ! NOTE: the dim doesnt do anything, just mimic the used call from intrinsic
   function findloc_i( arr, val, dim )result(idx)
     implicit none
     integer, intent(in), dimension(:) :: arr
