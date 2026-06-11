@@ -63,6 +63,10 @@ module sofi_tools
   ! integer(ip), parameter :: lim_n_val = 96
   integer(ip), parameter :: lim_n_val = 200
 
+  interface findloc
+     procedure :: findloc_i, findloc_b
+  end interface findloc
+
 
 contains
 
@@ -486,6 +490,40 @@ contains
     end if
     ax = ax*flip
   end subroutine ax_convention
+
+
+  ! overwrite findloc intrinsic, to lower the required version of compiler
+  function findloc_i( arr, val, dim )result(idx)
+    implicit none
+    integer, intent(in), dimension(:) :: arr
+    integer, intent(in) :: val
+    integer, intent(in), optional :: dim
+    integer :: idx
+    integer :: i
+    idx=0
+    do i = 1, size(arr)
+       if( arr(i) == val ) goto 666
+    end do
+    return
+666 continue
+    idx=i
+  end function findloc_i
+  function findloc_b( arr, val, dim )result(idx)
+    implicit none
+    logical, intent(in) :: arr(:)
+    logical, intent(in) :: val
+    integer, intent(in), optional :: dim
+    integer :: idx
+    integer :: i
+    idx=0
+    do i = 1, size(arr)
+       if( arr(i) .eqv. val ) goto 667
+    end do
+    return
+667 continue
+    idx=i
+  end function findloc_b
+
 
 
 end module sofi_tools

@@ -288,6 +288,7 @@
   ! subroutine cshda_from_cost( n2, n1, chkmat, found, dists )
   subroutine cshda_from_cost( n2, n1, cost, found, dists )
     use ira_precision
+    use sofi_tools, only: findloc
     implicit none
     integer(ip), intent(in) :: n2
     integer(ip), intent(in) :: n1
