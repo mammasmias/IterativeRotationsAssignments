@@ -347,6 +347,33 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
      return
   end if
 
+  !! validate the permutation before indexing with it.
+  !!
+  !! ira_unify can return ierr = 0 having left an entry of p_perm unwritten,
+  !! which happens when one structure carries a distant isolated atom. The
+  !! transform below indexes p_typ2 and p_coords2 with p_perm, so an unwritten
+  !! entry is either a valid index, giving a silently wrong match, or the
+  !! caller's initial value, which for a zeroed buffer is out of range and
+  !! aborts inside this routine rather than returning a status.
+  block
+    integer :: perm_seen(nat2), ip
+    perm_seen = 0
+    do ip = 1, nat2
+       if( p_perm(ip) < 1 .or. p_perm(ip) > nat2 ) then
+          cerr = -1_c_int
+          write(*,*) "ERROR in libira_match"
+          write(*,*) "permutation entry outside the range 1:nat2"
+          return
+       end if
+       perm_seen( p_perm(ip) ) = perm_seen( p_perm(ip) ) + 1
+    end do
+    if( any( perm_seen /= 1 ) ) then
+       cerr = -1_c_int
+       write(*,*) "ERROR in libira_match"
+       write(*,*) "permutation is not a bijection"
+       return
+    end if
+  end block
 
   !! transform
   ftyp2(:) = p_typ2(p_perm(:))
