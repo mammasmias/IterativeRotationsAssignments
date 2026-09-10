@@ -92,31 +92,16 @@ class algo():
 
         :meta private:
         """
-        ## get list of unique values
-        u=np.unique(arr1_in)
-        arr1_out=np.ndarray(len(arr1_in), dtype=int)
-        arr2_out=np.ndarray(len(arr2_in), dtype=int)
-        ## find values according to u
-        for i in range(len(arr1_in)):
-            loc = np.where( arr1_in[i] == u)[0]
-            if len(loc) > 0:
-                arr1_out[i] = loc[0] + 1
-        for i in range(len(arr2_in)):
-            loc = np.where( arr2_in[i] == u)[0]
-            if len(loc) > 0:
-                arr2_out[i] = loc[0] + 1
-            else:
-                ## it can happen that arr2 has values which arr1 doesn't
+        arr1 = np.asarray( arr1_in )
+        arr2 = np.asarray( arr2_in )
 
-                ## append the new typ into u
-                u=np.append(u, arr2_in[i] )
-                loc = np.where( arr2_in[i] == u)[0]
-                arr2_out[i] = loc[0]+1
+        ## find unique values for both arrays combined
+        all_vals = np.concatenate((arr1, arr2))
+        u, p = np.unique( all_vals, return_inverse=True )
 
-        arr1_out = np.intc( arr1_out )
-        arr2_out = np.intc( arr2_out )
-
-        return arr1_out, arr2_out
+        ## p contains indices of the combined unique values,
+        ## split into portions according to size of arrays
+        return np.intc( p[:len(arr1)] + 1), np.intc( p[len(arr1):] + 1)
 
     def get_version( self ):
         '''
