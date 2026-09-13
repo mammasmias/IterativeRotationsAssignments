@@ -30,3 +30,9 @@ The C program is run as:
 The python program is run as:
 
     python3 python_program.py
+
+The pair that leaves an unwritten `p_perm` entry (PR 16) lives in
+`bug-unwritten-perm/`. See that directory's README.
+
+The pair that triggers an unwritten `p_perm` entry is under
+`bug-unwritten-perm/` (see that directory's README).
