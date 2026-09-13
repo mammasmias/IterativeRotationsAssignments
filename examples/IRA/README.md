@@ -33,6 +33,3 @@ The python program is run as:
 
 The pair that leaves an unwritten `p_perm` entry (PR 16) lives in
 `bug-unwritten-perm/`. See that directory's README.
-
-The pair that triggers an unwritten `p_perm` entry is under
-`bug-unwritten-perm/` (see that directory's README).
