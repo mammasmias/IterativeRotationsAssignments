@@ -347,7 +347,6 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
      return
   end if
 
-
   !! transform
   ftyp2(:) = p_typ2(p_perm(:))
   fcoords2(:,:) = p_coords2(:,p_perm(:))

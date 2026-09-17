@@ -197,7 +197,7 @@
     integer(ip), dimension(nat1) :: tmpmin
 
     !! init output
-    dists = 999.9_rp
+    dists = huge(dists)
     found = 0
 
     !!
@@ -241,7 +241,7 @@
              !    tmpmin(i) = j
              ! end if
           else
-             chkmat(j,i) = 995.0_rp
+             chkmat(j,i) = huge(1.0_rp)
           end if
           !!
        end do
@@ -307,7 +307,7 @@
 
     !! init output
     found = 0
-    dists=999.9_rp
+    dists=huge(dists)
 
     !! init tmpmin
     do i = 1, n1
@@ -366,7 +366,7 @@
              !! if the previous found is closer, set the current distance
              !! to smth big, so its not found ever again!
              !!
-             chkmat(j,i) = 999.0_rp
+             chkmat(j,i) = huge(1.0_rp)
              tmpmin(i) = minloc(chkmat(:,i),1)
              !!
              !!
@@ -380,7 +380,7 @@
              !! if the previous found is larger then the new, the old idx should
              !! be searched again and the same distance should not be found!
              !!
-             chkmat(j, idx_old) = 999.0_rp
+             chkmat(j, idx_old) = huge(1.0_rp)
              lsearch( idx_old ) = .true.
              tmpmin(idx_old) = minloc( chkmat(:,idx_old), 1)
              assigned(idx_old) = 0

@@ -11,6 +11,16 @@ target_compile_options( f90main PRIVATE
 target_link_libraries( f90main PRIVATE ira )
 add_test( NAME f90main COMMAND f90main )
 
+# basic test ira match
+add_executable( test_ira test_ira.f90 )
+set_target_properties( test_ira PROPERTIES
+  Fortran_PREPROCESS ON
+  Fortran_FORMAT FREE )
+target_compile_options( test_ira PRIVATE
+  -ffree-line-length-0)
+target_link_libraries( test_ira PRIVATE ira )
+add_test( NAME test_ira COMMAND test_ira )
+
 # basic program with C caller
 add_executable( cmain main.c )
 target_link_libraries( cmain PRIVATE ira )
