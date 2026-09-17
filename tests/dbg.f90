@@ -11,6 +11,8 @@ module dbg
   public :: tostr
   public :: within
   public :: check_permutation
+  public :: random_permutation
+  public :: inverse_perm
 
   interface tostr
      procedure :: tostr_r0, tostr_r1
@@ -99,7 +101,7 @@ contains
 
     do ip = 1, n
        if( permutation(ip) < 1 .or. permutation(ip) > n ) then
-          write(*,*) "ERROR in libira_match"
+          write(*,*) "ERROR in check_permutation"
           write(*,"(1x,a,i0)") "permutation entry outside the range 1:",n
           write(*,"(1x,a,i0)") "permutation(i) = ",permutation(ip)
           return
@@ -107,13 +109,55 @@ contains
        perm_seen( permutation(ip) ) = perm_seen( permutation(ip) ) + 1
     end do
     if( any( perm_seen /= 1 ) ) then
-       write(*,*) "ERROR in libira_match"
+       write(*,*) "ERROR in check_permutation"
        write(*,*) "permutation is not a bijection:"
        write(*,"(10(i3,1x))") permutation
        return
     end if
     ierr = 0
   end function check_permutation
+
+  subroutine random_permutation( n, list )
+    !! generate a list of random indices of size n, such that
+    !! no index repeats
+    implicit none
+    integer, intent(in) :: n
+    integer, dimension(n), intent(out) :: list
+
+    integer :: i, idx
+    real :: z
+    logical :: old
+
+    !! initial values
+    list(:) = 0
+
+    do i = 1, n
+       old = .true.
+       do while( old )
+          call random_number(z)
+          !! generate index randomly in the range [1:n]
+          idx = int( z*n ) + 1
+          !! if this index already in list, skip and geenrate new
+          if( any(list .eq. idx ) ) cycle
+          !! if not, add it to list and stop loop for current index
+          list(i) = idx
+          old = .false.
+       end do
+    end do
+  end subroutine random_permutation
+
+  function inverse_perm( p )result(ip)
+    !! The inverse of a permutation is equal to index of each value,
+    !! e.g. ip(1) is the index of value 1 in p array.
+    !! `p` on input needs to be a valid permutation (no invalid values, or zeros!)
+    implicit none
+    integer, intent(in) :: p(:)
+    integer :: ip(size(p))
+    integer :: i
+    do i = 1, size(p)
+       ip(i) = findloc(p,i,dim=1)
+    end do
+  end function inverse_perm
 
 end module dbg
 
