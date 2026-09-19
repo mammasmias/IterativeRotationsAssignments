@@ -46,6 +46,7 @@ Tutorials and How-to
    howto/ira_howto
    howto/sofi_howto
 
+   howto/pgviewer
 
 (under construction)
 
