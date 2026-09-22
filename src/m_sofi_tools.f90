@@ -352,7 +352,7 @@ contains
 
     has_sigma = .false.
     do i = 1, nbas
-       if( op(i) == OP_IMPROP_ROT .and. n_int(i) .eq. 0 ) has_sigma = .true.
+       if( op(i) == OP_IMPROP_ROT .and. n_int(i) == 0 ) has_sigma = .true.
     end do
     return
   end function find_sigma

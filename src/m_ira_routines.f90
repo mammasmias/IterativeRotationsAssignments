@@ -436,6 +436,7 @@ contains
     logical :: fail
     integer(ip) :: count
     integer(ip) :: m_fin
+    integer, dimension(nat2) :: ord
 
     !! set local copies
     typ1(:) = typ1_in(:)
@@ -454,10 +455,11 @@ contains
     !!
     !! permute to this order
     !!
+    ord = nint(d_o(2,:))
     ! coords2(:,:) = coords2(:,nint(d_o(2,:)) )
     ! typ2(:) = typ2( nint(d_o(2,:)) )
-    call permute_real_2d(nat2, 3, coords2, nint(d_o(2, :)))
-    call permute_int_1d(nat2, typ2, nint(d_o(2, :)))
+    call permute_real_2d(nat2, 3, coords2, ord )
+    call permute_int_1d(nat2, typ2, ord )
     !!
     !! search for gamma
     !!
@@ -584,7 +586,7 @@ contains
     !!
     !! set data
     !!
-    if (idx1 == 0 .or. idx2 .eq. 0 .or. m_fin .eq. 0) then
+    if (idx1 == 0 .or. idx2 == 0 .or. m_fin == 0) then
        !! if nothing is found: BUG (probably too small kmax)
        !! But can also happen when searching nonequal nat...
        !! output gamma as identity matrix, all idx to zero
@@ -680,6 +682,7 @@ contains
     real(rp) :: dist_k
     integer(ip), dimension(3) :: gamma_idx
     integer(ip) :: count
+    integer(ip) :: ord(nat1)
 
     ierr = ERR_OTHER
 
@@ -752,10 +755,11 @@ contains
        call sort(nat1, 2, d_o, 1)
 
        !! permute coords1 to that order
+       ord = nint(d_o(2,:))
        ! coords1(:,:) = coords1(:,nint(d_o(2,:)))
        ! typ1(:) = typ1(nint(d_o(2,:)) )
-       call permute_real_2d(nat1, 3, coords1, nint(d_o(2, :)))
-       call permute_int_1d(nat1, typ1, nint(d_o(2, :)))
+       call permute_real_2d(nat1, 3, coords1, ord )
+       call permute_int_1d(nat1, typ1, ord )
 
        !!
        !! Find some basis in structure 1. Originally we take the first possible
@@ -894,8 +898,8 @@ contains
        !! permute struc1 back to orig
        ! coords1(:,nint(d_o(2,:))) = coords1(:,:)
        ! typ1(nint(d_o(2,:)) ) = typ1(:)
-       call permute_real_2d_back(nat1, 3, coords1, nint(d_o(2, :)))
-       call permute_int_1d_back(nat1, typ1, nint(d_o(2, :)))
+       call permute_real_2d_back(nat1, 3, coords1, ord )
+       call permute_int_1d_back(nat1, typ1, ord )
 
     end do
 
@@ -921,7 +925,7 @@ contains
     end if
 
     !! nothing has been found, this is probably same reason: too small dist_k
-    if (c1min == 0 .or. c2min .eq. 0) then
+    if (c1min == 0 .or. c2min == 0) then
        ierr = ERR_OTHER
        ! write(*,*) "another err"
        return

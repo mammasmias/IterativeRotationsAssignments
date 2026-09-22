@@ -304,6 +304,7 @@ contains
     real(rp) :: u_c3(3,5)
     real(rp) :: ax(3)
     real(rp) :: rmin, rmax
+    integer, allocatable :: ord(:)
 #ifdef DEBUG
     type( local_timer ) :: tm
 #endif
@@ -356,8 +357,10 @@ contains
 
     !! sorting routines from IRA lib
     call sort( nat, 2, d_o, 1)
-    coords = coords(:,nint(d_o(2,:)))
-    typ = typ( nint(d_o(2,:)))
+    allocate( ord(1:nat) )
+    ord = nint(d_o(2,:))
+    coords = coords(:,ord)
+    typ = typ( ord )
 
     !! find smallest atom-atom dist, for first cshda thr
     !!=============
@@ -445,7 +448,7 @@ contains
 
     ! write(*,*) "fail_beta", fail_beta
     ! write(*,*) i,j
-    if( fail1 .or. i > nat .or. j .gt. nat ) then
+    if( fail1 .or. i > nat .or. j > nat ) then
        write(*,*) repeat('%',40)
        write(*,*) "ERROR: cannot set beta. Structure not properly shifted?"
        write(*,*) repeat('%',40)
@@ -600,7 +603,7 @@ contains
 
 
     ! write(*,*) 'exiting get_symmops'
-    deallocate( d_o )
+    deallocate( d_o, ord )
 
   end subroutine sofi_get_symmops
 
@@ -1434,7 +1437,7 @@ contains
     !!
     !! flowchart, top part
     !!
-    if( max_n_val >= 3 .and. nr_n .ge. 2 ) then
+    if( max_n_val >= 3 .and. nr_n >= 2 ) then
        !!
        !! is some T# group (n < 4)
        if( max_n_val >= 4) then
@@ -1909,7 +1912,7 @@ contains
        end if
     end do
     !!
-    if( nl == n .and. pl .eq. p ) then
+    if( nl == n .and. pl == p ) then
        write(*,'(a,1x,f12.6)') "unable to find n and p for angle:",angle
        write(*,*) "origin at:",__FILE__,"line:",__LINE__
        ierr = ERR_OTHER
