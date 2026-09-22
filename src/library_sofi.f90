@@ -73,13 +73,14 @@
 !! ~~~~~~~~~~~~~~~
 !!
 subroutine libira_compute_all( nat, typ, coords, sym_thr, prescreen_ih, &
-                            n_mat, mat_list, perm_list, &
-                            op_list, n_list, p_list, &
-                            ax_list, angle_list, dHausdorff_list, pg, n_prin_ax, prin_ax, &
-                            cerr ) bind(C, name="libira_compute_all")
+     n_mat, mat_list, perm_list, &
+     op_list, n_list, p_list, &
+     ax_list, angle_list, dHausdorff_list, pg, n_prin_ax, prin_ax, &
+     cerr ) bind(C, name="libira_compute_all")
   use, intrinsic :: iso_c_binding
-  use sofi_tools, only: nmax
-  use err_module
+  use m_sofi_tools, only: nmax
+  use m_ira_error
+  use m_sofi_routines, only: sofi_compute_all
   implicit none
   integer( c_int ), value, intent(in) :: nat
   type( c_ptr ), value, intent(in) :: typ
@@ -225,7 +226,8 @@ end subroutine libira_compute_all
 subroutine libira_get_symm_ops(nat, typ, coords, symm_thr, prescreen_ih, n_mat, mat_list, cerr )&
      bind(C, name="libira_get_symm_ops")
   use, intrinsic :: iso_c_binding
-  use sofi_tools, only: nmax
+  use m_sofi_tools, only: nmax
+  use m_sofi_routines, only: sofi_get_symmops
   implicit none
   !! "input" structure
   integer( c_int ), value, intent(in) :: nat
@@ -299,6 +301,7 @@ end subroutine libira_get_symm_ops
 !!
 subroutine libira_get_pg( n_mat, cptr_op_list, ppg, npx, px, verbose, cerr )bind(C, name="libira_get_pg")
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_get_pg
   implicit none
   integer( c_int ), value, intent(in) :: n_mat
   type( c_ptr ), value, intent(in) :: cptr_op_list
@@ -357,7 +360,8 @@ end subroutine libira_get_pg
 subroutine libira_unique_ax_angle( n_mat, cptr_mat_list, op_out, ax_out, angle_out, cerr ) &
      bind(C,name="libira_unique_ax_angle")
   use, intrinsic :: iso_c_binding
-  use err_module
+  use m_sofi_routines, only: sofi_unique_ax_angle
+  use m_ira_error
   implicit none
   integer(c_int), value, intent(in) :: n_mat
   type( c_ptr ), value, intent(in) :: cptr_mat_list
@@ -436,6 +440,7 @@ end subroutine libira_unique_ax_angle
 !!
 subroutine libira_analmat( c_rmat, c_op, n, p, c_ax, angle, cerr )bind(C,name="libira_analmat")
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_analmat
   implicit none
   !! in
   type( c_ptr ), value, intent(in) :: c_rmat
@@ -481,6 +486,7 @@ end subroutine libira_analmat
 subroutine libira_ext_bfield( n_mat, cop_list, cb_field, n_out, cop_out )&
      bind(C, name="libira_ext_bfield")
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_ext_Bfield
   implicit none
 
   !! input
@@ -553,6 +559,7 @@ end subroutine libira_ext_bfield
 subroutine libira_get_perm( nat, typ, coords, n_mat, mat_list, perm_list, dHausdorff_list)&
      bind(C,name="libira_get_perm")
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_get_perm
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
@@ -616,7 +623,8 @@ end subroutine libira_get_perm
 subroutine libira_get_combos( nat, typ, coords, n_mat_in, mat_data, n_mat_out, mat_out, cerr )&
      bind(C,name="libira_get_combos")
   use, intrinsic :: iso_c_binding
-  use sofi_tools, only: nmax
+  use m_sofi_tools, only: nmax
+  use m_sofi_routines, only: sofi_get_combos
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
@@ -680,6 +688,7 @@ end subroutine libira_get_combos
 !! @param[out] perm :: permutation of atomic indices after application of rmat in C order (start at 0)
 subroutine libira_try_mat( nat, typ, coords, rmat, dh, perm )bind(C,name="libira_try_mat")
   use, intrinsic :: iso_c_binding
+  use m_cshda, only: cshda
   implicit none
   integer(c_int), value, intent(in) :: nat
   type( c_ptr ),    value, intent(in) :: typ
@@ -759,6 +768,7 @@ end subroutine libira_try_mat
 !!
 subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,name="libira_construct_operation")
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_construct_operation
   implicit none
   interface
      FUNCTION c_strlen(str) BIND(C, name='strlen')
@@ -832,7 +842,8 @@ end subroutine libira_construct_operation
 !! @returns n_mat_out, mat_out
 subroutine libira_mat_combos( n_mat_in, mat_data, n_mat_out, mat_out )bind(C,name="libira_mat_combos")
   use, intrinsic :: iso_c_binding
-  use sofi_tools, only: nmax
+  use m_sofi_tools, only: nmax
+  use m_sofi_routines, only: sofi_mat_combos
   implicit none
   integer( c_int ), value, intent(in) :: n_mat_in
   type( c_ptr ), value,  intent(in) :: mat_data
@@ -881,7 +892,7 @@ end subroutine libira_mat_combos
 subroutine libira_matrix_distance( mat1, mat2, dist )bind(C,name="libira_matrix_distance" )
   use, intrinsic :: iso_c_binding
   use ira_precision
-  use sofi_tools, only: matrix_distance
+  use m_sofi_tools, only: matrix_distance
   implicit none
   real( c_double ), dimension(3,3), intent(in) :: mat1
   real( c_double ), dimension(3,3), intent(in) :: mat2
@@ -917,6 +928,7 @@ end subroutine libira_matrix_distance
 !!
 subroutine libira_get_err_msg( cerr, cmsg )bind(C, name="libira_get_err_msg")
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_get_err_msg
   implicit none
   integer( c_int ), value, intent(in) :: cerr
   type( c_ptr ), intent(in) :: cmsg
@@ -951,6 +963,7 @@ end subroutine libira_get_err_msg
 !!~~~~~~~~~~~~~~~~~~
 subroutine libira_check_collinear( nat, coords, collinear, ax )bind(C,name="libira_check_collinear" )
   use, intrinsic :: iso_c_binding
+  use m_sofi_routines, only: sofi_check_collinear
   implicit none
   integer( c_int ), value, intent(in) :: nat
   type( c_ptr ), value, intent(in) :: coords

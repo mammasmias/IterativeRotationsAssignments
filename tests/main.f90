@@ -2,6 +2,7 @@
 program main
   use dbg
   use ira_precision, only: ira_rp => rp
+  use ira_mod
   implicit none
   real(ira_rp) :: r
   character(len=5) :: str

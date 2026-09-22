@@ -1,4 +1,4 @@
-module err_module
+module m_ira_error
 
   use ira_precision
   implicit none
@@ -78,5 +78,5 @@ contains
   end function get_err_msg
 
 
-end module err_module
+end module m_ira_error
 

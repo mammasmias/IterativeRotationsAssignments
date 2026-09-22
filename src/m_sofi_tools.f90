@@ -14,7 +14,7 @@
 !!
 
 
-module sofi_tools
+module m_sofi_tools
 
   use ira_precision
   implicit none
@@ -380,6 +380,7 @@ contains
     !!
     !!  det(M) MB = B
     !!
+    use m_ira_tools, only: determinant3x3
     implicit none
     logical :: is_valid
     real(rp), dimension(3,3), intent(in) :: rmat
@@ -527,4 +528,4 @@ contains
 
 
 
-end module sofi_tools
+end module m_sofi_tools

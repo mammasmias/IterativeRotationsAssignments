@@ -47,14 +47,18 @@ IRA_VERSION := -DSTRVERSION=\"${sem_version}\" -DDATEVERSION=${date_version}
 futils := \
 	$(SRC)/ira_precision.f90 \
 	$(SRC)/timer.f90 \
-	$(SRC)/sofi_tools.f90 \
-	$(SRC)/err_module.f90 \
-	$(SRC)/version.f90 \
+	$(SRC)/m_ira_error.f90 \
+	$(SRC)/m_ira_tools.f90 \
+	$(SRC)/m_sofi_tools.f90 \
+	$(SRC)/m_ira_version.f90 \
 	$(SRC)/sorting_module.f90 \
-	$(SRC)/set_candidate.f90 \
-	$(SRC)/cshda.f90 \
-	$(SRC)/ira_routines.f90 \
-	$(SRC)/sofi_routines.f90
+	$(SRC)/m_set_candidate.f90 \
+	$(SRC)/m_cshda.f90 \
+	$(SRC)/m_ira_routines.f90 \
+	$(SRC)/m_sofi_routines.f90 \
+	$(SRC)/ira_mod.f90 \
+	$(SRC)/ira_external.f90 \
+	$(SRC)/sofi_external.f90
 
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 

@@ -1,8 +1,8 @@
 #include "dbg.f90"
 program test_ira
   use dbg
-  use ira_precision, only: ira_rp => rp
-  use err_module, only: get_err_msg
+  ! use ira_precision, only: ira_rp => rp
+  use ira_mod
 
   implicit none
 

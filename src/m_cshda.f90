@@ -13,136 +13,11 @@
 !! limitations under the License.
 !!
 
+module m_cshda
 
-!> @cond SKIP
-  module ira_pbc
-
-    !! routines for computing a vector in periodic boundary condtions
-    use ira_precision
-    implicit none
-    private
-    public :: pbc_vec
-
-    contains
-
-      subroutine pbc_vec( vec, lat )
-        !! apply pbc of lattice 'lat' to a vector 'vec'
-        implicit none
-        real(rp), dimension(3), intent(inout) :: vec
-        real(rp), dimension(3,3), intent(in) :: lat
-
-        call cart_to_crist( vec, lat )
-        call periodic( vec )
-        call crist_to_cart( vec, lat )
-
-      end subroutine pbc_vec
-
-      subroutine periodic(c)
-        !--------------------------------
-        ! periodic boundary condition, for 3 dimensional vector input in crist coords.
-        !--------------------------------
-        implicit none
-        real(rp), dimension(3),intent(inout) :: c
-        integer(ip) :: i
-
-        do i = 1, 3
-          if( c(i) < -0.5_rp ) c(i) = c(i) + 1.0_rp
-          if( c(i) >= 0.5_rp ) c(i) = c(i) - 1.0_rp
-        end do
-
-      end subroutine periodic
-
-
-      subroutine cart_to_crist(xpp,ct)
-        !!----------------------------
-        !! cartesian to crystallographic coordinates transform, in 3-dimension
-        !! v_crist = B^-1 * R_cart; where B is the matrix formed by unit cell vectors
-        !! This routine does the transpose of B implicitly
-        !! --------
-        !! xpp(3)      ==> input vector of position in cartesian
-        !! ct(3,3)     ==> conversion matrix, vectors of the Bravais lattice in rows
-        !!
-        !!      ct = a1 a2 a3
-        !!           b1 b2 b3
-        !!           c1 c2 c3
-        !!----------------------------
-        !! bt(3,3) ==> inverse matrix of ct, used locally
-        !! xc(3)   ==> copy of xpp, used locally
-        !! detct   ==> determinant of ct, used locally
-        !!
-        implicit none
-        real(rp), dimension(3),   intent(inout) :: xpp
-        real(rp), dimension(3,3), intent(in)    :: ct
-
-        real(rp),dimension(3) :: xc
-        real(rp) :: detct
-        real(rp), dimension(3,3) :: bt
-
-        ! -----------------------------------------------
-        !  inverse matrix of ct(:,:)
-        !------------------------------------------------
-        detct=ct(1,1)*ct(2,2)*ct(3,3)+&
-              ct(1,2)*ct(2,3)*ct(3,1)+&
-              ct(2,1)*ct(3,2)*ct(1,3)&
-              -ct(1,3)*ct(2,2)*ct(3,1)&
-              -ct(3,2)*ct(2,3)*ct(1,1)&
-              -ct(1,2)*ct(2,1)*ct(3,3)
-
-        bt(1,1)= ct(2,2)*ct(3,3)-ct(2,3)*ct(3,2)
-        bt(1,2)=-(ct(1,2)*ct(3,3)-ct(1,3)*ct(3,2))
-        bt(1,3)= ct(1,2)*ct(2,3)-ct(1,3)*ct(2,2)
-        bt(2,1)=-(ct(2,1)*ct(3,3)-ct(2,3)*ct(3,1))
-        bt(2,2)= ct(1,1)*ct(3,3)-ct(3,1)*ct(1,3)
-        bt(2,3)=-(ct(1,1)*ct(2,3)-ct(1,3)*ct(2,1))
-        bt(3,1)= ct(2,1)*ct(3,2)-ct(2,2)*ct(3,1)
-        bt(3,2)=-(ct(1,1)*ct(3,2)-ct(1,2)*ct(3,1))
-        bt(3,3)= ct(1,1)*ct(2,2)-ct(2,1)*ct(1,2)
-        !------------------------------------------------
-
-        xc(1) = (xpp(1)*bt(1,1)+xpp(2)*bt(2,1)+xpp(3)*bt(3,1))/detct
-        xc(2) = (xpp(1)*bt(1,2)+xpp(2)*bt(2,2)+xpp(3)*bt(3,2))/detct
-        xc(3) = (xpp(1)*bt(1,3)+xpp(2)*bt(2,3)+xpp(3)*bt(3,3))/detct
-
-        xpp(:) = xc(:)
-
-      end subroutine cart_to_crist
-
-
-      subroutine crist_to_cart(xpp,bt)
-        !!--------------------------------
-        !! crystallographic to cartesian transformation in 3-dimensions
-        !! R_cart = B * v_crist; where B is the matrix formed by cell vectors vertically
-        !! This routine does the transpose implicitly!
-        !! -----------
-        !! xpp(3)    ==> input vector in crystallographic, output vector in cartesian
-        !! bt(3,3)   ==> input conversion matrix, vectors of the Bravais lattice in rows
-        !!
-        !!         bt = a1 a2 a3
-        !!              b1 b2 b3
-        !!              c1 c2 c3
-        !!-----
-        !! xc(3)   ==> local vector
-        !!
-        implicit none
-
-        real(rp), dimension(3),   intent(inout) :: xpp
-
-        real(rp), dimension(3,3), intent(in)    :: bt
-        real(rp), dimension(3) :: xc
-
-
-        xc(1) = (xpp(1)*bt(1,1)+xpp(2)*bt(2,1)+xpp(3)*bt(3,1))
-        xc(2) = (xpp(1)*bt(1,2)+xpp(2)*bt(2,2)+xpp(3)*bt(3,2))
-        xc(3) = (xpp(1)*bt(1,3)+xpp(2)*bt(2,3)+xpp(3)*bt(3,3))
-
-        xpp(:) = xc(:)
-
-      end subroutine crist_to_cart
-
-  end module
-!> @endcond
-
-
+  implicit none
+  public
+contains
 
   !> @details
   !! Linear Assignment Problem (LAP) algorithm:
@@ -288,7 +163,7 @@
   ! subroutine cshda_from_cost( n2, n1, chkmat, found, dists )
   subroutine cshda_from_cost( n2, n1, cost, found, dists )
     use ira_precision
-    use sofi_tools, only: findloc
+    use m_sofi_tools, only: findloc
     implicit none
     integer(ip), intent(in) :: n2
     integer(ip), intent(in) :: n1
@@ -456,7 +331,7 @@
                    some_thr, found, dists )
 
     use ira_precision
-    use ira_pbc, only: pbc_vec
+    use m_ira_tools, only: pbc_vec
     implicit none
     integer(ip),                  intent(in) :: nat1
     integer(ip), dimension(nat1), intent(in) :: typ1
@@ -613,3 +488,4 @@
   end subroutine cshda_pbc
 
 
+end module m_cshda

@@ -11,7 +11,7 @@ module sorting_module
   implicit none
 
   private
-  public :: mergesort
+  public :: sort
 contains
 
 
@@ -91,5 +91,23 @@ contains
     end if
   end subroutine mergesort
 
+  !> @brief Use mergesort to sort the input array by the chosen axis.
+  subroutine sort(n, ndim, array, axis)
+    implicit none
+    integer(ip), intent(in) :: n
+    integer(ip), intent(in) :: ndim
+    real(rp), dimension(ndim, n), intent(inout) :: array
+    integer(ip), intent(in) :: axis
+
+    real(rp), allocatable :: work(:, :)
+
+    !! allocate working space for the sorting routine
+    allocate (work(1:ndim, 1:(n + 1)/2), source=0.0_rp)
+
+    call mergesort(array, work, axis)
+
+    deallocate (work)
+
+  end subroutine sort
 
 end module sorting_module

@@ -62,6 +62,7 @@
 subroutine libira_cshda( nat1, typ1, coords1, nat2, typ2, coords2, thr, found, dists )&
      bind(C, name="libira_cshda")
   use, intrinsic :: iso_c_binding
+  use ira_mod, only: cshda
   implicit none
   integer(c_int),   value, intent(in) :: nat1
   type( c_ptr ),    value, intent(in) :: typ1
@@ -129,6 +130,7 @@ end subroutine libira_cshda
 !!~~~~~~~~~~~~~~~~
 subroutine libira_cshda_from_cost( n2, n1, cost, found, dists )bind(C,name="libira_cshda_from_cost")
   use, intrinsic :: iso_c_binding, only: c_int, c_ptr, c_double, c_f_pointer
+  use ira_mod, only: cshda_from_cost
   implicit none
   integer(c_int), value, intent(in) :: n2
   integer(c_int), value, intent(in) :: n1
@@ -198,6 +200,7 @@ subroutine libira_cshda_pbc( nat1, typ1, coords1, nat2, typ2, coords2, lat, thr,
      bind(C, name="libira_cshda_pbc")
   !! wrapper to the cshda_pbc routine from cshda.f90
   use, intrinsic :: iso_c_binding
+  use ira_mod, only: cshda_pbc
   implicit none
   integer(c_int), value, intent(in) :: nat1
   type( c_ptr ), value, intent(in) :: typ1
@@ -292,7 +295,8 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
      nat2, typ2, coords2, candidate2, &
      kmax_factor, rotation, translation, permutation, hd, cerr ) bind(C, name="libira_match")
   use, intrinsic :: iso_c_binding
-  use err_module, only: get_err_msg
+  use m_ira_error, only: get_err_msg
+  use ira_mod, only: ira_unify, svdrot_m
   implicit none
   integer(c_int), value, intent(in) :: nat1
   type( c_ptr ), value,  intent(in) :: typ1
@@ -337,8 +341,8 @@ subroutine libira_match( nat1, typ1, coords1, candidate1, &
 
   !! get apx
   call ira_unify( nat1, p_typ1, p_coords1, p_c1, &
-                  nat2, p_typ2, p_coords2, p_c2, &
-                  kmax_factor, p_matrix, p_tr, p_perm, hd, ierr )
+       nat2, p_typ2, p_coords2, p_c2, &
+       kmax_factor, p_matrix, p_tr, p_perm, hd, ierr )
   cerr = int( ierr, c_int )
   ! write(*,*) "HD after unify",hd
   if( ierr /= 0 ) then
@@ -413,6 +417,7 @@ subroutine libira_svdrot( nat1, typ1, coords1, nat2, typ2, coords2, rotation, tr
      bind(C, name="libira_svdrot")
   use, intrinsic :: iso_c_binding, only: c_int, c_ptr, c_double, c_f_pointer
   use ira_precision
+  use ira_mod, only: svdrot_m
   implicit none
   integer(c_int), value, intent(in) :: nat1
   type( c_ptr ),  value, intent(in) :: typ1
@@ -474,6 +479,7 @@ subroutine libira_cshda_svd(nat1, typ1, coords1, nat2, typ2, coords2, &
      dthr, recenter, perm, dists, rmat, tr, ierr )bind(C,name="libira_cshda_svd")
   use, intrinsic :: iso_c_binding, only: c_int, c_double, c_ptr, c_bool, c_f_pointer
   use ira_precision
+  use ira_mod, only: cshda_svd
   implicit none
   integer(c_int), value, intent(in) :: nat1
   type( c_ptr ),  value, intent(in) :: typ1
@@ -533,6 +539,7 @@ end subroutine libira_cshda_svd
 !!
 subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version")
   use, intrinsic :: iso_c_binding, only: c_long, c_null_char, c_char
+  use m_ira_version
   implicit none
   character(len=1, kind=c_char), dimension(6) :: cstring
   integer( c_long ) :: cdate

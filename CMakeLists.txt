@@ -29,18 +29,22 @@ include(GNUInstallDirs)
 
 # source files
 set(ira_src
-  src/version.f90
+  src/m_ira_version.f90
   src/ira_precision.f90
   src/timer.f90
-  src/sofi_tools.f90
-  src/err_module.f90
+  src/m_ira_tools.f90
+  src/m_sofi_tools.f90
+  src/m_ira_error.f90
   src/sorting_module.f90
-  src/set_candidate.f90
-  src/cshda.f90
-  src/ira_routines.f90
-  src/sofi_routines.f90
-	src/library_ira.f90
-	src/library_sofi.f90
+  src/m_set_candidate.f90
+  src/m_cshda.f90
+  src/m_ira_routines.f90
+  src/m_sofi_routines.f90
+  src/ira_mod.f90
+  src/library_ira.f90
+  src/library_sofi.f90
+  src/ira_external.f90
+  src/sofi_external.f90
   )
 
 
