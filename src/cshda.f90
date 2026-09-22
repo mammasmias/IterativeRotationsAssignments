@@ -252,7 +252,7 @@
        !! This criterion is used for early return of cshda.
        if( dmin > th2 ) then
           return
-       endif
+      end if
        !!
     end do
 
@@ -385,8 +385,8 @@
              tmpmin(idx_old) = minloc( chkmat(:,idx_old), 1)
              assigned(idx_old) = 0
              !!
-          endif
-       endif
+         end if
+      end if
        !!
        !! set found data
        !!
@@ -514,7 +514,7 @@
        !! is no way that final dH could be below that threshold
        if( minval(chkmat(i,:)) > some_thr ) then
           return
-       endif
+      end if
        !!
     end do
 
@@ -536,7 +536,7 @@
           dists(i) = 999.9_rp
           write(*,*) " PROBLEM in cshda_pbc: huge number of searches"
           return
-       endif
+      end if
        !!
        !!
        !! set next search on this index to 0
@@ -582,8 +582,8 @@
              chkmat(idx_old, j) = 999.9_rp
              search( idx_old ) = 1
              !!
-          endif
-       endif
+         end if
+      end if
        !!
        !!
        !! set found data

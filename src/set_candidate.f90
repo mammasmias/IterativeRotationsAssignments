@@ -58,7 +58,7 @@ subroutine set_candidates( nat1, typ1, coords1, &
   else
      write(*,*) 'error in set_candidate'
      stop
-  endif
+ end if
 
 
 
@@ -77,7 +77,7 @@ subroutine select_rc( nat, coords, c_idx, rc )
   if( c_idx == 0 ) then
      write(*,*) 'ERROR in select_rc'
      return
-  endif
+ end if
 
   if( c_idx == -1 ) then
      !! rc is geometric center
@@ -85,7 +85,7 @@ subroutine select_rc( nat, coords, c_idx, rc )
   else
      !! rc is vector of atom c_idx
      rc = coords(:,c_idx)
-  endif
+ end if
 
   return
 end subroutine select_rc

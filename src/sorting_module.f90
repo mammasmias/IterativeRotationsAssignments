@@ -61,7 +61,7 @@ contains
     tmp = x
     x = y
     y = tmp
-  end subroutine
+  end subroutine swap
 
 
   recursive subroutine mergesort(A, work, ax)
@@ -87,7 +87,7 @@ contains
       if (A(ax,half) > A(ax,half + 1)) then
         work(:,1 : half) = A(:,1 : half)
         call merge_a(work(:,1 : half), A(:,half + 1:), A, ax)
-      endif
+     end if
     end if
   end subroutine mergesort
 

@@ -453,7 +453,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
      ierr = ERR_BETA
      write(*,*) "origin at: ",__FILE__," line:",__LINE__
      return
-  endif
+ end if
 
   !! distances of atoms i,j
   d_i = norm2( coords(:,i))
@@ -654,7 +654,7 @@ subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dHausdorf
      ! if( any(found) == 0 ) then
      !    write(*,*) "!! ERROR IN: sofi_get_perm, failed cshda?"
      !    stop
-     ! endif
+     !end if
 
      !! correct with svd tr, rot should be diag(1,1,1), tr could be something small
      call svd_forcerot( nat, typ, coords, nat, t_local(found), c_local(:,found), svd_rot, svd_tr, ierr )
@@ -743,7 +743,7 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list, ierr )
            !    write(*,'(3f9.4)') theta(1,:)
            !    write(*,'(3f9.4)') theta(2,:)
            !    write(*,'(3f9.4)') theta(3,:)
-           ! endif
+           !end if
 
         end do
      end do
@@ -910,7 +910,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
      !! dh after refinement is good
      if( dh <= sym_thr ) is_valid = .true.
 
-  endif
+ end if
 
 
   ! write(*,*) 'is valid:',is_valid, dh, sym_thr
@@ -1137,13 +1137,13 @@ subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
         !! value of det can be +1 or -1, so no need for flexible thr here
         if( ddet < 1e-3_rp ) then
            eq_rmat = .true.
-        endif
+       end if
 
         ! write(*,*) 'rmat'
         ! write(*,'(3f9.4)') rmat
         ! write(*,*) 'op_list(:,:,i)'
         ! write(*,'(3f9.4)') op_list(:,:,i)
-     endif
+    end if
 
      is_new = .not.eq_rmat
 
@@ -1246,7 +1246,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   if( verb ) then
      write(*,*) repeat('=',20)
      write(*,*) "number of SymmOps entering get_pg:",nbas
-  endif
+ end if
 
   ierr = 0
 
@@ -1338,7 +1338,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         if( abs(dot_product(ax_list(:,i), uniq_ax(1:3,j))) > 0.99_rp ) then
            multip_ax(i) = nint(uniq_ax(5,j))
            exit
-        endif
+       end if
      end do
   end do
 
@@ -1354,7 +1354,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   if( count(op == OP_PROP_ROT) > 0 ) then
      max_n_val = maxval( n_int(:), mask=(op == OP_PROP_ROT))
      max_n_loc = maxloc( n_int(:), dim=1, mask=(op == OP_PROP_ROT))
-  endif
+ end if
   !!
   !! special case for D2: n of principal ax is equal to n of other C ax
   !!
@@ -1366,7 +1366,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         !! we have chosen the wrong axis, choose again among axes with multip > 1
         max_n_val = maxval( n_int(:), mask=(op == OP_PROP_ROT .and. multip_ax > 1))
         max_n_loc = maxloc( n_int(:), dim=1, mask=(op == OP_PROP_ROT .and. multip_ax > 1))
-     endif
+    end if
   end if
 
   !! can happen if there are no C operations in PG, for example Cs. Choose the ax of second op
@@ -1376,7 +1376,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   ! if(verb) then
   !   write(*,*) 'largest n:', max_n_val, max_n_loc
   !   write(*,*) 'ax:',ax_list(:,max_n_loc)
-  ! endif
+  !end if
 
   !! get how many C ax have this n
   nr_n = count( nint(uniq_ax(4,:)) == max_n_val )
@@ -1435,20 +1435,20 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
            !! is O#
            pg = 'O'
            if( has_sigma .or. has_inversion) pg = 'Oh'
-        endif
+       end if
      else
         if( has_sigma ) then
            pg = 'Td'
            if( has_inversion ) pg = 'Th'
         else
            pg = 'T'
-        endif
+       end if
         !!
-     endif
+    end if
      !!
      ! return
      goto 100
-  endif
+ end if
 
   !!
   !! bottom part of flowchart
@@ -1565,7 +1565,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     if( dotk < 0.01_rp .and. abs(cross) > 0.99_rp ) then
                        has_sigma_d = .true.
                        exit lp
-                    endif
+                   end if
                  end do
                  !! + -
                  ax = ax_list(:,i) - ax_list(:,j)
@@ -1582,7 +1582,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     if( dotk < 0.01_rp .and. cross>0.99_rp ) then
                        has_sigma_d = .true.
                        exit lp
-                    endif
+                   end if
                  end do
                  !! - +
                  ax = -ax_list(:,i) + ax_list(:,j)
@@ -1599,7 +1599,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     if( dotk < 0.01_rp .and. cross>0.99_rp) then
                        has_sigma_d = .true.
                        exit lp
-                    endif
+                   end if
                  end do
                  !! - -
                  ax = - ax_list(:,i) - ax_list(:,j)
@@ -1616,12 +1616,12 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                     if( dotk < 0.01_rp .and. cross>0.99_rp) then
                        has_sigma_d = .true.
                        exit lp
-                    endif
+                   end if
                  end do
 
-              endif
+             end if
            end do
-        endif
+       end if
      end do lp
 
   end if
@@ -1664,7 +1664,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      ! pg = 'C1'
      if( has_sigma ) pg = 'Cs'
      if( has_inversion ) pg = 'Ci'
-  endif
+ end if
 
   !! Cs and Ci have no prin_ax up to now
   if( pg == "Cs" .or. pg == "Ci" )then
@@ -1708,7 +1708,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      ierr = -1
      write(*,*) "at:",__FILE__," line:",__LINE__
      return
-  endif
+ end if
 
   ! write(*,*) 'PG is: ',pg
 
@@ -1838,7 +1838,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
      search_eval = -1.0_rp
      ! write(*,*) "matrix is (roto-)inversion"
      op(1:1)=OP_IMPROP_ROT
-  endif
+ end if
 
   !! find requested eigenvalue (they are not ordered)
   diff_old = 99.9_rp
@@ -2027,7 +2027,7 @@ subroutine sofi_ext_Bfield( n_op, op_list, b_field )
      !! should not, at least E should satisfy!
      write(*,*) 'heavy error in sofi_ext_Bfield'
      stop
-  endif
+ end if
 
   return
 end subroutine sofi_ext_Bfield
@@ -2185,7 +2185,7 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
               write(*,'(3f9.5,2x,f7.4)') ax_out(:,i), angle_out(i)
               write(*,'(3f9.5,2x,f7.4)') ax_out(:,j), angle_out(j)
               ierr = -1
-           endif
+          end if
         end if
      end do
   end do
@@ -2248,7 +2248,7 @@ subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
               if( dd < m_thr ) then
                  is_new = .false.
                  exit pp
-              endif
+             end if
 
            end do pp
            !!
@@ -2256,7 +2256,7 @@ subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
               !! add it
               ii = ii + 1
               mat_out(:,:,ii) = rmat
-           endif
+          end if
            !!
         end do
      end do
