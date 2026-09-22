@@ -543,7 +543,7 @@ subroutine libira_get_version( cstring, cdate )bind(C, name="libira_get_version"
   call ira_get_version( fstring, fdate )
   cdate = int( fdate, c_long )
   n = len_trim(fstring)
-  if( n .gt. 5 ) write(*,*) "WARNING: IRA version string seems long, check!"
+  if( n > 5 ) write(*,*) "WARNING: IRA version string seems long, check!"
   do i = 1, n
      cstring(i) = fstring(i:i)
   end do

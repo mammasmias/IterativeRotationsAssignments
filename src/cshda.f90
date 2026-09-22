@@ -46,8 +46,8 @@
         integer(ip) :: i
 
         do i = 1, 3
-          if( c(i) .lt. -0.5_rp ) c(i) = c(i) + 1.0_rp
-          if( c(i) .ge. 0.5_rp ) c(i) = c(i) - 1.0_rp
+          if( c(i) < -0.5_rp ) c(i) = c(i) + 1.0_rp
+          if( c(i) >= 0.5_rp ) c(i) = c(i) - 1.0_rp
         end do
 
       end subroutine periodic
@@ -220,7 +220,7 @@
           !! if the atoms are not of same typ, set large value for distance:
           !! like this they will not be found assigned
           !!
-          if( ti .eq. typ2(j) ) then
+          if( ti == typ2(j) ) then
              !!
              cj = coords2(:,j)
              !!
@@ -236,7 +236,7 @@
              !!
              !! keep for minimum row
              dmin = min( dmin, dist )
-             ! if( dist .lt. dmin ) then
+             ! if( dist < dmin ) then
              !    dmin = dist
              !    tmpmin(i) = j
              ! end if
@@ -250,7 +250,7 @@
        !! if any row chkmat(i,:) has all values above some_threshold,
        !! then there is no way that Hausdorff distance be lower than some_threshold.
        !! This criterion is used for early return of cshda.
-       if( dmin .gt. th2 ) then
+       if( dmin > th2 ) then
           return
        endif
        !!
@@ -330,7 +330,7 @@
        !! set index of next search
        !!
        i = findloc( lsearch(:), .true., 1)
-       if( i .eq. 0 ) exit
+       if( i == 0 ) exit
        ! write(*,*) "next i",i
        !!
        !! set next search on this index to .false.
@@ -347,8 +347,8 @@
        !!
        !! check the if we already have this j
        !!
-       ! if( assigned(j) .gt. 0 ) then
-       if( any(found .eq. j) ) then
+       ! if( assigned(j) > 0 ) then
+       if( any(found == j) ) then
           !!
           !!
           !! find the old index where its used, and the old distance
@@ -360,7 +360,7 @@
           ! write(*,*) "j already assigned at", idx_old, dist_old
           ! write(*,"(*(f4.2,:,1x))") dists
           !!
-          if( dist_old .lt. dist ) then
+          if( dist_old < dist ) then
              !!
              !!
              !! if the previous found is closer, set the current distance
@@ -400,10 +400,10 @@
     end do
 
     !! for equal sizes of structures we should be done
-    if( n1 .eq. n2 ) return
+    if( n1 == n2 ) return
 
     !! if any found maps to zero, cshda has exited
-    if( any(found(1:n1) .eq. 0) ) return
+    if( any(found(1:n1) == 0) ) return
 
     ! write(*,*) "found now"
     ! write(*,"(10i3)") found
@@ -413,7 +413,7 @@
     k = n1
     do i = 1, n2
        !! if this i is already found, do nothing
-       if( any(i .eq. found(:) ) ) cycle
+       if( any(i == found(:) ) ) cycle
        !! add this i to last spot
        ! write(*,*) "adding ",i,"to idx k=", k
        k = k + 1
@@ -503,7 +503,7 @@
           !! if the atoms are not of same typ, set some large distance:
           !! like this they will not be found paired
           !!
-          if( typ1(i) .ne. typ2(j) ) dist = 99990.0_rp
+          if( typ1(i) /= typ2(j) ) dist = 99990.0_rp
           !!
           chkmat(i,j) = dist
           !!
@@ -512,7 +512,7 @@
        !! Early return method:
        !! if all values in the row chkmat(i,:) are above some_threshold, there
        !! is no way that final dH could be below that threshold
-       if( minval(chkmat(i,:)) .gt. some_thr ) then
+       if( minval(chkmat(i,:)) > some_thr ) then
           return
        endif
        !!
@@ -526,12 +526,12 @@
     j = minloc( chkmat(i,:), 1 )
 
     n_count = 1
-    do while( search(i) .gt. 0 )
+    do while( search(i) > 0 )
        !!
        !! return on huge number of searches
        !! ( in worst case do n searches on each of the n sites )
        !!
-       if( n_count .gt. nat1**2) then
+       if( n_count > nat1**2) then
           found(i) = 0
           dists(i) = 999.9_rp
           write(*,*) " PROBLEM in cshda_pbc: huge number of searches"
@@ -552,7 +552,7 @@
        !!
        !! check the found indices if we already have this j
        !!
-       if( any(found .eq. j) ) then
+       if( any(found == j) ) then
           !!
           !!
           !! find the old index where its used, and the old distance
@@ -560,7 +560,7 @@
           idx_old = minloc( abs( found - j) , 1)
           dist_old = minval( chkmat(idx_old,:), 1)
           !!
-          if( dist_old .lt. dist ) then
+          if( dist_old < dist ) then
              !!
              !!
              !! if the previous found is closer, set the current distance
@@ -604,7 +604,7 @@
     k = nat1
     do i = 1, nat2
        !! if this i is already found, do nothing
-       if( any(i .eq. found(:) ) ) cycle
+       if( any(i == found(:) ) ) cycle
        !! add this i to last spot
        k = k + 1
        found(k) = i

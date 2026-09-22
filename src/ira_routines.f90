@@ -288,20 +288,20 @@ subroutine set_orthonorm_bas(vec1, vec2, basis, fail)
   !! first vector, normalize
   norm_v = sqrt(dot_product(vec1, vec1))
   !! if too small, return with fail = .true.
-  if (norm_v .lt. small_size_thr) return
+  if (norm_v < small_size_thr) return
   basis(1, :) = vec1(:)/norm_v
 
   !! second vector, normalize
   norm_v = sqrt(dot_product(vec2, vec2))
   !! if too small, return with fail = .true.
-  if (norm_v .lt. small_size_thr) return
+  if (norm_v < small_size_thr) return
   basis(2, :) = vec2(:)/norm_v
 
   !! check projection
   prod = dot_product(basis(1, :), basis(2, :))
 
   !! if vectors are collinear, return with fail = .true.
-  if (abs(prod) .gt. collinearity_thr) then
+  if (abs(prod) > collinearity_thr) then
      fail = .true.
      ! write(*,*) 'failed collinearity',abs(prod)
      return
@@ -323,7 +323,7 @@ subroutine set_orthonorm_bas(vec1, vec2, basis, fail)
   !!
   !! check for NaN. Can it happen?
   !!
-  if (any(basis .ne. basis)) then
+  if (any(basis /= basis)) then
      fail = .true.
      ! write(*,*) 'fail NaN'
      ! write(*,*) basis(1,:)
@@ -588,7 +588,7 @@ subroutine svd_forcerot(nat1, typ1, coords1_in, &
   call determinant3x3(rmat, det_r)
 
   !! force rmat to be rotation: Vt is written row-wise
-  if (det_r .lt. -0.5_rp) vt(3, :) = -vt(3, :)
+  if (det_r < -0.5_rp) vt(3, :) = -vt(3, :)
   rmat = matmul(u, vt)
 
   ! write(*,*) 'rmat:', det_r
@@ -706,15 +706,15 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
      !!
      !! if out of range, exit this i
      !!
-     if (norm2(coords2(:, i)) .gt. kmax) exit
+     if (norm2(coords2(:, i)) > kmax) exit
      !!
      do j = 1, nat2
         !!
-        if (i .eq. j) cycle
+        if (i == j) cycle
         !!
         !! if out of range, exit this j
         !!
-        if (norm2(coords2(:, j)) .gt. kmax) exit
+        if (norm2(coords2(:, j)) > kmax) exit
         !!
         !! set current bas
         !!
@@ -741,7 +741,7 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
         hd = maxval(dists(1:nat1))
         !!
         !! keep the hd thr at minimum
-        if (hd .lt. some_thr) some_thr = hd
+        if (hd < some_thr) some_thr = hd
         !!
         ! write(*,*) nat1+nat2
         ! write(*,*) 'bas',i,j, hd
@@ -753,7 +753,7 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
         ! end do
 
         ! write(*,'(5i3,3f13.7)') i,j,nint(d_o(2,i)), nint(d_o(2,j)),m,hd, norm2(coords2(:,j))
-        if (hd .lt. hd_old) then
+        if (hd < hd_old) then
            hd_old = hd
            idx1 = i
            idx2 = j
@@ -786,10 +786,10 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
         hd = maxval(dists(1:nat1))
         !!
         !! keep the hd thr at minimum
-        if (hd .lt. some_thr) some_thr = hd
+        if (hd < some_thr) some_thr = hd
         !!
         ! write(*,'(5i3,3f13.7)') i,j,nint(d_o(2,i)), nint(d_o(2,j)),m,hd, norm2(coords2(:,j))
-        if (hd .lt. hd_old) then
+        if (hd < hd_old) then
            hd_old = hd
            idx1 = i
            idx2 = j
@@ -804,7 +804,7 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
         end do
         !!
         !! early exit criterion idea
-        ! if( hd_old .lt. some_threshold ) goto 111
+        ! if( hd_old < some_threshold ) goto 111
      end do
   end do
   ! 111 continue
@@ -819,7 +819,7 @@ subroutine get_gamma_m(nat1, typ1_in, coords1_in, &
   !!
   !! set data
   !!
-  if (idx1 .eq. 0 .or. idx2 .eq. 0 .or. m_fin .eq. 0) then
+  if (idx1 == 0 .or. idx2 .eq. 0 .or. m_fin .eq. 0) then
      !! if nothing is found: BUG (probably too small kmax)
      !! But can also happen when searching nonequal nat...
      !! output gamma as identity matrix, all idx to zero
@@ -915,8 +915,8 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
   ierr = ERR_OTHER
 
   !!
-  !! REQUIREMENT: nat1 .le. nat2
-  if (nat1 .gt. nat2) then
+  !! REQUIREMENT: nat1 <= nat2
+  if (nat1 > nat2) then
      write (*, *) "error in ira_unify: nat1 > nat2", nat1, nat2
      return
   end if
@@ -963,7 +963,7 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
      c1 = candidate_1(ii)
 
      !! we have exhausted all candidates in 1
-     if (c1 .eq. 0) exit
+     if (c1 == 0) exit
 
      !!
      !! shift struc 1 to respective vector
@@ -997,7 +997,7 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
      !!
      do i = 1, nat1
         do j = 1, nat1
-           if (i .eq. j) cycle
+           if (i == j) cycle
            !! set bas
            ! write(*,*) coords1(:,i)
            ! write(*,*) coords1(:,j)
@@ -1038,7 +1038,7 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
         c2 = candidate_2(jj)
 
         !! we have exhausted all candidates in 2
-        if (c2 .eq. 0) exit
+        if (c2 == 0) exit
 
         !!
         !! shift struc 2 to respective vector
@@ -1064,7 +1064,7 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
         end do
 
         !! if gamma is found:
-        if (gamma_idx(1) .ne. 0) then
+        if (gamma_idx(1) /= 0) then
            !!
            count = count + 1
            !!
@@ -1087,7 +1087,7 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
         ! write(*, '(3f8.4)') gamma(2,:)
         ! write(*, '(3f8.4)') gamma(3,:)
         !!
-        if (hd .lt. hd_old) then
+        if (hd < hd_old) then
            hd_old = hd
            c1min = c1
            c2min = c2
@@ -1145,14 +1145,14 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
   !!
 
   !! no attempts have been made, return error (too small dist_k?)
-  if (count .eq. 0) then
+  if (count == 0) then
      ierr = ERR_TOO_SMALL_KMAX
      ! write(*,*) "count=0", ierr
      return
   end if
 
   !! nothing has been found, this is probably same reason: too small dist_k
-  if (c1min .eq. 0 .or. c2min .eq. 0) then
+  if (c1min == 0 .or. c2min .eq. 0) then
      ierr = ERR_OTHER
      ! write(*,*) "another err"
      return
@@ -1178,7 +1178,7 @@ subroutine ira_unify(nat1, typ1_in, coords1_in, candidate_1, &
   end do
 
   !! permutation
-  if (idxm .ne. 0) then
+  if (idxm /= 0) then
      !! if no bug in gamma (which happens if dist_k too small):
      !! find final permutations
      call cshda(nat1, typ1, coords1, &
@@ -1294,7 +1294,7 @@ subroutine ira_svd(nat1, typ1_in, coords1_in, &
   call ira_unify(nat1, typ1, coords1, candidate_1, &
        nat2, typ2, coords2, candidate_2, &
        kmax_factor, rotation, translation, permutation, hd_out, ierr)
-  if (ierr .ne. 0) then
+  if (ierr /= 0) then
      ! write(*,*) "error in ira_unify! ierr code:", ierr
      ! write(*,*) get_err_msg( ierr )
      return
@@ -1421,7 +1421,7 @@ subroutine cshda_svd( nat1, typ1_in, coords1_in, &
   ! get perm, dists
   call cshda( nat1, typ1_in, coords1, nat2, typ2_in, coords2, dthr, perm, dists )
   ! cshda couldnt assign?
-  if( any(perm(1:nat1).eq.0) ) return
+  if( any(perm(1:nat1)==0) ) return
 
   ! do svd with init coords
   call svdrot_m( nat1, typ1_in, coords1_in, &

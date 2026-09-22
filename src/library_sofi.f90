@@ -763,7 +763,7 @@ subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,nam
   interface
      FUNCTION c_strlen(str) BIND(C, name='strlen')
        IMPORT :: c_char, c_size_t
-       IMPLICIT NONE
+       implicit none
        character(c_char), dimension(*), intent(in) :: str
        INTEGER(c_size_t) :: c_strlen
      END FUNCTION c_strlen
@@ -785,7 +785,7 @@ subroutine libira_construct_operation( op, axis, angle, matrix, cerr )bind(C,nam
   integer :: ierr
 
   n=c_strlen(op)
-  if( n .gt. 1 ) then
+  if( n > 1 ) then
      write(*,*) "ERR: expected len-1 string as op, got:",n
      write(*,*) "at:",__FILE__, " line:",__LINE__
      cerr = -8

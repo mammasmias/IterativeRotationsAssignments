@@ -31,7 +31,7 @@ subroutine set_candidates( nat1, typ1, coords1, &
   !! some preprocessing
   dnat = nat2-nat1
   !!
-  if( dnat .eq. 0 ) then
+  if( dnat == 0 ) then
      !! nat1 = nat2
 
      !! value -1 indicates some special vector (geometrical center)
@@ -41,7 +41,7 @@ subroutine set_candidates( nat1, typ1, coords1, &
      candidate2(1) = -1
 
 
-  elseif( dnat .gt. 0) then
+  elseif( dnat > 0) then
      !! nat2 > nat1
 
      !! in struc 1 take the first atom
@@ -50,7 +50,7 @@ subroutine set_candidates( nat1, typ1, coords1, &
      !! in struc 2 take all atoms
      k = 1
      do i = 1, nat2
-        if( typ2(i) .ne. typ1(1) ) cycle
+        if( typ2(i) /= typ1(1) ) cycle
         candidate2(k) = i
         k = k + 1
      end do
@@ -74,12 +74,12 @@ subroutine select_rc( nat, coords, c_idx, rc )
   integer(ip), intent(in) :: c_idx
   real(rp), dimension(3), intent(out) :: rc
 
-  if( c_idx .eq. 0 ) then
+  if( c_idx == 0 ) then
      write(*,*) 'ERROR in select_rc'
      return
   endif
 
-  if( c_idx .eq. -1 ) then
+  if( c_idx == -1 ) then
      !! rc is geometric center
      rc = sum(coords(:,:),2)/nat
   else

@@ -157,7 +157,7 @@ contains
     !! @param [out]   eigvals   output vector of eigenvalues, not sorted!
     !! @param [in]    vec	      0 if don't want to compute eigenvectors, 1 otherwise
     !!
-    IMPLICIT NONE
+    implicit none
     interface
        subroutine dgeev(jobvl, jobvr, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
          use, intrinsic :: iso_fortran_env, only: dp=>real64
@@ -352,7 +352,7 @@ contains
 
     has_sigma = .false.
     do i = 1, nbas
-       if( op(i) .eq. OP_IMPROP_ROT .and. n_int(i) .eq. 0 ) has_sigma = .true.
+       if( op(i) == OP_IMPROP_ROT .and. n_int(i) .eq. 0 ) has_sigma = .true.
     end do
     return
   end function find_sigma
@@ -368,7 +368,7 @@ contains
 
     has_cn = .false.
     do i = 1, nbas
-       if( op(i) .eq. OP_PROP_ROT .and. n_int(i) .gt. 1 ) has_cn = .true.
+       if( op(i) == OP_PROP_ROT .and. n_int(i) > 1 ) has_cn = .true.
     end do
     return
 
@@ -401,7 +401,7 @@ contains
 
     !! compare vec to bdir, shoudl be equal: dot = 1.0
     dotp = dot_product( vec, bdir )
-    if( dotp .gt. 0.999_rp ) is_valid = .true.
+    if( dotp > 0.999_rp ) is_valid = .true.
 
   end function op_valid_ext_b
 
@@ -473,7 +473,7 @@ contains
     real(rp) :: flip
 
     flip = 1.0_rp
-    if( ax(3) .lt. -epsilon ) then
+    if( ax(3) < -epsilon ) then
        !! z is negative, flip
        flip = -flip
     elseif( abs(ax(3)) < epsilon ) then

@@ -312,7 +312,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   ierr = 0
   prescreen = prescreen_ih
 
-  if( size(op_list,3) .ne. nmax ) then
+  if( size(op_list,3) /= nmax ) then
      ierr = ERR_SIZE_NMAX
      write(*,*) 'the op_list on input should have maxsize:',nmax
      write(*,*) "origin at: ",__FILE__," line:",__LINE__
@@ -320,7 +320,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   end if
 
   !! edge cases for nat=2 or nat=1
-  if( nat .lt. 3 ) then
+  if( nat < 3 ) then
      !! add identity
 
      !! if nat==2: check mirror
@@ -424,9 +424,9 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   !! fail_beta is .true. when no beta is generated
   fail_beta = .true.
   do i = 1, nat
-     if( norm2( coords(:,i)) .lt. small_norm) cycle
+     if( norm2( coords(:,i)) < small_norm) cycle
      do j = 1, nat
-        if( norm2( coords(:,j)) .lt. small_norm) cycle
+        if( norm2( coords(:,j)) < small_norm) cycle
         !!
         !! call to IRA lib
         call set_orthonorm_bas( coords(:,i), coords(:,j), beta, fail1 )
@@ -440,7 +440,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
 
   ! write(*,*) "fail_beta", fail_beta
   ! write(*,*) i,j
-  if( fail1 .or. i .gt. nat .or. j .gt. nat ) then
+  if( fail1 .or. i > nat .or. j .gt. nat ) then
      write(*,*) repeat('%',40)
      write(*,*) "ERROR: cannot set beta. Structure not properly shifted?"
      write(*,*) repeat('%',40)
@@ -481,12 +481,12 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
   !!========
   nn = 0
   kloop_: do k = 1, nat
-     if( abs( d_i - norm2(coords(:,k))) .gt. 1.1_rp*sym_thr ) cycle
-     if( typ(k) .ne. ti ) cycle
+     if( abs( d_i - norm2(coords(:,k))) > 1.1_rp*sym_thr ) cycle
+     if( typ(k) /= ti ) cycle
      do l = 1, nat
-        if( k.eq.l) cycle
-        if( abs( d_j - norm2(coords(:,l))) .gt. 1.1*sym_thr ) cycle
-        if( typ(l) .ne. tj ) cycle
+        if( k==l) cycle
+        if( abs( d_j - norm2(coords(:,l))) > 1.1*sym_thr ) cycle
+        if( typ(l) /= tj ) cycle
         !!
         !! call to IRA lib
         !! (re)-set gamma
@@ -495,7 +495,7 @@ subroutine sofi_get_symmops( nat, typ_in, coords_in, sym_thr, prescreen_ih, n_so
         !!
         do mm = 1, 5
            m = mm - 4
-           if( m .eq. 0 ) cycle
+           if( m == 0 ) cycle
            nn = nn + 1
            !!
            !! call to IRA lib
@@ -651,7 +651,7 @@ subroutine sofi_get_perm( nat, typ, coords, nbas, bas_list, perm_list, dHausdorf
      end do
      !! compute cshda with high thr (accept anything)
      call cshda( nat, typ, coords, nat, t_local, c_local, 99.9_rp, found, dists )
-     ! if( any(found) .eq. 0 ) then
+     ! if( any(found) == 0 ) then
      !    write(*,*) "!! ERROR IN: sofi_get_perm, failed cshda?"
      !    stop
      ! endif
@@ -738,7 +738,7 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list, ierr )
               write(*,*) "at: ",__FILE__," line:",__LINE__
               return
            end if
-           ! if( dh .lt. sym_thr ) then
+           ! if( dh < sym_thr ) then
            !    write(*,*) i,j,dh
            !    write(*,'(3f9.4)') theta(1,:)
            !    write(*,'(3f9.4)') theta(2,:)
@@ -747,7 +747,7 @@ subroutine sofi_get_combos( nat, typ, coords, nbas, bas_list, ierr )
 
         end do
      end do
-     if( nbas .eq. ii ) exit
+     if( nbas == ii ) exit
      ! write(*,*) 'loop',m,ii, nbas
      nbas = ii
   end do
@@ -860,7 +860,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
   ! write(*,*) "initial", dh, act_thr
 
   !! add another epsilon to act_thr, for numerics...
-  if( dh .gt. act_thr+epsilon ) then
+  if( dh > act_thr+epsilon ) then
      ! write(*,*) "return:: dh is too big"
      return
   end if
@@ -869,7 +869,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
 
   not_crazy = .true.
   !! cshda returned no assignments
-  if( any(found .eq. 0)) not_crazy = .false.
+  if( any(found == 0)) not_crazy = .false.
 
   ! write(*,*) 'not_crazy',not_crazy
   if( .not. not_crazy ) then
@@ -895,7 +895,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
 
   do_refine = .true.
   !! if first cshda already super good, no need to refine
-  if( dh .lt. min(sym_thr*1e-3_rp, epsilon) ) then
+  if( dh < min(sym_thr*1e-3_rp, epsilon) ) then
      do_refine = .false.
      is_valid = .true.
   end if
@@ -908,7 +908,7 @@ subroutine try_sofi( theta, nat, typ_in, coords_in, sym_thr, dd, nbas, op_list, 
      call refine_sofi( nat, typ_in, coords_in, nat, typ, coords, theta, dh, perm )
 
      !! dh after refinement is good
-     if( dh .le. sym_thr ) is_valid = .true.
+     if( dh <= sym_thr ) is_valid = .true.
 
   endif
 
@@ -1013,7 +1013,7 @@ subroutine refine_sofi( nat_ref, typ_ref, coords_ref, nat, typ_in, coords_in, th
 
      !! this shoud not happen, positive determinant is forced by svd_forcerot
      ! call determinant3x3(svd_r,det1)
-     ! if( det1 .lt. -0.5 ) svd_r(3,:) = -svd_r(3,:)
+     ! if( det1 < -0.5 ) svd_r(3,:) = -svd_r(3,:)
 
 
      !! only for ptinting, check what is this matrix
@@ -1060,7 +1060,7 @@ subroutine refine_sofi( nat_ref, typ_ref, coords_ref, nat, typ_in, coords_in, th
      ! write(*,*) i, dh
 
      !! if no permutation is found, the refinement is finished
-     if( all(found_new .eq. found) ) exit
+     if( all(found_new == found) ) exit
 
   end do
 
@@ -1125,7 +1125,7 @@ subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
   do i = 1, nbas
      !! if rmat equal
      call matrix_distance( rmat, op_list(:,:,i), dd)
-     if( dd .lt. matrix_thr ) then
+     if( dd < matrix_thr ) then
         !! call to IRA
         !! check if determinants equal (should be, but maybe not when high matrix_thr)
         call determinant3x3( rmat, det1 )
@@ -1135,7 +1135,7 @@ subroutine is_new_sofi( rmat, nbas, op_list, m_thr, is_new )
         ! write(*,*) 'det1:', det1, 'det2:',det2
 
         !! value of det can be +1 or -1, so no need for flexible thr here
-        if( ddet .lt. 1e-3_rp ) then
+        if( ddet < 1e-3_rp ) then
            eq_rmat = .true.
         endif
 
@@ -1170,7 +1170,7 @@ subroutine add_sofi( nat, rmat, nbas, mat_list, ierr )
 
   !! increment nbas
   nbas = nbas + 1
-  if( nbas .gt. nmax ) then
+  if( nbas > nmax ) then
      ierr = ERR_LIST_TOO_SMALL
      write(*,*) "subroutine add_sofi::: ERROR ADDING RMAT, LIST TOO SMALL"
      write(*,*) "origin at: "__FILE__," line:",__LINE__
@@ -1252,7 +1252,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
 
   !! start from below
   pg = 'C1'
-  if( nbas .eq. 1 ) then
+  if( nbas == 1 ) then
      !! Structure is C1 (no symmetry except identity).
      !! No need to do anything in this routine.
      !!
@@ -1300,10 +1300,10 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
 
   !! group the Ops of the list by axis
   do i = 1, nbas
-     if( op(i) .eq. OP_INVERSION ) cycle
-     if( op(i) .eq. OP_IDENTITY ) cycle
+     if( op(i) == OP_INVERSION ) cycle
+     if( op(i) == OP_IDENTITY ) cycle
      !!
-     if( skip_ax(i) .eq. 1 ) cycle
+     if( skip_ax(i) == 1 ) cycle
      ax = ax_list(:,i)
      if(verb) write(*,'(a4,3f9.4)') 'ax:',ax
      !! add to uniq_ax
@@ -1317,7 +1317,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
         if( op(j) == OP_IDENTITY )cycle
         if( op(j) == OP_INVERSION )cycle
         !!
-        if( abs(dot_product(ax, ax_list(:,j))) .gt. 0.999_rp ) then
+        if( abs(dot_product(ax, ax_list(:,j))) > 0.999_rp ) then
            !! is same ax
            if(verb) write(*,'(a3,g0,a1,g0,1x,f7.4)') op(j), n_int(j),'^', power(j), angle_list(j)
            skip_ax(j) = 1
@@ -1335,7 +1335,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   do i = 1, nbas
      !! find which ax from uniq list
      do j = 1, nbas
-        if( abs(dot_product(ax_list(:,i), uniq_ax(1:3,j))) .gt. 0.99_rp ) then
+        if( abs(dot_product(ax_list(:,i), uniq_ax(1:3,j))) > 0.99_rp ) then
            multip_ax(i) = nint(uniq_ax(5,j))
            exit
         endif
@@ -1351,26 +1351,26 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !! find largest n of C ops, there are at least 2 ops on list
   max_n_val = 0
   max_n_loc = 2
-  if( count(op .eq. OP_PROP_ROT) .gt. 0 ) then
-     max_n_val = maxval( n_int(:), mask=(op .eq. OP_PROP_ROT))
-     max_n_loc = maxloc( n_int(:), dim=1, mask=(op .eq. OP_PROP_ROT))
+  if( count(op == OP_PROP_ROT) > 0 ) then
+     max_n_val = maxval( n_int(:), mask=(op == OP_PROP_ROT))
+     max_n_loc = maxloc( n_int(:), dim=1, mask=(op == OP_PROP_ROT))
   endif
   !!
   !! special case for D2: n of principal ax is equal to n of other C ax
   !!
   !! D2 has all axes multip 1, any of the C2 axes can be principal,
   !! but D2d has 2 C2 axes which are not prncipal, with multip=1, and principal C2 with multip=3
-  if( maxval(multip_ax, mask=(op .eq. OP_PROP_ROT)) .gt. 1 ) then
+  if( maxval(multip_ax, mask=(op == OP_PROP_ROT)) > 1 ) then
      !! there are axes with multip > 1
      if( multip_ax( max_n_loc) == 1 ) then
         !! we have chosen the wrong axis, choose again among axes with multip > 1
-        max_n_val = maxval( n_int(:), mask=(op .eq. OP_PROP_ROT .and. multip_ax .gt. 1))
-        max_n_loc = maxloc( n_int(:), dim=1, mask=(op .eq. OP_PROP_ROT .and. multip_ax .gt. 1))
+        max_n_val = maxval( n_int(:), mask=(op == OP_PROP_ROT .and. multip_ax > 1))
+        max_n_loc = maxloc( n_int(:), dim=1, mask=(op == OP_PROP_ROT .and. multip_ax > 1))
      endif
   end if
 
   !! can happen if there are no C operations in PG, for example Cs. Choose the ax of second op
-  if( max_n_loc .eq. 0 ) max_n_loc = 2
+  if( max_n_loc == 0 ) max_n_loc = 2
 
 
   ! if(verb) then
@@ -1379,7 +1379,7 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   ! endif
 
   !! get how many C ax have this n
-  nr_n = count( nint(uniq_ax(4,:)) .eq. max_n_val )
+  nr_n = count( nint(uniq_ax(4,:)) == max_n_val )
   ! write(*,*) 'nr_n', nr_n
 
   ! write(*,*) "nbas:",nbas
@@ -1405,14 +1405,14 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   do i = 1, nbas
      !! find which ax on list have same characteristics as cn
      !! NOTE: this will find duplicates also
-     if( n_int(i) .eq. cn_val .and. &
-          op(i) .eq. OP_PROP_ROT .and. &
-          multip_ax(i) .eq. cn_multip ) then
+     if( n_int(i) == cn_val .and. &
+          op(i) == OP_PROP_ROT .and. &
+          multip_ax(i) == cn_multip ) then
         ! write(*,"(a,1x, 3f9.4)") "ax is prin:", ax_list(:,i)
         !! store only unique
         isnew = .true.
         do j = 1, n_prin_ax
-           if( dot_product(ax_list(:,i), prin_ax(:,j)) .gt. 0.999_rp ) isnew = .false.
+           if( dot_product(ax_list(:,i), prin_ax(:,j)) > 0.999_rp ) isnew = .false.
         end do
         if( .not. isnew ) cycle
         n_prin_ax = n_prin_ax + 1
@@ -1423,11 +1423,11 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !!
   !! flowchart, top part
   !!
-  if( max_n_val .ge. 3 .and. nr_n .ge. 2 ) then
+  if( max_n_val >= 3 .and. nr_n .ge. 2 ) then
      !!
      !! is some T# group (n < 4)
-     if( max_n_val .ge. 4) then
-        if( max_n_val .ge. 5 ) then
+     if( max_n_val >= 4) then
+        if( max_n_val >= 5 ) then
            !! is I#
            pg = 'I'
            if( has_sigma .or. has_inversion) pg = 'Ih'
@@ -1458,14 +1458,14 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   n_c2 = 0
   ! write(*,*) '>> checking c2 perp'
   do i = 1, nbas
-     if( op(i) .ne. OP_PROP_ROT) cycle
-     if( n_int(i) .ne. 2) cycle
-     if( i .eq. max_n_loc ) cycle
+     if( op(i) /= OP_PROP_ROT) cycle
+     if( n_int(i) /= 2) cycle
+     if( i == max_n_loc ) cycle
      ax = ax_list(:,i)
      !! keep dot prod of all
      dot = abs( dot_product( cn_ax, ax))
      !! can be same ax as cn_ax
-     if( dot .gt. 0.99_rp) cycle
+     if( dot > 0.99_rp) cycle
      ! write(*,*) op(i), n_int(i)
      ! write(*,'(5x,i2,f5.2,3f9.4)') i, dot, ax
      dd = dd + dot
@@ -1473,20 +1473,20 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
      n_c2 = n_c2 + 1
      ! write(*,*) i, dd
   end do
-  if( n_c2 .gt. 0) dd = dd/n_c2
+  if( n_c2 > 0) dd = dd/n_c2
   ! write(*,*) 'n_c2',n_c2
   ! write(*,*) 'dd is:',dd
-  if( dd .lt. 0.01_rp .and. n_c2 .gt. 0 ) c2_perp = .true.
+  if( dd < 0.01_rp .and. n_c2 > 0 ) c2_perp = .true.
   ! write(*,*) '>> c2 are perp',c2_perp
 
   !! check if has sigma_h
   !! horizontal refl plane: axis of plane is parallel to principal, dot( ax_s0, principal ) = 1.0
   ! write(*,*) '>> checking sigma_h'
   do i = 1, nbas
-     if( op(i) .ne. OP_IMPROP_ROT) cycle
-     if( n_int(i) .ne. 0) cycle
+     if( op(i) /= OP_IMPROP_ROT) cycle
+     if( n_int(i) /= 0) cycle
      dot = abs( dot_product(cn_ax, ax_list(:,i)))
-     if( dot .gt. 0.99_rp ) has_sigma_h = .true.
+     if( dot > 0.99_rp ) has_sigma_h = .true.
      ! write(*,*) i, dot
   end do
   ! write(*,*) '>> sigma_h found:',has_sigma_h
@@ -1498,17 +1498,17 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   ! write(*,*) '>> checking sigma_v'
   n_in_plane = 0
   do i = 1, nbas
-     if( op(i) .ne. OP_IMPROP_ROT) cycle
-     if( n_int(i) .ne. 0) cycle
+     if( op(i) /= OP_IMPROP_ROT) cycle
+     if( n_int(i) /= 0) cycle
      !! cross prod( ax, cn_ax ) = 1 for ax in plane
      call cross_prod( ax_list(:,i), cn_ax, cc)
      cross=norm2(cc)
      ! write(*,'(5x,i2,f5.2,3f9.4)') i, cross, ax_list(:,i)
-     if( abs( cross ) .gt. 0.99_rp ) n_in_plane = n_in_plane + 1
+     if( abs( cross ) > 0.99_rp ) n_in_plane = n_in_plane + 1
   end do
   ! write(*,*) 'n_in_plane',n_in_plane, n_c2
-  ! if( n_in_plane .eq. n_c2) has_sigma_v = .true.
-  if( n_in_plane .gt. 0) has_sigma_v = .true.
+  ! if( n_in_plane == n_c2) has_sigma_v = .true.
+  if( n_in_plane > 0) has_sigma_v = .true.
   ! write(*,*) '>> sigma_v found:',has_sigma_v
 
 
@@ -1527,20 +1527,20 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
 
      !! first, find two C2 axes perpendicular to principal ax: i,j
      lp:do i = 1, nbas
-        if( op(i) .ne. OP_PROP_ROT ) cycle
-        if( n_int(i) .ne. 2) cycle
+        if( op(i) /= OP_PROP_ROT ) cycle
+        if( n_int(i) /= 2) cycle
 
         dot = abs( dot_product( ax_list(:,i), cn_ax))
         !! i is perp to cn
-        if( dot .lt. 0.01_rp) then
+        if( dot < 0.01_rp) then
            !! select another
            do j = 1, nbas
-              if( j .eq. i ) cycle
-              if( op(j) .ne. OP_PROP_ROT ) cycle
-              if( n_int(j) .ne. 2) cycle
+              if( j == i ) cycle
+              if( op(j) /= OP_PROP_ROT ) cycle
+              if( n_int(j) /= 2) cycle
 
               dotj = abs( dot_product( ax_list(:,j), cn_ax))
-              if( dotj .lt. 0.01_rp) then
+              if( dotj < 0.01_rp) then
                  ! write(*,*) i, j, dot,dotj
                  ! write(*,*) ax_list(:,i)
                  ! write(*,*) ax_list(:,j)
@@ -1554,15 +1554,15 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                  !! dot with s0 should be zero -> s0 bisects axes i,j
                  do k = 1, nbas
                     !! loop through s0 ops
-                    if( op(k) .ne. 'S') cycle
-                    if( n_int(k) .ne. 0) cycle
+                    if( op(k) /= 'S') cycle
+                    if( n_int(k) /= 0) cycle
                     !! dot with ax_s0
                     dotk = abs( dot_product(ax, ax_list(:,k)) )
                     ! write(*,*) i,j,k, dotk
                     !! check if this s0 plane contains principal
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
-                    if( dotk .lt. 0.01_rp .and. abs(cross) .gt. 0.99_rp ) then
+                    if( dotk < 0.01_rp .and. abs(cross) > 0.99_rp ) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1573,13 +1573,13 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                  ! write(*,*) ax
                  !! dot with s0 should be zero -> s0 bisects axes i,j
                  do k = 1, nbas
-                    if( op(k) .ne. OP_IMPROP_ROT) cycle
-                    if( n_int(k) .ne. 0) cycle
+                    if( op(k) /= OP_IMPROP_ROT) cycle
+                    if( n_int(k) /= 0) cycle
                     dotk = abs( dot_product(ax, ax_list(:,k)) )
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
                     ! write(*,*) i,j,k, dotk
-                    if( dotk .lt. 0.01_rp .and. cross.gt.0.99_rp ) then
+                    if( dotk < 0.01_rp .and. cross>0.99_rp ) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1590,13 +1590,13 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                  ! write(*,*) ax
                  !! dot with s0 should be zero -> s0 bisects axes i,j
                  do k = 1, nbas
-                    if( op(k) .ne. OP_IMPROP_ROT) cycle
-                    if( n_int(k) .ne. 0) cycle
+                    if( op(k) /= OP_IMPROP_ROT) cycle
+                    if( n_int(k) /= 0) cycle
                     dotk = abs( dot_product(ax, ax_list(:,k)) )
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
                     ! write(*,*) i,j,k, dotk
-                    if( dotk .lt. 0.01_rp .and. cross.gt.0.99_rp) then
+                    if( dotk < 0.01_rp .and. cross>0.99_rp) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1607,13 +1607,13 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
                  ! write(*,*) ax
                  !! dot with s0 should be zero -> s0 bisects axes i,j
                  do k = 1, nbas
-                    if( op(k) .ne. OP_IMPROP_ROT) cycle
-                    if( n_int(k) .ne. 0) cycle
+                    if( op(k) /= OP_IMPROP_ROT) cycle
+                    if( n_int(k) /= 0) cycle
                     dotk = abs( dot_product(ax, ax_list(:,k)) )
                     call cross_prod( ax_list(:,k), cn_ax, cc)
                     cross=norm2(cc)
                     ! write(*,*) i,j,k, dotk
-                    if( dotk .lt. 0.01_rp .and. cross.gt.0.99_rp) then
+                    if( dotk < 0.01_rp .and. cross>0.99_rp) then
                        has_sigma_d = .true.
                        exit lp
                     endif
@@ -1630,8 +1630,8 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
 
   !! check if has s2n
   do i = 1, nbas
-     if( op(i) .ne. OP_IMPROP_ROT ) cycle
-     if( n_int(i) .ne. 2*max_n_val) cycle
+     if( op(i) /= OP_IMPROP_ROT ) cycle
+     if( n_int(i) /= 2*max_n_val) cycle
      has_s2n = .true.
      exit
   end do
@@ -1698,12 +1698,12 @@ subroutine sofi_get_pg( nbas, op_list, pg, n_prin_ax, prin_ax, verb, ierr )
   !! some simple check on consistency of PG and number of Ops
   pg_err = check_pg_Nop( pg, nbas )
   ! write(*,*) pg
-  ! if( pg_err .gt. 0 ) pg = '---'
-  if( pg_err .eq. 1 ) then
+  ! if( pg_err > 0 ) pg = '---'
+  if( pg_err == 1 ) then
      write(pg,'(a,a1)') trim(pg),'+'
-  elseif( pg_err .eq. -1 )then
+  elseif( pg_err == -1 )then
      write(pg,'(a,a1)') trim(pg),'-'
-  elseif( pg_err .eq. -9 ) then
+  elseif( pg_err == -9 ) then
      !! error in check_pg_Nop
      ierr = -1
      write(*,*) "at:",__FILE__," line:",__LINE__
@@ -1804,7 +1804,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   !! determinant
   !! IRA routine
   call determinant3x3( rdum, det )
-  if( abs(det) .gt. 1.0_rp + epsilon ) then
+  if( abs(det) > 1.0_rp + epsilon ) then
      write(*,*) "input matrix:"
      write(*,'(3f9.4)') rdum(1,:)
      write(*,'(3f9.4)') rdum(2,:)
@@ -1825,14 +1825,14 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   ! end do
 
   !! based on value of det, decide what to check
-  if( det .gt. 0.5_rp ) then
+  if( det > 0.5_rp ) then
      !! positive 1.0 determinant, matrix is rotation
      !! there is one eignevalue which is 1.0
      search_eval = 1.0_rp
      ! write(*,*) "matrix is rotation"
      op(1:1)=OP_PROP_ROT
      !!
-  elseif( det .lt. -0.5_rp) then
+  elseif( det < -0.5_rp) then
      !! negative 1.0 determinant, matrix is (roto-)inversion.
      !! There is one eignevalue -1.0
      search_eval = -1.0_rp
@@ -1845,7 +1845,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   idx = 0
   do i = 1, 3
      diff = eigvals(i) - search_eval
-     if( abs(diff) .lt. diff_old) then
+     if( abs(diff) < diff_old) then
         diff_old = abs(diff)
         idx = i
      end if
@@ -1859,8 +1859,8 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   i = mod(i,3) + 1
   cosangl = eigvals(i)
   !! massage the eigenvalue a bit, since acos is defined strictly on [-1:1]
-  ! if( cosangl .gt. 1.0 .or. cosangl .lt. -1.0) cosangl = real(nint(cosangl))
-  if( abs(cosangl) .gt. (1.0_rp + epsilon) ) then
+  ! if( cosangl > 1.0 .or. cosangl < -1.0) cosangl = real(nint(cosangl))
+  if( abs(cosangl) > (1.0_rp + epsilon) ) then
      !! value cosangl beyond 1.0, or below -1.0, error
      write(*,'(a,1x,3f9.6)') "eigvals:", eigvals
      write(*,'(a,1x,f6.2)') "search_eval:", search_eval
@@ -1868,7 +1868,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
      write(*,*) "origin at:",__FILE__,"line:",__LINE__
      ierr = ERR_ACOS_ARG
      return
-  elseif( abs(cosangl) .gt. 1.0_rp ) then
+  elseif( abs(cosangl) > 1.0_rp ) then
      !! value 1.0 within precision, take sign with value 1.0
      cosangl = sign(1.0_rp, cosangl )
   end if
@@ -1889,7 +1889,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   do j = 1, lim_n_val
      diff = angle*j - nint(angle*j)
      ! write(*,*) j, diff
-     if( abs(diff) .lt. mindiff ) then
+     if( abs(diff) < mindiff ) then
         nl = j
         pl = nint(angle*j)
         ! exit
@@ -1897,7 +1897,7 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
      end if
   end do
   !!
-  if( nl .eq. n .and. pl .eq. p ) then
+  if( nl == n .and. pl .eq. p ) then
      write(*,'(a,1x,f12.6)') "unable to find n and p for angle:",angle
      write(*,*) "origin at:",__FILE__,"line:",__LINE__
      ierr = ERR_OTHER
@@ -1913,14 +1913,14 @@ subroutine sofi_analmat( rmat, op, n, p, ax, angle, ierr )
   p = p/gcd
 
 
-  if( angle .lt. epsilon ) n = 0
-  if( p .eq. 0 ) p = 1
+  if( angle < epsilon ) n = 0
+  if( p == 0 ) p = 1
   !!
   !! C0 = E :: rotation of angle 0 around any axis is identity
-  if( op(1:1)==OP_PROP_ROT .and. angle .lt. epsilon ) op=OP_IDENTITY
+  if( op(1:1)==OP_PROP_ROT .and. angle < epsilon ) op=OP_IDENTITY
   !!
   !! S2 = I :: rotation 0.5 and reflection about any axis is inversion
-  if( op(1:1)==OP_IMPROP_ROT .and. abs(angle-0.5_rp) .lt. epsilon ) op=OP_INVERSION
+  if( op(1:1)==OP_IMPROP_ROT .and. abs(angle-0.5_rp) < epsilon ) op=OP_INVERSION
 
   ! write(*,'(a,x,i3,a3,2f9.4)') 'angle:',n, op, angle, (n-1.0/angle)
 
@@ -2023,7 +2023,7 @@ subroutine sofi_ext_Bfield( n_op, op_list, b_field )
   op_list(:,:,:) = 0.0_rp
   op_list(:,:,1:n_op) = op_new(:,:,1:n_op)
 
-  if( n_op .lt. 1) then
+  if( n_op < 1) then
      !! should not, at least E should satisfy!
      write(*,*) 'heavy error in sofi_ext_Bfield'
      stop
@@ -2157,7 +2157,7 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
   !!   - opposite ax, opposite angle
   do i = 1, n_mat
      do j = i+1, n_mat
-        if( op_list(i) .ne. op_list(j) ) cycle
+        if( op_list(i) /= op_list(j) ) cycle
         !! axes
         dotp=dot_product( ax_out(:,i), ax_out(:,j))
         !! angles
@@ -2165,8 +2165,8 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
         angle_sum = angle_out(i) + angle_out(j)
         !!
         !! same ax, same angle
-        if( dotp .gt. dotp_equal .and. &
-             abs(angle_diff) .lt. 1e-3_rp ) then
+        if( dotp > dotp_equal .and. &
+             abs(angle_diff) < 1e-3_rp ) then
            !! ops are ambiguous
            write(*,*) i, j
            write(*,*)"dotp",dotp, "angle_diff",abs(angle_diff)
@@ -2176,9 +2176,9 @@ subroutine sofi_unique_ax_angle( n_mat, mat_list, op_out, ax_out, angle_out, ier
         end if
         !!
         !! opposite ax, equal or opposite angle
-        if( dotp .lt. -dotp_equal  )then
-           if( abs( angle_diff ) .lt. 1e-3_rp .or. &
-                abs(angle_sum) .lt. 1e-2_rp ) then
+        if( dotp < -dotp_equal  )then
+           if( abs( angle_diff ) < 1e-3_rp .or. &
+                abs(angle_sum) < 1e-2_rp ) then
               !! ops are ambiguous
               write(*,*) i, j, angle_diff
               write(*,*)"dotp",dotp, "angle_diff",abs(angle_diff), "angle_sum",abs(angle_sum)
@@ -2245,7 +2245,7 @@ subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
            pp: do k = 1, ii
               call matrix_distance( rmat, mat_out(:,:,k), dd )
 
-              if( dd .lt. m_thr ) then
+              if( dd < m_thr ) then
                  is_new = .false.
                  exit pp
               endif
@@ -2261,7 +2261,7 @@ subroutine sofi_mat_combos( n_in, mat_in, n_out, mat_out )
         end do
      end do
      !! if nothing new, exit
-     if( nn .eq. ii) exit mm
+     if( nn == ii) exit mm
      nn = ii
   end do mm
 
@@ -2273,7 +2273,7 @@ end subroutine sofi_mat_combos
 !! @param[in]
 subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3, u_c3, terminate )
   !! update state flags, terminate if condition for Ih is found.
-  !! condition for Ih: has sigma or inversion, and number of unique c3 axes .ge. 3
+  !! condition for Ih: has sigma or inversion, and number of unique c3 axes >= 3
   !!
   !! NOTE: The variables which store the state need to be allocated and initialised in the caller!
   use ira_precision
@@ -2321,13 +2321,13 @@ subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3,
      end if
 
      !! if C3, check the unique axes
-     c3ax: if( op == OP_PROP_ROT .and. n .ge. 3) then
+     c3ax: if( op == OP_PROP_ROT .and. n >= 3) then
         !!
-        if( n_u_c3 .ge. 5 ) exit c3ax
+        if( n_u_c3 >= 5 ) exit c3ax
         unique = .true.
         do iax = 1, n_u_c3
            dotp = dot_product( ax, u_c3(:,iax))
-           if( abs(dotp) .gt. 0.99_rp ) unique = .false.
+           if( abs(dotp) > 0.99_rp ) unique = .false.
         end do
         !!
         if( unique ) then
@@ -2338,7 +2338,7 @@ subroutine state_update( n_old, n_op, op_list, has_sigma, has_inversion, n_u_c3,
      end if c3ax
 
      !! check condition for Ih:
-     if( n_u_c3 .ge. 5 ) then
+     if( n_u_c3 >= 5 ) then
         if( has_sigma .or. has_inversion ) terminate = .true.
      end if
 
@@ -2365,7 +2365,7 @@ subroutine sofi_get_err_msg( ierr, msg )
 
   !! cant output allocatable ... write to fixed length string
   str = get_err_msg( ierr )
-  if( len(str) .le. len(msg) ) then
+  if( len(str) <= len(msg) ) then
      msg = str
   else
      write(*,*) "WARNING: error str longer than given msg variable!"
