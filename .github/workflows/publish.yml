@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
-  workflow_dispatch:
+permissions: {}
 
 jobs:
   build_wheels:
@@ -15,31 +15,36 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-          - os: macos-13   # x86_64
-          - os: macos-14   # arm64
+          - os: macos-13       # x86_64
+          - os: macos-latest   # arm64
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
-          # Linux: use manylinux_2_28 (GLIBC 2.28+); install gfortran 12 from gcc-toolset
-          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
-          CIBW_BEFORE_ALL_LINUX: dnf install -y gcc-toolset-12-gcc-gfortran lapack-devel blas-devel
-          CIBW_ENVIRONMENT_LINUX: 'FC=/opt/rh/gcc-toolset-12/root/usr/bin/gfortran CMAKE_ARGS="-DIRA_ENABLE_NATIVE_OPTIMIZATION=OFF"'
-          # macOS: install gfortran via Homebrew and create unversioned symlink for CMake
+          CIBW_SKIP: "*-musllinux*"
+
+          CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DIRA_ENABLE_NATIVE_OPTIMIZATION=OFF"'
+
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          # CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_ALL_LINUX: dnf install -y gcc-gfortran
+
           CIBW_BEFORE_ALL_MACOS: |
-            brew install gcc
             GFORTRAN_PATH=$(find "$(brew --prefix gcc)/bin" -name 'gfortran-*' | sort | tail -1)
-            ln -sf "$GFORTRAN_PATH" "$(brew --prefix)/bin/gfortran" || true
-          CIBW_ENVIRONMENT_MACOS: 'CMAKE_ARGS="-DIRA_ENABLE_NATIVE_OPTIMIZATION=OFF"'
+            ln -sf "$GFORTRAN_PATH" "$(brew --prefix)/bin/gfortran"
+
+          CIBW_TEST_COMMAND: python -c "import ira_mod; print(ira_mod.version)"
+        with:
+          output-dir: dist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
-          path: ./wheelhouse/*.whl
+          name: dist-wheels-${{ matrix.os }}
+          path: dist/*.whl
 
   build_sdist:
     name: Source distribution
@@ -47,16 +52,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Check tag matches version.txt
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          file_version="$(head -n1 version.txt | tr -d '[:space:]')"
+          if [ "$tag_version" != "$file_version" ]; then
+            echo "::error::git Tag: v${tag_version} does not match version.txt: (${file_version})"
+            exit 1
+          fi
+
+      - name: Setup python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Build sdist
         run: pipx run build --sdist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sdist
+          name: dist-sdist
           path: dist/*.tar.gz
 
   publish:
@@ -70,15 +85,11 @@ jobs:
       id-token: write   # required for OIDC trusted publishing
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download all built distributions
+        uses: actions/download-artifact@v4
         with:
-          pattern: "wheels-*"
+          pattern: dist-*
           path: dist
           merge-multiple: true
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: sdist
-          path: dist
 
       - uses: pypa/gh-action-pypi-publish@release/v1
