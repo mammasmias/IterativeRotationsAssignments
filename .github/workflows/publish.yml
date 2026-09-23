@@ -1,0 +1,95 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+permissions: {}
+
+jobs:
+  build_wheels:
+    name: Wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-13       # x86_64
+          - os: macos-latest   # arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.2.1
+        env:
+          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
+          CIBW_SKIP: "*-musllinux*"
+
+          CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DIRA_ENABLE_NATIVE_OPTIMIZATION=OFF"'
+
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          # CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_ALL_LINUX: dnf install -y gcc-gfortran
+
+          CIBW_BEFORE_ALL_MACOS: |
+            GFORTRAN_PATH=$(find "$(brew --prefix gcc)/bin" -name 'gfortran-*' | sort | tail -1)
+            ln -sf "$GFORTRAN_PATH" "$(brew --prefix)/bin/gfortran"
+
+          CIBW_TEST_COMMAND: python -c "import ira_mod; print(ira_mod.version)"
+        with:
+          output-dir: dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-wheels-${{ matrix.os }}
+          path: dist/*.whl
+
+  build_sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches version.txt
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          file_version="$(head -n1 version.txt | tr -d '[:space:]')"
+          if [ "$tag_version" != "$file_version" ]; then
+            echo "::error::git Tag: v${tag_version} does not match version.txt: (${file_version})"
+            exit 1
+          fi
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
+
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ira-mod
+    permissions:
+      id-token: write   # required for OIDC trusted publishing
+
+    steps:
+      - name: Download all built distributions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
