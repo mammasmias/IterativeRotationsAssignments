@@ -137,12 +137,18 @@ set(LAPACKLIB_STR "")
 # dgemm_ makes a later dlopen bind that symbol instead of a tuned BLAS.
 # Hiding is the default. -DIRA_HIDE_BUNDLED_BLAS=OFF keeps the old export.
 # Callers that resolved BLAS from that export must link a BLAS themselves.
-# --version-script is ELF-only. macOS ld64 and the MSVC link used for
-# scikit-build wheels reject it, and those builds leave the symbols visible.
+# GNU ld gets src/libira.map. A linker that rejects --version-script does
+# not keep the export: lap.f is archived and linked with --exclude-libs.
+# gfortran -fvisibility=hidden does not mark those procedures hidden, and
+# objcopy --localize-symbol leaves them in .dynsym (binutils 2.42).
+# If both linker flags are rejected, a shared build that would compile
+# the bundled BLAS stops at configure.
 option(IRA_HIDE_BUNDLED_BLAS
   "Hide reference BLAS symbols in the shared library. Callers that used the bundled export must link a BLAS themselves."
   ON)
 set(IRA_VERSION_SCRIPT_APPLIED FALSE)
+set(IRA_HIDE_WITH_EXCLUDE_LIBS FALSE)
+set(IRA_BLAS_HIDDEN FALSE)
 if(IRA_HIDE_BUNDLED_BLAS)
   get_target_property(IRA_LIB_TYPE ${PROJECT_NAME} TYPE)
   if(IRA_LIB_TYPE STREQUAL "SHARED_LIBRARY")
@@ -155,18 +161,17 @@ if(IRA_HIDE_BUNDLED_BLAS)
       target_link_options(${PROJECT_NAME} PRIVATE
         "-Wl,--version-script=${IRA_VERSION_SCRIPT}")
       set(IRA_VERSION_SCRIPT_APPLIED TRUE)
+      set(IRA_BLAS_HIDDEN TRUE)
     else()
-      message(STATUS
-        "IRA :: linker has no -Wl,--version-script; skipping it (macOS ld64, MSVC/scikit-build wheels). Reference BLAS symbols stay exported.")
+      check_linker_flag(Fortran
+        "-Wl,--exclude-libs,liblap_local.a"
+        IRA_LINKER_SUPPORTS_EXCLUDE_LIBS)
+      if(IRA_LINKER_SUPPORTS_EXCLUDE_LIBS)
+        set(IRA_HIDE_WITH_EXCLUDE_LIBS TRUE)
+        set(IRA_BLAS_HIDDEN TRUE)
+      endif()
     endif()
   endif()
-endif()
-if(IRA_VERSION_SCRIPT_APPLIED)
-  add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND /bin/sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/link_external_blas.sh"
-            $<TARGET_FILE:${PROJECT_NAME}>
-    VERBATIM)
 endif()
 
 # link lapack
@@ -177,12 +182,30 @@ if(${LAPACK_FOUND})
 else()
   # compile and link the local lapack files
   message(STATUS "IRA :: LAPACK library not found. Compiling local version (un-optimised).")
-  add_library(lap_local OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
+  if(IRA_HIDE_BUNDLED_BLAS AND IRA_LIB_TYPE STREQUAL "SHARED_LIBRARY" AND NOT IRA_BLAS_HIDDEN)
+    message(FATAL_ERROR
+      "IRA error: linker rejected --version-script and --exclude-libs. Bundled dgemm_ would stay exported. Set IRA_HIDE_BUNDLED_BLAS=OFF to keep that export.")
+  endif()
+  if(IRA_HIDE_WITH_EXCLUDE_LIBS)
+    message(WARNING
+      "IRA warning: linker rejected --version-script. Hiding bundled reference BLAS with --exclude-libs instead of exporting dgemm_.")
+    add_library(lap_local STATIC "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
+    target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--exclude-libs,liblap_local.a")
+  else()
+    add_library(lap_local OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
+  endif()
   target_compile_options(lap_local PRIVATE -O0)
   set_target_properties(lap_local PROPERTIES Fortran_FORMAT FIXED POSITION_INDEPENDENT_CODE ON)
   target_link_libraries( ${PROJECT_NAME} lap_local)
   # add lap_local target to the exported targets
   list(APPEND alltargets "lap_local" )
+endif()
+if(IRA_BLAS_HIDDEN)
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND /bin/sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/link_external_blas.sh"
+            $<TARGET_FILE:${PROJECT_NAME}>
+    VERBATIM)
 endif()
 
 

@@ -43,7 +43,7 @@ Python module:
 
 For other build tools and more details, see the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/compilation.html).
 
-The shared library hides the reference BLAS that the bundled `lap.f` would otherwise export. A caller that used those symbols (`dgemm_`, `dgemv_`, `dgesvd_`, `xerbla_`) from `libira` must link a BLAS itself. Opt out with `-DIRA_HIDE_BUNDLED_BLAS=OFF` or `IRA_HIDE_BUNDLED_BLAS=0`. Linkers without `-Wl,--version-script` (macOS ld64, MSVC/scikit-build wheels) skip the hide and keep the export.
+The shared library hides the reference BLAS that the bundled `lap.f` would otherwise export. A caller that used those symbols (`dgemm_`, `dgemv_`, `dgesvd_`, `xerbla_`) from `libira` must link a BLAS itself. Opt out with `-DIRA_HIDE_BUNDLED_BLAS=OFF` or `IRA_HIDE_BUNDLED_BLAS=0`. GNU ld applies `src/libira.map`. A linker that rejects `-Wl,--version-script` warns and hides the same symbols with `-Wl,--exclude-libs` on the bundled archive. If that flag is rejected too, the shared build stops rather than exporting `dgemm_`.
 
 # Conda build
 
