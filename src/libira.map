@@ -1,0 +1,11 @@
+{
+  global:
+    libira_*;
+    ira_*;
+    sofi_*;
+    cshda_*;
+    svdrot_m_;
+    __*;
+  local:
+    *;
+};

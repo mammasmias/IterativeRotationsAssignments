@@ -14,7 +14,6 @@ AR = ar
 #
 LIBLAPACK?= -llapack
 
-
 #=======================
 #
 # compilation flags
@@ -28,6 +27,19 @@ SRC := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ = $(SRC)/Obj
 MOD = $(abspath $(SRC)/../include)
 LIBOUT = $(abspath $(SRC)/../lib)
+
+# Hide reference BLAS/LAPACK symbols in the shared library (default).
+# IRA_HIDE_BUNDLED_BLAS=0 keeps the bundled export. Callers that used
+# dgemm_ from that export must link a BLAS themselves when it is hidden.
+# The flag is applied only when the linker accepts --version-script.
+# macOS ld64 and MSVC do not, so those builds skip it.
+IRA_HIDE_BUNDLED_BLAS ?= 1
+CC ?= cc
+ifeq ($(IRA_HIDE_BUNDLED_BLAS),0)
+IRA_VERSION_SCRIPT_FLAG :=
+else
+IRA_VERSION_SCRIPT_FLAG := $(shell echo 'int ira_vs(void){return 0;}' | $(CC) -shared -x c - -o /dev/null -Wl,--version-script=$(SRC)/libira.map >/dev/null 2>&1 && echo -Wl,--version-script=$(SRC)/libira.map)
+endif
 
 
 
@@ -110,9 +122,22 @@ $(IRALIB): $(outils) $(olib)
 #====
 # pack the shared library
 #====
-$(SHLIB): $(outils) $(olib)
-	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
+$(SHLIB): $(outils) $(olib) $(SRC)/libira.map
+	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $(outils) $(olib) $(FFLAGS) $(LIBLAPACK) \
+		-Wl,-soname,libira.so $(IRA_VERSION_SCRIPT_FLAG)
 	@ln -sf $(LIBOUT)/$@ .
+	@if [ -n "$(IRA_VERSION_SCRIPT_FLAG)" ]; then \
+		if nm -D $(LIBOUT)/$@ | awk '$$2 ~ /^[TWD]$$/ && $$3 ~ /^(dgemm_|dgemv_|dgesvd_|xerbla_)$$/ { found = 1 } END { exit !found }'; then \
+			echo "error: $(SHLIB) exports reference BLAS/LAPACK symbols"; exit 1; \
+		fi; \
+	fi
+
+# Shared library with the bundled reference BLAS, then a link of a
+# caller that must name its own BLAS. Restores nothing: the last
+# `make shlib` in this directory is the library left in ../lib.
+test-link-blas:
+	$(MAKE) shlib LIBLAPACK=
+	$(SRC)/../tests/link_external_blas.sh $(LIBOUT)/$(SHLIB)
 
 msg:
 	@echo 'Use one of the following:'

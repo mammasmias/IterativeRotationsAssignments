@@ -133,6 +133,42 @@ find_package(LAPACK)
 
 # string for pkgconfig link to lapack in template.pc
 set(LAPACKLIB_STR "")
+# The bundled lap.f is an unoptimized reference BLAS. Exporting its
+# dgemm_ makes a later dlopen bind that symbol instead of a tuned BLAS.
+# Hiding is the default. -DIRA_HIDE_BUNDLED_BLAS=OFF keeps the old export.
+# Callers that resolved BLAS from that export must link a BLAS themselves.
+# --version-script is ELF-only. macOS ld64 and the MSVC link used for
+# scikit-build wheels reject it, and those builds leave the symbols visible.
+option(IRA_HIDE_BUNDLED_BLAS
+  "Hide reference BLAS symbols in the shared library. Callers that used the bundled export must link a BLAS themselves."
+  ON)
+set(IRA_VERSION_SCRIPT_APPLIED FALSE)
+if(IRA_HIDE_BUNDLED_BLAS)
+  get_target_property(IRA_LIB_TYPE ${PROJECT_NAME} TYPE)
+  if(IRA_LIB_TYPE STREQUAL "SHARED_LIBRARY")
+    include(CheckLinkerFlag)
+    set(IRA_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/src/libira.map")
+    check_linker_flag(Fortran
+      "-Wl,--version-script=${IRA_VERSION_SCRIPT}"
+      IRA_LINKER_SUPPORTS_VERSION_SCRIPT)
+    if(IRA_LINKER_SUPPORTS_VERSION_SCRIPT)
+      target_link_options(${PROJECT_NAME} PRIVATE
+        "-Wl,--version-script=${IRA_VERSION_SCRIPT}")
+      set(IRA_VERSION_SCRIPT_APPLIED TRUE)
+    else()
+      message(STATUS
+        "IRA :: linker has no -Wl,--version-script; skipping it (macOS ld64, MSVC/scikit-build wheels). Reference BLAS symbols stay exported.")
+    endif()
+  endif()
+endif()
+if(IRA_VERSION_SCRIPT_APPLIED)
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND /bin/sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/link_external_blas.sh"
+            $<TARGET_FILE:${PROJECT_NAME}>
+    VERBATIM)
+endif()
+
 # link lapack
 if(${LAPACK_FOUND})
   target_link_libraries( ${PROJECT_NAME} PUBLIC ${LAPACK_LIBRARIES})
@@ -151,6 +187,7 @@ endif()
 
 
 if(IRA_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(tests)
 endif()
 

@@ -31,3 +31,12 @@ enable_language(CXX)
 add_executable( cppmain main.cpp )
 target_link_libraries( cppmain PRIVATE ira )
 add_test( NAME cppmain COMMAND cppmain )
+
+# The shared library no longer exports the bundled reference BLAS.
+# link_external_blas.c is a caller that must name a BLAS itself.
+if(IRA_VERSION_SCRIPT_APPLIED)
+  add_test(
+    NAME link_external_blas
+    COMMAND /bin/sh "${CMAKE_CURRENT_SOURCE_DIR}/link_external_blas.sh" $<TARGET_FILE:ira>
+    )
+endif()

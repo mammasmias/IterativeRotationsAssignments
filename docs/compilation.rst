@@ -63,7 +63,8 @@ Other build tools are available, use one of the following:
       The available options are:
 
       * ``-DIRA_BUILD_TESTS``: build some simple tests (default OFF);
-      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON).
+      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON);
+      * ``-DIRA_HIDE_BUNDLED_BLAS``: hide the reference BLAS symbols of the bundled ``lap.f`` in a shared library (default ON). ``OFF`` keeps the old export. The option is a no-op when the linker rejects ``-Wl,--version-script``, which is the case for macOS ``ld64`` and for MSVC scikit-build wheels.
 
       To install the library and module files to a particular location, do:
 
@@ -126,6 +127,8 @@ Other build tools are available, use one of the following:
          .. code-block:: bash
 
             LIBLAPACK='' make all
+
+         That local copy used to export ``dgemm_``. A shared library now hides it, unless ``IRA_HIDE_BUNDLED_BLAS=0`` or the linker has no ``--version-script`` (macOS ``ld64``, MSVC). A program that used to resolve BLAS from ``libira`` has to link a BLAS itself, for example ``-lopenblas``. ``make test-link-blas`` builds that bundled library and checks both links.
 
 
       .. admonition:: python module ``ira_mod``
