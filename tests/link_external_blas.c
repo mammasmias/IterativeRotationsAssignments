@@ -1,6 +1,5 @@
-/* A caller that used to take dgemm_ from libira's bundled reference
-   BLAS. With the symbols hidden, this file links only when a BLAS is
-   named on the link line. */
+/* dgemm_ is a real BLAS symbol. libira defines ira_dgemm_ instead, so
+   this file links only when a BLAS is named on the link line. */
 #include <stddef.h>
 #include <stdio.h>
 
