@@ -8,13 +8,6 @@ F90 = gfortran
 #
 AR = ar
 
-#
-# lapack flag, optional:
-# if not provided, local copy will be compiled (not optimized).
-#
-LIBLAPACK?= -llapack
-
-
 #=======================
 #
 # compilation flags
@@ -62,16 +55,14 @@ futils := \
 
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
-ifndef LIBLAPACK
+# lap.f is always compiled in. Its routines are prefixed ira_.
 outils:=$(OBJ)/lap.o $(outils)
-endif
 
 
 
 flib := $(SRC)/library_ira.f90 \
 	$(SRC)/library_sofi.f90
 olib := $(patsubst $(SRC)%,$(OBJ)%,$(flib:%.f90=%.o))
-
 
 default: msg
 all : lib shlib
@@ -80,9 +71,11 @@ all : lib shlib
 $(OBJ)/%.o: $(SRC)/%.f90
 	$(F90) $(FFLAGS) $(IRA_VERSION) -J$(MOD) -I$(MOD) -c $^ -o $@
 
-# local lapack file if needed (keep -O0 to be sure)
+# Bundled reference BLAS/LAPACK. -O2, and -fPIC so the object can go into
+# libira.so. No fast-math and no other optimisation flags: dlamch and
+# disnan depend on IEEE behaviour.
 $(OBJ)/lap.o: $(SRC)/../lap_local/lap.f
-	$(F90) -J$(MOD) -c -fPIC -O0 -funroll-loops -g $^ -o $@
+	$(F90) -c -fPIC -O2 $^ -o $@
 
 
 
@@ -111,8 +104,15 @@ $(IRALIB): $(outils) $(olib)
 # pack the shared library
 #====
 $(SHLIB): $(outils) $(olib)
-	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $^ $(FFLAGS) $(LIBLAPACK) -Wl,-soname,libira.so
+	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $(outils) $(olib) $(FFLAGS) \
+		-Wl,-soname,libira.so
 	@ln -sf $(LIBOUT)/$@ .
+	$(SRC)/../tests/link_external_blas.sh --symbols-only $(LIBOUT)/$@
+
+# Link a caller that uses dgemm_ against libira and OpenBLAS together.
+.PHONY: test-link-blas
+test-link-blas: shlib
+	$(SRC)/../tests/link_external_blas.sh $(LIBOUT)/$(SHLIB)
 
 msg:
 	@echo 'Use one of the following:'

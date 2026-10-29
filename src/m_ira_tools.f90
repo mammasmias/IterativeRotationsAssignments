@@ -150,15 +150,15 @@ contains
     use m_ira_error
     implicit none
     interface
-       ! lapack
-       subroutine dgesvd( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO )
+       ! bundled lap.f, prefixed so it cannot clash with a system BLAS
+       subroutine ira_dgesvd( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO )
          use, intrinsic :: iso_fortran_env, only: ddp => real64
          character(len=1), intent(in) :: JOBU, JOBVT
          integer, intent(in)   :: LDA, LDU, LDVT, LWORK, M, N
          integer, intent(out)   :: INFO
          real(ddp), intent(inout) :: A( LDA, * ), S( * ), U( LDU, * ), VT( LDVT, * )
          real(ddp), intent(out) :: WORK( * )
-       end subroutine dgesvd
+       end subroutine ira_dgesvd
     end interface
     integer(ip), intent(in) :: m
     integer(ip), intent(in) :: n
@@ -200,7 +200,7 @@ contains
     !!
     !!
     !! for the double precision real use this:
-    call dgesvd(jobu, jobv, m, n, a_copy, lda, sdiag, u, ldu, v, ldv, work, &
+    call ira_dgesvd(jobu, jobv, m, n, a_copy, lda, sdiag, u, ldu, v, ldv, work, &
          lwork, info)
 
     if (info /= 0) then

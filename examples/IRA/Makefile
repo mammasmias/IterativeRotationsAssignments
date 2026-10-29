@@ -41,9 +41,10 @@ SHLIB = -L$(LIBDIR) -lira
 SHLIB += -Wl,-rpath,$(LIBDIR)
 
 #
-# when linking to static library libira.a add these:
+# when linking to static library libira.a add these
+# (the archive already contains the ira_-prefixed LAPACK routines):
 #
-SHLIB += #-lm -lgfortran -llapack
+SHLIB += #-lm -lgfortran
 
 # Produced filenames
 #

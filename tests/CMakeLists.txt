@@ -31,3 +31,12 @@ enable_language(CXX)
 add_executable( cppmain main.cpp )
 target_link_libraries( cppmain PRIVATE ira )
 add_test( NAME cppmain COMMAND cppmain )
+
+# libira defines ira_dgemm_, not dgemm_. This caller brings its own BLAS.
+get_target_property(ira_type ira TYPE)
+if(ira_type STREQUAL "SHARED_LIBRARY")
+  add_test(
+    NAME link_external_blas
+    COMMAND /bin/sh "${CMAKE_CURRENT_SOURCE_DIR}/link_external_blas.sh" $<TARGET_FILE:ira>
+    )
+endif()

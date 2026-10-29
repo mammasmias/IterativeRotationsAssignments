@@ -40,7 +40,7 @@ Source files:
 
 ## Compile
 
-TO COMPILE: (you need lapack library, see the Makefile)
+TO COMPILE: (the bundled ``lap_local/lap.f`` is compiled in; see the Makefile)
 
     make all
 

@@ -1,12 +1,10 @@
 name = "ira"
 version = "version.txt"
 
-[build]
-link = "lapack"
-
 [library]
 type = ["static", "shared"]
 source-dir = "src"
+include-dir = ["lap_local"]
 
 [fortran]
 implicit-external = true
@@ -19,7 +17,7 @@ source-form="default"
 macros = ["STRVERSION=\\\"2.2.0\\\"", "DATEVERSION=20250911" ]
 
 [features]
-optimized.flags = "-ffree-line-length-0 -fPIC -Ofast -ffast-math -march=native -funroll-loops"
+optimized.flags = "-ffree-line-length-0 -fPIC -O2"
 
 [profiles]
 release=["optimized"]

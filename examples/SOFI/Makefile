@@ -49,9 +49,10 @@ SHLIB = -L$(LIBDIR) -lira
 SHLIB += -Wl,-rpath,$(LIBDIR)
 
 
-## When using the static library: uncomment the following:
+## When using the static library: uncomment the following.
+## The archive already contains the ira_-prefixed LAPACK routines.
 ##
-SHLIB += #-lm -lgfortran -llapack
+SHLIB += #-lm -lgfortran
 
 
 

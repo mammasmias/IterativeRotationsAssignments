@@ -5,5 +5,5 @@ includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/@PROJECT_NAME@
 Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
-Libs: -L${libdir} -l@PROJECT_NAME@ @LAPACKLIB_STR@
+Libs: -L${libdir} -l@PROJECT_NAME@
 Cflags: -I${includedir}

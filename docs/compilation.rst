@@ -63,7 +63,9 @@ Other build tools are available, use one of the following:
       The available options are:
 
       * ``-DIRA_BUILD_TESTS``: build some simple tests (default OFF);
-      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON).
+      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON);
+
+      The build always compiles ``lap_local/lap.f`` into the library. Those routines are prefixed ``ira_`` and built with ``-O2``. ``libira`` does not define ``dgemm_`` or the other reference BLAS and LAPACK names, so a program can link ``-lira`` and a BLAS such as OpenBLAS in the same binary.
 
       To install the library and module files to a particular location, do:
 
@@ -92,7 +94,6 @@ Other build tools are available, use one of the following:
 
    .. tab-item:: Traditional ``make``
 
-      To compile the IRA library, you need the ``lapack`` library.
       On a standard linux machine, it should suffice to type:
 
       .. code-block:: bash
@@ -102,30 +103,15 @@ Other build tools are available, use one of the following:
 
 
       This will generate the static and shared libraries: ``libira.a``, and ``libira.so``.
+      ``make`` always compiles ``lap_local/lap.f`` (routines prefixed ``ira_``, ``-O2``) and links that object into both libraries. No external LAPACK is required.
       To compile only one of the libraries, type ``make lib`` or ``make shlib``, respectively.
+      ``make test-link-blas`` checks that ``libira.so`` exports none of the unprefixed BLAS names and that a program linked with ``-lira -lopenblas`` runs.
 
       To clean the build type:
 
       .. code-block:: bash
 
          make clean
-
-
-      .. admonition:: lapack library
-         :class: tip
-
-         The lapack library is needed for compilation.
-         Default flag is ``LIBLAPACK=-llapack``, however if you wish to change that, i.e. with openblas, you can specify it from the command as:
-
-         .. code-block:: bash
-
-            LIBLAPACK=-lopenblas make all
-
-         If the lapack library is not available on your system, you can leave the variable undefined (this will compile a local version of the needed lapack routines, which is however not optimal):
-
-         .. code-block:: bash
-
-            LIBLAPACK='' make all
 
 
       .. admonition:: python module ``ira_mod``
@@ -146,7 +132,7 @@ Other build tools are available, use one of the following:
       .. code-block:: bash
 
          curl -fsSL https://pixi.sh/install.sh | bash
-         # build the library with openblas
+         # build the library
          pixi run build_lib
          pixi shell # sets the environment variable
          cd examples/IRA
@@ -161,7 +147,7 @@ Other build tools are available, use one of the following:
 
       .. code-block:: bash
 
-         fpm build --flag "-fPIC -fcheck=bounds -ffree-line-length-none -Ofast -march=native -ffast-math -funroll-loops"
+         fpm build --flag "-fPIC -fcheck=bounds -ffree-line-length-none -O2"
          fpm install --prefix .
 
       .. admonition:: python module ``ira_mod``

@@ -127,30 +127,33 @@ set(alltargets "")
 list(APPEND alltargets "${PROJECT_NAME}" )
 
 
-# find lapack/blas
-find_package(LAPACK)
-# set(LAPACK_FOUND False) ### test lapack not found
+# Bundled reference BLAS/LAPACK. Every routine in lap.f is prefixed ira_,
+# so the objects can sit inside libira next to a real BLAS. -O2, and no
+# fast-math: dlamch and disnan depend on IEEE behaviour. The matrices IRA
+# passes are 3x3, so an external LAPACK is not used.
+add_library(lap_local OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
+target_compile_options(lap_local PRIVATE -O2)
+set_target_properties(lap_local PROPERTIES
+  Fortran_FORMAT FIXED
+  POSITION_INDEPENDENT_CODE ON
+  )
+target_link_libraries(${PROJECT_NAME} PRIVATE lap_local)
+# Static libira records this object library as a usage requirement, so the
+# export set has to name it. The objects are archived into libira either way.
+list(APPEND alltargets "lap_local")
 
-# string for pkgconfig link to lapack in template.pc
-set(LAPACKLIB_STR "")
-# link lapack
-if(${LAPACK_FOUND})
-  target_link_libraries( ${PROJECT_NAME} PUBLIC ${LAPACK_LIBRARIES})
-  # the "-l" prefix is set here, so the @LAPACK_STR@ in template.pc is empty when local lapack is used
-  set(LAPACKLIB_STR "-l${LAPACK_LIBRARIES}")
-else()
-  # compile and link the local lapack files
-  message(STATUS "IRA :: LAPACK library not found. Compiling local version (un-optimised).")
-  add_library(lap_local OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
-  target_compile_options(lap_local PRIVATE -O0)
-  set_target_properties(lap_local PROPERTIES Fortran_FORMAT FIXED POSITION_INDEPENDENT_CODE ON)
-  target_link_libraries( ${PROJECT_NAME} lap_local)
-  # add lap_local target to the exported targets
-  list(APPEND alltargets "lap_local" )
+get_target_property(IRA_LIB_TYPE ${PROJECT_NAME} TYPE)
+if(IRA_LIB_TYPE STREQUAL "SHARED_LIBRARY")
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND /bin/sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/link_external_blas.sh"
+            --symbols-only $<TARGET_FILE:${PROJECT_NAME}>
+    VERBATIM)
 endif()
 
 
 if(IRA_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(tests)
 endif()
 
