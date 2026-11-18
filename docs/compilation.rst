@@ -67,7 +67,8 @@ Other build tools are available, use one of the following:
         (for example ``-march=native``; default ON);
       * ``-DIRA_ENABLE_FAST_MATH`` allow non-IEEE transformations (for example
         ``-Ofast -ffast-math``; default ON). Set it to ``OFF`` for ``-O3``
-        without fast-math;
+        without fast-math. Fast-math can disable IRA's ``x /= x`` NaN guard,
+        so use it only when inputs are known not to reach degenerate bases;
       * ``-DIRA_LINALG_PROVIDER=AUTO|FLEXIBLAS|LAPACK|BUNDLED`` selects the
         linear algebra provider. ``AUTO`` (the default) first asks CMake's
         ``FindBLAS`` and ``FindLAPACK`` modules for ``BLA_VENDOR=FlexiBLAS``,
@@ -178,6 +179,8 @@ Other build tools are available, use one of the following:
       fast-math; and ``portable-release`` also omits ``-march=native``. Use
       ``bundled-release`` for an optimized no-dependency build or
       ``bundled-safe-release`` to compile the entire package with ``-O2``.
+      Prefer ``strict-release`` when degenerate inputs may exercise IRA's NaN
+      guard; ``release`` prioritizes benchmark speed and is not IEEE-safe.
 
       fpm 0.13 applies one compiler flag set to the complete dependency graph;
       it cannot give a path dependency separate per-file flags. Consequently
