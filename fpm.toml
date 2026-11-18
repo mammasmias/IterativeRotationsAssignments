@@ -17,10 +17,14 @@ source-form="default"
 macros = ["STRVERSION=\\\"2.2.0\\\"", "DATEVERSION=20250911" ]
 
 [features]
-optimized.flags = "-ffree-line-length-0 -fPIC -O2"
+optimized.flags = "-ffree-line-length-0 -fPIC -Ofast -ffast-math -march=native -funroll-loops"
+external-lapack.build.link = "lapack"
+external-lapack.preprocess.cpp.macros = ["IRA_USE_EXTERNAL_LAPACK"]
+bundled-optimized.flags = "-ffree-line-length-0 -fPIC -O3 -march=native -funroll-loops"
 
 [profiles]
-release=["optimized"]
+release=["optimized", "external-lapack"]
+bundled-release=["bundled-optimized"]
 
 [install]
 library=true

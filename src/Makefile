@@ -8,6 +8,11 @@ F90 = gfortran
 #
 AR = ar
 
+#
+# optimized LAPACK, optional. Set LIBLAPACK= to use the bundled fallback.
+#
+LIBLAPACK ?= -llapack
+
 #=======================
 #
 # compilation flags
@@ -69,7 +74,7 @@ all : lib shlib
 
 # rules
 $(OBJ)/%.o: $(SRC)/%.f90
-	$(F90) $(FFLAGS) $(IRA_VERSION) -J$(MOD) -I$(MOD) -c $^ -o $@
+	$(F90) $(FFLAGS) $(IRA_VERSION) $(if $(strip $(LIBLAPACK)),-DIRA_USE_EXTERNAL_LAPACK) -J$(MOD) -I$(MOD) -c $^ -o $@
 
 # Bundled reference BLAS/LAPACK. -O2, and -fPIC so the object can go into
 # libira.so. No fast-math and no other optimisation flags: dlamch and
@@ -105,7 +110,7 @@ $(IRALIB): $(outils) $(olib)
 #====
 $(SHLIB): $(outils) $(olib)
 	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $(outils) $(olib) $(FFLAGS) \
-		-Wl,-soname,libira.so
+		$(LIBLAPACK) -Wl,-soname,libira.so
 	@ln -sf $(LIBOUT)/$@ .
 	$(SRC)/../tests/link_external_blas.sh --symbols-only $(LIBOUT)/$@
 

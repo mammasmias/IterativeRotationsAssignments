@@ -15,6 +15,11 @@ project(ira
 option(IRA_ENABLE_NATIVE_OPTIMIZATION
   "optimize IRA for native CPU (this adds flags: '-march=native -ffast-math' or equivalent)" ON)
 
+# Prefer an optimized LAPACK when one is available. The prefixed bundled copy
+# remains in libira as a collision-free fallback.
+option(IRA_USE_EXTERNAL_LAPACK
+  "use an external optimized LAPACK when one is available" ON)
+
 # optionally build tests
 option( IRA_BUILD_TESTS "build basic IRA tests" OFF )
 
@@ -141,6 +146,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE lap_local)
 # Static libira records this object library as a usage requirement, so the
 # export set has to name it. The objects are archived into libira either way.
 list(APPEND alltargets "lap_local")
+
+if(IRA_USE_EXTERNAL_LAPACK)
+  find_package(LAPACK QUIET)
+  if(LAPACK_FOUND)
+    message(STATUS "IRA :: Using external LAPACK: ${LAPACK_LIBRARIES}")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE IRA_USE_EXTERNAL_LAPACK)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${LAPACK_LIBRARIES})
+  else()
+    message(STATUS "IRA :: External LAPACK not found; using bundled fallback")
+  endif()
+else()
+  message(STATUS "IRA :: Using bundled LAPACK fallback")
+endif()
 
 get_target_property(IRA_LIB_TYPE ${PROJECT_NAME} TYPE)
 if(IRA_LIB_TYPE STREQUAL "SHARED_LIBRARY")

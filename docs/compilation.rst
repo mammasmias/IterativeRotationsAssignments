@@ -64,8 +64,9 @@ Other build tools are available, use one of the following:
 
       * ``-DIRA_BUILD_TESTS``: build some simple tests (default OFF);
       * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON);
+      * ``-DIRA_USE_EXTERNAL_LAPACK`` use an optimized LAPACK when it can be found (default ON). Set it to ``OFF`` to use the bundled fallback.
 
-      The build always compiles ``lap_local/lap.f`` into the library. Those routines are prefixed ``ira_`` and built with ``-O2``. ``libira`` does not define ``dgemm_`` or the other reference BLAS and LAPACK names, so a program can link ``-lira`` and a BLAS such as OpenBLAS in the same binary.
+      The build always compiles ``lap_local/lap.f`` into the library. Those routines are prefixed ``ira_`` and built with ``-O2``. ``libira`` does not define ``dgemm_`` or the other reference BLAS and LAPACK names. By default IRA uses an external LAPACK when available and otherwise calls the bundled copy.
 
       To install the library and module files to a particular location, do:
 
@@ -103,7 +104,7 @@ Other build tools are available, use one of the following:
 
 
       This will generate the static and shared libraries: ``libira.a``, and ``libira.so``.
-      ``make`` always compiles ``lap_local/lap.f`` (routines prefixed ``ira_``, ``-O2``) and links that object into both libraries. No external LAPACK is required.
+      ``make`` uses ``-llapack`` by default and always includes ``lap_local/lap.f`` (routines prefixed ``ira_``, ``-O2``) as a collision-free fallback. Use ``make LIBLAPACK=`` to call the bundled copy instead.
       To compile only one of the libraries, type ``make lib`` or ``make shlib``, respectively.
       ``make test-link-blas`` checks that ``libira.so`` exports none of the unprefixed BLAS names and that a program linked with ``-lira -lopenblas`` runs.
 
@@ -143,12 +144,14 @@ Other build tools are available, use one of the following:
 
    .. tab-item:: Using ``fpm``
 
-      Required minimum ``fpm`` version 0.12.0.
+      Required minimum ``fpm`` version 0.13.0.
 
       .. code-block:: bash
 
-         fpm build --flag "-fPIC -fcheck=bounds -ffree-line-length-none -O2"
+         fpm build --profile release
          fpm install --prefix .
+
+      The release profile uses an external LAPACK. Use ``--profile bundled-release`` for the optimized bundled fallback.
 
       .. admonition:: python module ``ira_mod``
          :class: tip

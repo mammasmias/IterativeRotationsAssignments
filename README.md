@@ -43,7 +43,7 @@ Python module:
 
 For other build tools and more details, see the [online documentation](https://mammasmias.github.io/IterativeRotationsAssignments/compilation.html).
 
-`libira` always includes the bundled `lap_local/lap.f`. Every routine in that file is prefixed `ira_`, so the library does not define `dgemm_`, `dgemv_`, `dgesvd_`, `xerbla_`, or the other reference BLAS and LAPACK names. A program can link `-lira` together with a BLAS such as `-lopenblas`.
+`libira` always includes the bundled `lap_local/lap.f`. Every routine in that file is prefixed `ira_`, so the library does not define `dgemm_`, `dgemv_`, `dgesvd_`, `xerbla_`, or the other reference BLAS and LAPACK names. Optimized builds use an external LAPACK when available and retain the prefixed copy as a collision-free fallback.
 
 # Conda build
 
