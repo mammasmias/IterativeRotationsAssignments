@@ -17,10 +17,23 @@ source-form="default"
 macros = ["STRVERSION=\\\"2.2.0\\\"", "DATEVERSION=20250911" ]
 
 [features]
-optimized.flags = "-ffree-line-length-0 -fPIC -O2"
+optimized.gfortran.flags = "-ffree-line-length-0 -fPIC -Ofast -ffast-math -march=native -funroll-loops"
+portable-optimized.gfortran.flags = "-ffree-line-length-0 -fPIC -O3 -funroll-loops"
+strict-optimized.gfortran.flags = "-ffree-line-length-0 -fPIC -O3 -march=native -funroll-loops"
+flexiblas.build.link = ["flexiblas"]
+flexiblas.preprocess.cpp.macros = ["IRA_USE_EXTERNAL_LAPACK"]
+external-lapack.build.link = ["lapack", "blas"]
+external-lapack.preprocess.cpp.macros = ["IRA_USE_EXTERNAL_LAPACK"]
+bundled-optimized.gfortran.flags = "-ffree-line-length-0 -fPIC -O3 -march=native -funroll-loops"
+bundled-safe.gfortran.flags = "-ffree-line-length-0 -fPIC -O2"
 
 [profiles]
-release=["optimized"]
+release = ["optimized", "flexiblas"]
+lapack-release = ["optimized", "external-lapack"]
+portable-release = ["portable-optimized", "flexiblas"]
+strict-release = ["strict-optimized", "flexiblas"]
+bundled-release = ["bundled-optimized"]
+bundled-safe-release = ["bundled-safe"]
 
 [install]
 library=true
