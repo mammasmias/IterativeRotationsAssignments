@@ -63,10 +63,23 @@ Other build tools are available, use one of the following:
       The available options are:
 
       * ``-DIRA_BUILD_TESTS``: build some simple tests (default OFF);
-      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` pass the compiler flags "-march=native -ffast-math" or equivalent (default ON);
-      * ``-DIRA_USE_EXTERNAL_LAPACK`` use an optimized LAPACK when it can be found (default ON). Set it to ``OFF`` to use the bundled fallback.
+      * ``-DIRA_ENABLE_NATIVE_OPTIMIZATION`` optimize for the build machine
+        (for example ``-march=native``; default ON);
+      * ``-DIRA_ENABLE_FAST_MATH`` allow non-IEEE transformations (for example
+        ``-Ofast -ffast-math``; default ON). Set it to ``OFF`` for ``-O3``
+        without fast-math;
+      * ``-DIRA_LINALG_PROVIDER=AUTO|FLEXIBLAS|LAPACK|BUNDLED`` selects the
+        linear algebra provider. ``AUTO`` (the default) first asks CMake's
+        ``FindBLAS`` and ``FindLAPACK`` modules for ``BLA_VENDOR=FlexiBLAS``,
+        then tries any BLAS/LAPACK, and finally uses the bundled fallback.
+        The other values require the selected provider.
 
-      The build always compiles ``lap_local/lap.f`` into the library. Those routines are prefixed ``ira_`` and built with ``-O2``. ``libira`` does not define ``dgemm_`` or the other reference BLAS and LAPACK names. By default IRA uses an external LAPACK when available and otherwise calls the bundled copy.
+      FlexiBLAS is preferred because one public BLAS interface can dispatch to
+      a backend selected at runtime, for example with
+      ``FLEXIBLAS=OPENBLASPTHREAD`` or ``FLEXIBLAS=NETLIB``. The bundled
+      ``lap_local/lap.f`` is compiled only for the fallback, with ``-O2`` and
+      without fast-math. Its routines are prefixed ``ira_``; ``libira`` never
+      defines the public ``dgemm_`` or other BLAS/LAPACK names.
 
       To install the library and module files to a particular location, do:
 
@@ -104,7 +117,10 @@ Other build tools are available, use one of the following:
 
 
       This will generate the static and shared libraries: ``libira.a``, and ``libira.so``.
-      ``make`` uses ``-llapack`` by default and always includes ``lap_local/lap.f`` (routines prefixed ``ira_``, ``-O2``) as a collision-free fallback. Use ``make LIBLAPACK=`` to call the bundled copy instead.
+      ``make`` asks ``pkg-config`` for FlexiBLAS first and for LAPACK second.
+      If neither is found it compiles ``lap_local/lap.f`` (routines prefixed
+      ``ira_``, ``-O2``). Override ``LIBLAPACK`` to select another provider;
+      use ``make LIBLAPACK=`` to force the bundled fallback.
       To compile only one of the libraries, type ``make lib`` or ``make shlib``, respectively.
       ``make test-link-blas`` checks that ``libira.so`` exports none of the unprefixed BLAS names and that a program linked with ``-lira -lopenblas`` runs.
 
@@ -139,6 +155,11 @@ Other build tools are available, use one of the following:
          cd examples/IRA
          python python_program.py
 
+      The conda-forge environment supplies OpenBLAS and uses the generic LAPACK
+      path (``pixi run build_fpm`` or ``pixi run build_cmake``). FlexiBLAS is
+      not currently packaged on conda-forge, so the Pixi environment cannot
+      enable the preferred provider without a separately installed FlexiBLAS.
+
       .. [pixi-install] Installation instructions here: `<https://pixi.sh/latest/>`_
 
 
@@ -151,7 +172,19 @@ Other build tools are available, use one of the following:
          fpm build --profile release
          fpm install --prefix .
 
-      The release profile uses an external LAPACK. Use ``--profile bundled-release`` for the optimized bundled fallback.
+      The ``release`` profile links FlexiBLAS and applies the native
+      ``-Ofast`` profile. ``lapack-release`` uses generic BLAS/LAPACK instead;
+      ``strict-release`` keeps ``-O3 -march=native -funroll-loops`` but omits
+      fast-math; and ``portable-release`` also omits ``-march=native``. Use
+      ``bundled-release`` for an optimized no-dependency build or
+      ``bundled-safe-release`` to compile the entire package with ``-O2``.
+
+      fpm 0.13 applies one compiler flag set to the complete dependency graph;
+      it cannot give a path dependency separate per-file flags. Consequently
+      ``bundled-release`` compiles both IRA and the prefixed fallback with
+      ``-O3`` (without fast-math), while ``bundled-safe-release`` keeps the
+      fallback's conservative ``-O2`` at the cost of compiling IRA itself with
+      the same flags. The CMake and Make builds do not have this limitation.
 
       .. admonition:: python module ``ira_mod``
          :class: tip

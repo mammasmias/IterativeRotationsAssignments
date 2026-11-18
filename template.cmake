@@ -1,5 +1,28 @@
 @PACKAGE_INIT@
 
+set(_ira_linalg_provider "@IRA_CONFIG_LINALG_PROVIDER@")
+if(NOT _ira_linalg_provider STREQUAL "BUNDLED")
+  include(CMakeFindDependencyMacro)
+  if(_ira_linalg_provider STREQUAL "FLEXIBLAS")
+    if(DEFINED BLA_VENDOR)
+      set(_ira_saved_bla_vendor "${BLA_VENDOR}")
+      set(_ira_had_bla_vendor TRUE)
+    else()
+      set(_ira_had_bla_vendor FALSE)
+    endif()
+    set(BLA_VENDOR FlexiBLAS)
+  endif()
+  find_dependency(BLAS)
+  find_dependency(LAPACK)
+  if(_ira_linalg_provider STREQUAL "FLEXIBLAS")
+    if(_ira_had_bla_vendor)
+      set(BLA_VENDOR "${_ira_saved_bla_vendor}")
+    else()
+      unset(BLA_VENDOR)
+    endif()
+  endif()
+endif()
+
 # if the target ira::ira does not exist, include the targets file to create the targets
 if(NOT TARGET "@PROJECT_NAME@::@PROJECT_NAME@" )
   include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")

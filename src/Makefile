@@ -9,9 +9,14 @@ F90 = gfortran
 AR = ar
 
 #
-# optimized LAPACK, optional. Set LIBLAPACK= to use the bundled fallback.
+# Linear algebra provider. Prefer FlexiBLAS, then another pkg-config LAPACK.
+# Override LIBLAPACK (including with an empty value) to select another library
+# or the bundled prefixed fallback.
 #
-LIBLAPACK ?= -llapack
+PKG_CONFIG ?= pkg-config
+FLEXIBLAS_LIBS := $(shell $(PKG_CONFIG) --libs flexiblas 2>/dev/null)
+LAPACK_LIBS := $(shell $(PKG_CONFIG) --libs lapack 2>/dev/null)
+LIBLAPACK ?= $(if $(strip $(FLEXIBLAS_LIBS)),$(FLEXIBLAS_LIBS),$(LAPACK_LIBS))
 
 #=======================
 #
@@ -60,8 +65,10 @@ futils := \
 
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
-# lap.f is always compiled in. Its routines are prefixed ira_.
+ifeq ($(strip $(LIBLAPACK)),)
+# No external provider: use the prefixed, collision-free fallback.
 outils:=$(OBJ)/lap.o $(outils)
+endif
 
 
 
