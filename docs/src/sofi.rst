@@ -5,6 +5,6 @@ SOFI reference
 ##############
 
 
-.. doxygenfile:: sofi_routines.f90
+.. doxygenfile:: m_sofi_routines.f90
    :project: lib_IRA
 

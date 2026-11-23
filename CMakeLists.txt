@@ -18,6 +18,8 @@ option(IRA_ENABLE_NATIVE_OPTIMIZATION
 # optionally build tests
 option( IRA_BUILD_TESTS "build basic IRA tests" OFF )
 
+option( IRA_BUILD_BENCHMARK "Build original IRA benchmark" OFF)
+
 option( IRA_INSTALL_PYTHON "install the python-specific files" OFF )
 if(IRA_INSTALL_PYTHON)
   # shared lib is needed for python interf, managed by pyproject.toml
@@ -157,7 +159,9 @@ if(IRA_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-
+# if(IRA_BUILD_BENCHMARK)
+#   add_subdirectory(benchmark_test)
+# endif()
 
 
 # install procedures

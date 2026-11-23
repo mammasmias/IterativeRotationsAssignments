@@ -56,7 +56,7 @@ subroutine cshda_pbc( nat1, typ1, coords1, &
   real(rp),                     intent(in) :: some_thr
   integer(ip), dimension(nat2), intent(out) :: found
   real(rp), dimension(nat2),    intent(out) :: dists
-  call cshda_pbc_x( nat1, typ1, coords2, nat2, typ2, coords2, lat2, some_thr, found, dists )
+  call cshda_pbc_x( nat1, typ1, coords1, nat2, typ2, coords2, lat2, some_thr, found, dists )
 end subroutine cshda_pbc
 
 

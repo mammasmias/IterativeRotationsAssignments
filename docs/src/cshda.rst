@@ -5,6 +5,6 @@ CShDA reference
 ###############
 
 
-.. doxygenfile:: cshda.f90
+.. doxygenfile:: m_cshda.f90
    :project: lib_IRA
 

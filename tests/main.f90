@@ -1,4 +1,4 @@
-#include "dbg.f90"
+#include "dbg.h"
 program main
   use dbg
   use ira_precision, only: ira_rp => rp
