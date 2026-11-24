@@ -9,7 +9,7 @@ description = "Algorithms for Iterative Rotations and Assignments (IRA); Symmetr
 authors = [{name = "MAMMASMIAS Consortium"}]
 urls = {Homepage = "https://github.com/mammasmias/IterativeRotationsAssignments"}
 license = {text = "GPL-3.0-or-later OR Apache-2.0"}
-dependencies = ["numpy>=2.2.6"]
+dependencies = ["numpy>=2.0.0"]
 
 [tool.scikit-build]
 cmake.version = ">=3.5"

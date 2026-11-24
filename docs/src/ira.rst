@@ -5,6 +5,6 @@ IRA reference
 #############
 
 
-.. doxygenfile:: ira_routines.f90
+.. doxygenfile:: m_ira_routines.f90
    :project: lib_IRA
 

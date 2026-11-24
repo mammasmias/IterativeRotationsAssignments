@@ -18,6 +18,7 @@ Online `documentation and tutorials <https://mammasmias.github.io/IterativeRotat
 
    intro
    compilation
+   tests
 
 
 
@@ -33,6 +34,8 @@ Online `documentation and tutorials <https://mammasmias.github.io/IterativeRotat
 .. include:: intro.rst
 
 .. include:: compilation.rst
+
+.. include:: tests.rst
 
 
 Tutorials and How-to
