@@ -62,7 +62,8 @@ contains
     real(rp), dimension(3) :: rij
     real(rp), dimension(3) :: ci, cj
     real(rp) :: dx, dy, dz, th, m_th, th2
-    real(rp), dimension(nat2,nat1) :: chkmat
+    ! real(rp), dimension(nat2,nat1) :: chkmat
+    real(rp), allocatable :: chkmat(:,:)
     logical, dimension(nat1) :: lsearch
     integer(ip), dimension(nat2) :: assigned
     integer(ip) :: i, j, k, ti, tj
@@ -75,6 +76,7 @@ contains
     dists = huge(dists)
     found = 0
 
+    allocate(chkmat(1:nat2,1:nat1))
     !!
     !! set up distance matrix, compute elements as dist^2, do sqrt at the end
     !!
@@ -347,7 +349,7 @@ contains
     !! local
     !!
     real(rp), dimension(3) :: rij, rj
-    real(rp), dimension(nat1,nat2) :: chkmat
+    real(rp), allocatable :: chkmat(:,:)
     integer(ip), dimension(nat1) :: search
     integer(ip) :: i, j, k
     integer(ip) :: idx_old
@@ -359,7 +361,7 @@ contains
     found(:) = 0
     !!
     !! set up distance matrix
-    chkmat(:,:) = 0.0_rp
+    allocate( chkmat(1:nat1,1:nat2), source=0.0_rp)
     !!
     !! ATTENTION: the double loop needs to go from 1 to nat, for i and j
     !!    because there are permutations in the set, so the distance matrix is
