@@ -8,6 +8,16 @@ F90 = gfortran
 #
 AR = ar
 
+#
+# Linear algebra provider. Prefer FlexiBLAS, then another pkg-config LAPACK.
+# Override LIBLAPACK (including with an empty value) to select another library
+# or the bundled prefixed fallback.
+#
+PKG_CONFIG ?= pkg-config
+FLEXIBLAS_LIBS := $(shell $(PKG_CONFIG) --libs flexiblas 2>/dev/null)
+LAPACK_LIBS := $(shell $(PKG_CONFIG) --libs lapack 2>/dev/null)
+LIBLAPACK ?= $(if $(strip $(FLEXIBLAS_LIBS)),$(FLEXIBLAS_LIBS),$(LAPACK_LIBS))
+
 #=======================
 #
 # compilation flags
@@ -55,8 +65,10 @@ futils := \
 
 outils:= $(patsubst $(SRC)%,$(OBJ)%,$(futils:%.f90=%.o))
 
-# lap.f is always compiled in. Its routines are prefixed ira_.
+ifeq ($(strip $(LIBLAPACK)),)
+# No external provider: use the prefixed, collision-free fallback.
 outils:=$(OBJ)/lap.o $(outils)
+endif
 
 
 
@@ -69,7 +81,7 @@ all : lib shlib
 
 # rules
 $(OBJ)/%.o: $(SRC)/%.f90
-	$(F90) $(FFLAGS) $(IRA_VERSION) -J$(MOD) -I$(MOD) -c $^ -o $@
+	$(F90) $(FFLAGS) $(IRA_VERSION) $(if $(strip $(LIBLAPACK)),-DIRA_USE_EXTERNAL_LAPACK) -J$(MOD) -I$(MOD) -c $^ -o $@
 
 # Bundled reference BLAS/LAPACK. -O2, and -fPIC so the object can go into
 # libira.so. No fast-math and no other optimisation flags: dlamch and
@@ -105,7 +117,7 @@ $(IRALIB): $(outils) $(olib)
 #====
 $(SHLIB): $(outils) $(olib)
 	$(F90) -o $(LIBOUT)/$@ -shared -J$(MOD) -I$(MOD) $(outils) $(olib) $(FFLAGS) \
-		-Wl,-soname,libira.so
+		$(LIBLAPACK) -Wl,-soname,libira.so
 	@ln -sf $(LIBOUT)/$@ .
 	$(SRC)/../tests/link_external_blas.sh --symbols-only $(LIBOUT)/$@
 

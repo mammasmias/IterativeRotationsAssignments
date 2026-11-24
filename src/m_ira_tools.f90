@@ -150,15 +150,23 @@ contains
     use m_ira_error
     implicit none
     interface
+#ifdef IRA_USE_EXTERNAL_LAPACK
+       subroutine dgesvd( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO )
+#else
        ! bundled lap.f, prefixed so it cannot clash with a system BLAS
        subroutine ira_dgesvd( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT, WORK, LWORK, INFO )
+#endif
          use, intrinsic :: iso_fortran_env, only: ddp => real64
          character(len=1), intent(in) :: JOBU, JOBVT
          integer, intent(in)   :: LDA, LDU, LDVT, LWORK, M, N
          integer, intent(out)   :: INFO
          real(ddp), intent(inout) :: A( LDA, * ), S( * ), U( LDU, * ), VT( LDVT, * )
          real(ddp), intent(out) :: WORK( * )
+#ifdef IRA_USE_EXTERNAL_LAPACK
+       end subroutine dgesvd
+#else
        end subroutine ira_dgesvd
+#endif
     end interface
     integer(ip), intent(in) :: m
     integer(ip), intent(in) :: n
@@ -200,8 +208,13 @@ contains
     !!
     !!
     !! for the double precision real use this:
+#ifdef IRA_USE_EXTERNAL_LAPACK
+    call dgesvd(jobu, jobv, m, n, a_copy, lda, sdiag, u, ldu, v, ldv, work, &
+         lwork, info)
+#else
     call ira_dgesvd(jobu, jobv, m, n, a_copy, lda, sdiag, u, ldu, v, ldv, work, &
          lwork, info)
+#endif
 
     if (info /= 0) then
        write (*, '(a)') ' '

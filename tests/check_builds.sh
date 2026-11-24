@@ -16,6 +16,12 @@ tar -C "$root" \
 echo "make: all"
 make -C "$work/src" all
 "$work/tests/link_external_blas.sh" "$work/lib/libira.so"
+if pkg-config --exists flexiblas; then
+  if ! ldd "$work/lib/libira.so" | grep -q libflexiblas; then
+    echo "make did not prefer pkg-config FlexiBLAS" >&2
+    exit 1
+  fi
+fi
 
 echo "cmake: shared library and tests"
 cmake -S "$work" -B "$work/build" \
@@ -30,4 +36,13 @@ if [ -z "$so" ]; then
 fi
 "$work/tests/link_external_blas.sh" "$so"
 ( cd "$work/build" && ctest --output-on-failure )
+
+echo "cmake: bundled fallback"
+cmake -S "$work" -B "$work/build-bundled" \
+  -DBUILD_SHARED_LIBS=ON \
+  -DIRA_LINALG_PROVIDER=BUNDLED
+cmake --build "$work/build-bundled"
+bundled_so=$(find "$work/build-bundled" \
+  -name 'libira.so' -o -name 'libira.so.*' | head -n 1)
+"$work/tests/link_external_blas.sh" --symbols-only "$bundled_so"
 echo "check_builds: ok"

@@ -13,7 +13,17 @@ project(ira
 
 # optimize for native machine
 option(IRA_ENABLE_NATIVE_OPTIMIZATION
-  "optimize IRA for native CPU (this adds flags: '-march=native -ffast-math' or equivalent)" ON)
+  "optimize IRA for the build machine (for example, '-march=native')" ON)
+option(IRA_ENABLE_FAST_MATH
+  "allow non-IEEE transformations (for example, '-Ofast -ffast-math')" ON)
+
+# Prefer FlexiBLAS, then any BLAS/LAPACK implementation, and finally the
+# collision-free bundled implementation.  Set this to FLEXIBLAS, LAPACK, or
+# BUNDLED to require a particular path.
+set(IRA_LINALG_PROVIDER "AUTO" CACHE STRING
+  "linear algebra provider: AUTO, FLEXIBLAS, LAPACK, or BUNDLED")
+set_property(CACHE IRA_LINALG_PROVIDER PROPERTY STRINGS
+  AUTO FLEXIBLAS LAPACK BUNDLED)
 
 # optionally build tests
 option( IRA_BUILD_TESTS "build basic IRA tests" OFF )
@@ -66,17 +76,28 @@ if(unroll_loops)
   list(APPEND flagstr "-funroll-loops" )
 endif()
 #
-check_fortran_compiler_flag( "-Ofast" Ofast )
-if(Ofast)
-  list(APPEND flagstr "-Ofast" )
-endif()
-#
-if( IRA_ENABLE_NATIVE_OPTIMIZATION )
+if(IRA_ENABLE_FAST_MATH)
+  check_fortran_compiler_flag( "-Ofast" Ofast )
+  if(Ofast)
+    list(APPEND flagstr "-Ofast" )
+  else()
+    check_fortran_compiler_flag( "-O3" O3 )
+    if(O3)
+      list(APPEND flagstr "-O3" )
+    endif()
+  endif()
   check_fortran_compiler_flag( "-ffast-math" fast_math )
   if(fast_math)
     list(APPEND flagstr "-ffast-math" )
   endif()
-  #
+else()
+  check_fortran_compiler_flag( "-O3" O3 )
+  if(O3)
+    list(APPEND flagstr "-O3" )
+  endif()
+endif()
+#
+if( IRA_ENABLE_NATIVE_OPTIMIZATION )
   check_fortran_compiler_flag("-march=native" march_native )
   if(march_native)
     list(APPEND flagstr "-march=native")
@@ -129,20 +150,82 @@ set(alltargets "")
 list(APPEND alltargets "${PROJECT_NAME}" )
 
 
-# Bundled reference BLAS/LAPACK. Every routine in lap.f is prefixed ira_,
-# so the objects can sit inside libira next to a real BLAS. -O2, and no
-# fast-math: dlamch and disnan depend on IEEE behaviour. The matrices IRA
-# passes are 3x3, so an external LAPACK is not used.
-add_library(lap_local OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
-target_compile_options(lap_local PRIVATE -O2)
-set_target_properties(lap_local PROPERTIES
-  Fortran_FORMAT FIXED
-  POSITION_INDEPENDENT_CODE ON
-  )
-target_link_libraries(${PROJECT_NAME} PRIVATE lap_local)
-# Static libira records this object library as a usage requirement, so the
-# export set has to name it. The objects are archived into libira either way.
-list(APPEND alltargets "lap_local")
+string(TOUPPER "${IRA_LINALG_PROVIDER}" _ira_linalg_provider)
+set(_ira_linalg_choices AUTO FLEXIBLAS LAPACK BUNDLED)
+if(NOT _ira_linalg_provider IN_LIST _ira_linalg_choices)
+  message(FATAL_ERROR
+    "IRA_LINALG_PROVIDER must be AUTO, FLEXIBLAS, LAPACK, or BUNDLED")
+endif()
+
+set(_ira_external_linalg FALSE)
+set(IRA_PC_PRIVATE_LIBS "")
+set(IRA_CONFIG_LINALG_PROVIDER "BUNDLED")
+if(_ira_linalg_provider STREQUAL "AUTO"
+    OR _ira_linalg_provider STREQUAL "FLEXIBLAS")
+  if(DEFINED BLA_VENDOR)
+    set(_ira_saved_bla_vendor "${BLA_VENDOR}")
+    set(_ira_had_bla_vendor TRUE)
+  else()
+    set(_ira_had_bla_vendor FALSE)
+  endif()
+  set(BLA_VENDOR FlexiBLAS)
+  find_package(BLAS QUIET)
+  find_package(LAPACK QUIET)
+  if(BLAS_FOUND AND LAPACK_FOUND)
+    set(_ira_external_linalg TRUE)
+    set(_ira_linalg_name "FlexiBLAS")
+    set(IRA_PC_PRIVATE_LIBS "-lflexiblas")
+    set(IRA_CONFIG_LINALG_PROVIDER "FLEXIBLAS")
+  elseif(_ira_linalg_provider STREQUAL "FLEXIBLAS")
+    message(FATAL_ERROR
+      "FlexiBLAS was requested but its BLAS and LAPACK interfaces were not found")
+  endif()
+  if(_ira_had_bla_vendor)
+    set(BLA_VENDOR "${_ira_saved_bla_vendor}")
+  else()
+    unset(BLA_VENDOR)
+  endif()
+endif()
+
+if(NOT _ira_external_linalg
+    AND (_ira_linalg_provider STREQUAL "AUTO"
+         OR _ira_linalg_provider STREQUAL "LAPACK"))
+  unset(BLAS_FOUND)
+  unset(BLAS_LIBRARIES)
+  unset(LAPACK_FOUND)
+  unset(LAPACK_LIBRARIES)
+  find_package(BLAS QUIET)
+  find_package(LAPACK QUIET)
+  if(BLAS_FOUND AND LAPACK_FOUND)
+    set(_ira_external_linalg TRUE)
+    set(_ira_linalg_name "BLAS/LAPACK")
+    set(IRA_PC_PRIVATE_LIBS "-llapack -lblas")
+    set(IRA_CONFIG_LINALG_PROVIDER "LAPACK")
+  elseif(_ira_linalg_provider STREQUAL "LAPACK")
+    message(FATAL_ERROR
+      "BLAS/LAPACK was requested but both interfaces were not found")
+  endif()
+endif()
+
+if(_ira_external_linalg)
+  message(STATUS
+    "IRA :: Using ${_ira_linalg_name}: ${LAPACK_LIBRARIES};${BLAS_LIBRARIES}")
+  target_compile_definitions(${PROJECT_NAME} PRIVATE IRA_USE_EXTERNAL_LAPACK)
+  target_link_libraries(${PROJECT_NAME} PRIVATE LAPACK::LAPACK BLAS::BLAS)
+else()
+  # Every bundled symbol is prefixed ira_, so this fallback cannot interpose on
+  # another library's BLAS. Keep dlamch/disnan IEEE-safe and position-independent.
+  message(STATUS "IRA :: Using bundled prefixed BLAS/LAPACK fallback")
+  add_library(lap_local OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/lap_local/lap.f")
+  target_compile_options(lap_local PRIVATE -O2)
+  set_target_properties(lap_local PROPERTIES
+    Fortran_FORMAT FIXED
+    POSITION_INDEPENDENT_CODE ON
+    )
+  target_link_libraries(${PROJECT_NAME} PRIVATE lap_local)
+  # Static libira records this object library as a usage requirement.
+  list(APPEND alltargets "lap_local")
+endif()
 
 get_target_property(IRA_LIB_TYPE ${PROJECT_NAME} TYPE)
 if(IRA_LIB_TYPE STREQUAL "SHARED_LIBRARY")

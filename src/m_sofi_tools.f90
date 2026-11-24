@@ -159,7 +159,11 @@ contains
     !!
     implicit none
     interface
+#ifdef IRA_USE_EXTERNAL_LAPACK
+       subroutine dgeev(jobvl, jobvr, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
+#else
        subroutine ira_dgeev(jobvl, jobvr, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork, info)
+#endif
          use, intrinsic :: iso_fortran_env, only: dp=>real64
          integer, intent(out) :: info
          integer, intent(in) :: lda, ldvl, ldvr, lwork, n
@@ -167,7 +171,11 @@ contains
          real(dp), intent(inout) :: a(lda, *), vl(ldvl, *), vr(ldvr, *), wi(*), wr(*)
          real(dp), intent(out) :: work(max(1,lwork))
          intrinsic :: max
+#ifdef IRA_USE_EXTERNAL_LAPACK
+       end subroutine dgeev
+#else
        end subroutine ira_dgeev
+#endif
     end interface
     INTEGER(IP),              intent(in) :: n
     REAL(RP), DIMENSION(n,n), intent(inout) :: A
@@ -191,12 +199,20 @@ contains
     mat = A
     !! test workspace
     lwork = -1
+#ifdef IRA_USE_EXTERNAL_LAPACK
+    call dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, dummy, 1, eigvec, n, dummy, lwork, info)
+#else
     call ira_dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, dummy, 1, eigvec, n, dummy, lwork, info)
+#endif
 
     !! choose optimal size of workspace (as in example from intel website)
     lwork = min( 1000, nint(dummy(1)) )
     !! compute stuffs
+#ifdef IRA_USE_EXTERNAL_LAPACK
+    call dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, dummy, 1, eigvec, n, dummy, lwork, info)
+#else
     call ira_dgeev('N',getvec, n, A, lda, eigvals, eigvals_i, dummy, 1, eigvec, n, dummy, lwork, info)
+#endif
 
     ! write(*,*) 'diagonal matrix'
     ! ! mat = matmul(mat, transpose(A))
